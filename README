@@ -1,0 +1,8 @@
+Open Chrome dev tools
+Click on the application tab
+Click on service workers to verify
+
+TODO:
+Get PWA install menu enabled.
+Verify PWA lighthouse status is ok
+Write a simple application or animation as a placeholder
