@@ -1,6 +1,6 @@
 {
-"short_name": "Wasm Pwa Demo",
-"name": "Wasm Pwa Demo",
+"short_name": "Pwa Demo",
+"name": "Pwa Demo",
 "icons": [
 {
 "src": "launcher-icon-4x.png",
