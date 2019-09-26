@@ -1,38 +1,35 @@
-<html>
+#version 330
 
-<body>
+uniform vec2 u_resolution; 
+uniform float u_time;
 
-<div id="container"></div>
- 
-<link rel="stylesheet" href="stylesheet.css">
-<link rel="manifest" href="/manifest.json">
+uniform vec2 u_mouse;
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
+//uniform vec2 u_mouse_scroll;
+//uniform int u_mouse_left;
+//uniform int u_mouse_right;
+//uniform int u_mouse_middle;
 
-<script id="vertShader" type="x-shader/x-vertex">
+uniform vec3 u_cam_position;
+uniform vec3 u_cam_target;
 
-varying vec2 uVu;
+uniform float u_random_hash;
+uniform float u_random;
 
-void main() {
+uniform sampler2D tex0;
+in vec2 texcoord;
 
-uVu = uv;
-gl_Position = vec4(position,1.0);
-
-}
-
-</script>
-
-<script id="fragShader" type="x-shader/x-fragment">
-
-varying vec2 uVu;
-
-uniform float time;
-
-void main() {
+//keyboard uniforms
 
 
+uniform int u_key_up;
+uniform int u_key_down;
+uniform int u_key_left;
+uniform int u_key_right;
 
+uniform int u_key_space;
+uniform int u_key_enter;
+uniform int u_key_shift;
 
 const float PI  =  3.1415926535;
 const float PHI =  1.618033988749894;
@@ -525,91 +522,4 @@ gl_FragColor = vec4(color,1.0);
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-gl_FragColor = (vec4(vec3(1.0,0.0,0.0),1.0));
 }
-
-</script>
-
-<script>
-
-var vert = $('#vertShader').text();
-var frag = $('#fragShader').text();
-
-var container = $('#container');
-
-var camera,scene,renderer;
-var uniforms;
-
-var w = window.innerWidth;
-var h = window.innerHeight;
-
-var aspect = w/h;
-
-init();
-animate();
-
-function init() {
-
-camera = new THREE.PerspectiveCamera(45,aspect,1,1000);
-
-scene = new THREE.Scene();
-
-var geometry = new THREE.PlaneBufferGeometry(2,2);
-
-uniforms = {
-    "time": { value : 1.0 }
-};   
-
-var material = new THREE.ShaderMaterial({
-
-    uniforms : uniforms,
-    vertexShader : vert,
-    fragmentShader : frag
-
-});
-
-var mesh = new THREE.Mesh(geometry,material);
-scene.add(mesh);
-
-renderer = new THREE.WebGLRenderer();
-renderer.setPixelRatio(window.devicePixelRatio);
-container.append(renderer.domElement);
-
-onWindowResize();
-window.addEventListener('resize',onWindowResize,false);
-
-}
-
-function onWindowResize() {
-
-renderer.setSize(w,h);
-
-}
-
-function animate(timestamp) {
-
-requestAnimationFrame(animate);
-uniforms["time"].value = timestamp / 1000;
-renderer.render(scene,camera);
-}
-
-</script>
-
-<script src="main.js"></script>
-
-</body>
-
-</html>
