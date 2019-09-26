@@ -2,11 +2,107 @@
 
 <body>
 
+<div id="container"></div>
+ 
+<link rel="stylesheet" href="stylesheet.css">
 <link rel="manifest" href="/manifest.json">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
+
+<script id="vertShader" type="x-shader/x-vertex">
+
+varying vec2 uVu;
+
+void main() {
+
+uVu = uv;
+gl_Position = vec4(position,1.0);
+
+}
+
+</script>
+
+<script id="fragShader" type="x-shader/x-fragment">
+
+varying vec2 uVu;
+
+uniform float time;
+
+void main() {
+
+gl_FragColor = (vec4(vec3(1.0,0.0,0.0),1.0));
+}
+
+</script>
+
+<script>
+
+var vert = $('#vertShader').text();
+var frag = $('#fragShader').text();
+
+var container = $('#container');
+
+var camera,scene,renderer;
+var uniforms;
+
+var w = window.innerWidth;
+var h = window.innerHeight;
+
+var aspect = w/h;
+
+init();
+animate();
+
+function init() {
+
+camera = new THREE.PerspectiveCamera(45,aspect,1,1000);
+
+scene = new THREE.Scene();
+
+var geometry = new THREE.PlaneBufferGeometry(2,2);
+
+uniforms = {
+    "time": { value : 1.0 }
+};   
+
+var material = new THREE.ShaderMaterial({
+
+    uniforms : uniforms,
+    vertexShader : vert,
+    fragmentShader : frag
+
+});
+
+var mesh = new THREE.Mesh(geometry,material);
+scene.add(mesh);
+
+renderer = new THREE.WebGLRenderer();
+renderer.setPixelRatio(window.devicePixelRatio);
+container.append(renderer.domElement);
+
+onWindowResize();
+window.addEventListener('resize',onWindowResize,false);
+
+}
+
+function onWindowResize() {
+
+renderer.setSize(w,h);
+
+}
+
+function animate(timestamp) {
+
+requestAnimationFrame(animate);
+uniforms["time"].value = timestamp / 1000;
+renderer.render(scene,camera);
+}
+
+</script>
 
 <script src="main.js"></script>
 
 </body>
-
 
 </html>
