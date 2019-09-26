@@ -25,14 +25,11 @@ gl_Position = vec4(position,1.0);
 
 <script id="fragShader" type="x-shader/x-fragment">
 
-varying vec2 uVu;
+//varying vec2 uVu;
 
 uniform float time;
 
 void main() {
-
-
-
 
 const float PI  =  3.1415926535;
 const float PHI =  1.618033988749894;
@@ -45,13 +42,11 @@ const float TRACE_DISTANCE = 50.0;
 
 #define NORMAL_LIMIT 1.0
 
-//0: 2d uv plane rendering
-//1: raymarching
-#define RENDER_MODE 1
-
 //float hash(float h) { return fract(PHI * h * 1000.0); }
 //float hash(float h) { return fract(sin(h) * 1000.0); }
-float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 23324.0  ); }
+float hash(float h) { 
+return fract(PHI/log(23324.0 ) * h  * 23324.0  );
+}
 
 float rand2d(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
@@ -333,29 +328,14 @@ vec2 res = vec2(1.0,0.0);
 //mat4 rotate_my = rotationAxis(vec3(1.0,0.0,0.0),mouse_scale * m.y);
 //p = (vec4(p,1.0) * rotate_mx * rotate_my).xyz;
 
-//mat4 n4 = translate(vec3(2.0));
-//p = (vec4(p,1.0) * n4).xyz;
-
-//float n = sin3(p,5.0,.25);
-
-//float n = fb3d( p ) ;
-//float n = fb2d(vec2(p.x,p.y) );
-//float dx = texture(tex0,texcoord).r;
-vec2 n =  texture(tex0,texcoord).r;
-
-//float n = clamp(dx * 256.0,0,1);
+float n = fb3d( p ) ;
 
 //vec3 rotating_point  = (rotY(u_time) * vec4(p,1.0)).xyz;
 //float n = fb3d(vec3(rotating_point),u_random_hash);
 
-//res = opU(res,vec2(sphereSDF(p - vec3(0.0,0.0,0.0)   ,1.0+n),0.0));
-
-//res = opU(res,vec2(boxSDF(p - vec3(0.0,0.0,0.0),vec3(1.0)),0.0));
 //res = opU(res,vec2(boxSDF(p - vec3(0.0,0.0,0.0),vec3(.5 )),0.0));
 
-//res = vec2(zSDF(p)+dy,0.0);
 res = vec2(sphereSDF(p,10.0+n),0.0);  
-//res = vec2(boxSDF(p,vec3(.5)),0.0);
 
 return res;
 
@@ -489,35 +469,14 @@ return color;
 }
 
 void main() {
-
-if(RENDER_MODE == 0) { 
-
-//2d function testing plane
-
-vec2 uv = gl_FragCoord.xy / u_resolution;
  
-vec2 displace = texture(tex0,texcoord).rg;
-
-vec3 color = vec3(displace,0.0);
-
-//vec3 color = texture(tex0,texCoordVarying);
-//vec3 color = vec3(uv,0.0 ) ;
-gl_FragColor = vec4(color,1.0);
-
-
-
-}
- 
-if(RENDER_MODE == 1) {
-
-//vec3 camera_position = vec3(u_cam_position);
 vec3 camera_position = vec3(0.0,0.0,35.0);
+vec3 camera_target = vec3(0.0,0.0,0.0);
 
-vec3 camera_target = vec3(u_cam_target);
+//vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.x) / (min (u_resolution.x,u_resolution.y) );
+vec2 uVu = uv;
 
-vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.x) / (min (u_resolution.x,u_resolution.y) );
-
-vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uv,1.0));
+vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uVu,1.0));
 
 vec3 color = render(camera_position,direction);
 
@@ -525,21 +484,6 @@ gl_FragColor = vec4(color,1.0);
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-gl_FragColor = (vec4(vec3(1.0,0.0,0.0),1.0));
-}
 
 </script>
 
