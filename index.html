@@ -9,10 +9,9 @@
 
 <body>
 <div id="container"></div>
-
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>-->
  
-<script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js"></script>
+<script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js"></script> 
+<!--<script src="https://unpkg.com/datgui@0.7.6/dist/dat.gui.min.js"></script> -->
 
 <script src="https://unpkg.com/three/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.108.0/examples/js/controls/OrbitControls.js"></script>
@@ -32,6 +31,10 @@ gl_Position = vec4(position,1.0);
 
 <script id="fragShader" type="x-shader/x-fragment">
 
+#ifdef GL_ES
+precision mediump float;
+#endif
+
 varying vec2 uVu;
 
 uniform float u_time;
@@ -40,6 +43,9 @@ uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
 uniform vec3 u_camera_target;
 uniform float u_hash;
+//uniform vec3 light_position;
+//uniform float light_shineness;
+//uniform vec3 light_color;
 
 const float PI  =  3.1415926535;
 const float PHI =  1.618033988749894;
@@ -87,6 +93,64 @@ return mix(a,b,u.x) +
           (c - a) * u.y * (1.0 - u.x) +
           (d - b) * u.x * u.y;
 }
+
+#define LCG(k) k = (65 * k) % 1021
+#define lr(k) float(k)/1021.
+
+int permutation(int i1,int i2) {
+
+int t = (i1 + i2) & 255;
+return ((112 * t + 153) * t + 151) & 255;
+}
+    
+vec2 worley(int type,vec3 p) {
+
+vec2 dl = vec2(20.0);
+ivec3 iv = ivec3(floor(p));
+vec3 fv = fract(p);
+
+int j = 0;
+ivec3 di = ivec3(1);
+ivec3 ki = -di;
+ivec4 fi = ivec4(0,1,2,3);
+
+for(int k = 0; k < 27; ++k) {
+int s = permutation(permutation(permutation(0,iv.z + ki.z),iv.y + ki.y),iv.x + ki.x);
+LCG(s);
+
+for(int m = 0; m < 2; ++m) {
+
+    LCG(s);
+    float sz = lr(s); 
+    LCG(s);
+    float sy = lr(s);
+    LCG(s);
+    float sx = lr(s);
+
+    vec3 tp = vec3(ki) + vec3(sx,sy,sz) - fv;
+    float c = 0.0;
+
+    if(type == 1) c = dot(tp,tp);
+    if(type == 2) c = abs(tp.x) + abs(tp.y) + abs(tp.x);
+    if(type == 3) c = max(abs(tp.x),max(abs(tp.y),max(abs(tp.z)));  
+
+    float m1 = min(c,dl.x);
+    dl = vec2(min(m1,dl.y),max(m1,min(max(c,dl.x),dl.y)));
+    }
+
+j = fi[0];
+fi[0] = 0;
+ki[2 - j] += di[j];
+
+if((ki[2 - j] & 1) == 1) {
+    di[j] = -di[j];
+    fi[j] = fi[j + 1];
+    fi[j + 1] = j + 1;
+
+    }  
+}
+
+       
 
 float fb2d(in vec2 st_) {
 
@@ -430,7 +494,7 @@ const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
 vec3 light = vec3(10.0,10.0,10.0);
-//vec3 light = vec3(255.0);
+//vec3 light = u_light_color;
 
 vec3 intensity = vec3(0.5,0.5,0.5);
 //vec3 intensity = vec3(0.0);
@@ -468,6 +532,7 @@ vec3 position =  ro + rd * distance;
 vec3 normal = calcNormal(position);
 
 vec3 light_position = vec3(-150.0);
+//vec3 light_position = u_light_position;
 
 vec3 light_dir = normalize(light_position - position);
 
@@ -476,6 +541,7 @@ vec3 kd = vec3(0.5);
 vec3 ks = vec3(1.0);
 
 float shininess = 0.0;
+//float shininess = u_light_shininess;
  
 vec3 color = phongLight(ka,kd,ks,shininess,position,ro);
 
