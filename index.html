@@ -68,8 +68,8 @@ uniform float u_star_type;
 const float PI  =  3.1415926535;
 const float PHI =  1.618033988749894;
 
-const float EPSILON = 0.00001;
-const float NORMAL_EPSILON = 0.0001;
+const float EPSILON = 0.001;
+const float NORMAL_EPSILON = 0.001;
 
 const int RAYMARCH_STEPS = 64;
 const float TRACE_DISTANCE = 1000.0;
@@ -77,8 +77,8 @@ const float TRACE_DISTANCE = 1000.0;
 const float NORMAL_LIMIT = 1.0;
 const float NORMAL_LIMIT_NEG = -1.0;
 
-//float hash(float h) { return fract(PHI * h * 1000.0); }
-float hash(float h) { return fract(sin(h) * u_hash * 43758.5453); }
+float hash(float h) { return fract( h * u_hash ); }
+//float hash(float h) { return fract(sin(h) * u_hash * 43758.5453; }
 //float hash(float h) { 
 //return fract(PHI/log(23324.0 ) * h  * 23324.0  );
 //}
@@ -207,16 +207,18 @@ return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x),
 
 } 
 
-float fb3d(vec3 x) {
+float fb3d(vec3 x,float h) {
 
 float value = 0.0;
-float amp = 0.5;
+float g = exp2(-h);
+float amp = 1.0;
+float freq = 1.0;
 
-for(int i = 0; i < 2; ++i) {
+for(int i = 0; i < 6; ++i) {
 
-value += amp * noise3d(x);
-x *= 2.0;
-amp *= 0.5;
+value += amp * noise3d(freq * x);
+freq *= 2.0;
+amp *= g;
 }
 return value;
 }
@@ -415,31 +417,37 @@ vec2 map(in vec3 p) {
     
 vec2 res = vec2(1.0,0.0);
 
-//float mouse_scale = PI * 2.0;
-//vec2 m = mouse.xy ;
+/*
+float mouse_scale = PI * 2.0;
+vec2 m = u_mouse.xy ;
 
-//mat4 rotate_mx = rotationAxis(vec3(0.0,1.0,0.0),mouse_scale * m.x);
-//mat4 rotate_my = rotationAxis(vec3(1.0,0.0,0.0),mouse_scale * m.y);
+mat4 rotate_mx = rotationAxis(vec3(0.0,1.0,0.0),mouse_scale * m.x);
+mat4 rotate_my = rotationAxis(vec3(1.0,0.0,0.0),mouse_scale * m.y);
 
-//if(mouse_pressed == 1) {
-//p = (vec4(p,1.0) * rotate_mx * rotate_my).xyz;
-//}
+if(u_mouse_pressed == 1) {
+p = (vec4(p,1.0) * rotate_mx * rotate_my).xyz;
+}
+*/
 
-float n = fb3d( p ) ;
+//float n = fb3d( p ) ;
+float n = noise3d(p);
 
-//mat4 roty = rotatationAxis(0.0,1.0,0.0),u_time * u_rotational_speed);
+//mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.1 );
 //p = (vec4(p,1.0) * roty).xyz;
  
-//vec3 roty  = (rotY(time) * vec4(p,1.0)).xyz;
+//vec3 roty  = (rotY(u_time) * vec4(p,1.0)).xyz;
 //float planet_radius = u_radius;   
 //float planet_radius = 10.0;
-//res = opU(res,vec2(sphereSDF(p,u_radius+n),0.0));
 
-//res = opU(res,vec2(boxSDF( p,vec3(5.0 )),0.0));
+res = opU(res,vec2(sphereSDF(p,1.0),0.0));
+//res = opU(res,vec2(sphereSDF(p-vec3(10.0),2.0+n),1.0));
 
-res = vec2(sphereSDF(p,u_radius  +n),0.0);  
+//res = opU(res,vec2(boxSDF( p,vec3(1.0 )),1.0));
 
-//vec2 ocean = vec2(sphereSDF(p,u_ocean_level),1.0);
+
+
+//vec2 planet = vec2(sphereSDF(p,u_radius  )+n,0.0);
+//vec2 ocean = vec2(sphereSDF(p + vec3(15.0) ,u_ocean_level),1.0);
 
 
 
@@ -522,11 +530,16 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
-vec3 light = vec3(10.0,10.0,10.0);
-//vec3 light = u_light_color;
+//vec3 light = vec3(10.0,10.0,10.0);
 
-vec3 intensity = vec3(0.5,0.5,0.5);
-//vec3 intensity = vec3(0.0);
+mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * u_rotational_speed);
+vec3 light = vec3(-10.0,-10.0,-10.0);
+light = (vec4(light,1.0) * rot).xyz;
+
+//vec3 light = u_light_position;
+
+//vec3 intensity = vec3(0.5,0.5,0.5);
+vec3 intensity = vec3(1.0);
 
 color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
 return color;
@@ -558,22 +571,47 @@ float distance = rend.x;
 float d = rend.y;
 
 vec3 position =  ro + rd * distance;
-vec3 normal = calcNormal(position);
+//vec3 normal = calcNormal(position);
 
-vec3 light_position = vec3(-10000.0);
+//vec3 light_position = vec3(-10000.0);
 //vec3 light_position = u_light_position;
-
-vec3 light_dir = normalize(light_position - position);
+//vec3 light_dir = normalize(light_position - position);
 
 vec3 ka = vec3(0.0);
-vec3 kd = vec3(0.5);
-vec3 ks = vec3(1.0);
+vec3 kd = vec3(.5,0.5,0.5);
+vec3 ks = vec3(.1);
+float n =fb3d(position,1.0);
 
-float shininess = 10.0;
-//float shininess = u_light_shininess;
+if(d == 0.0) {
+mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01);
+//n =  (vec4(n,1.0) * roty).xyz;
+//if(position > vec3(5.0)) { 
+
+//fade effect
+if(u_time < 10.0) {
+//n = n * u_time * 0.1 ; 
+}
+
+//n = n + sin(u_time * 0.1);
+
+kd = vec3(n);
+}
+
+// color =  phongLight(vec3(0.0),vec3(1.0),vec3(1.0),0.0,position,ro);
+//} else {
+
+if(d == 1.0) {
+//color = phongLight(vec3(0.0),vec3(0.0,1.0,0.0),vec3(1.0),0.0,position,ro); 
+kd = vec3(0.5,0.5,0.5);
+} 
+
+
+
+//float shininess = 10.0;
+float shininess = u_shininess;
  
 vec3 color = phongLight(ka,kd,ks,shininess,position,ro);
-
+//color += vec3(1.0,0.0,0.0);
 return color;
 
 }
@@ -582,6 +620,8 @@ void main() {
  
 vec3 camera_position = cameraPosition;
 vec3 camera_target = u_camera_target;
+//vec3 camera_position = vec3(0.0,0.0,35.0);
+//vec3 camera_target = vec3(0.0);
 
 vec2 uvu = 2.0 * uVu.xy - 1.0;
 
@@ -635,6 +675,8 @@ mouse_pressed = true;
 });
 
 var camera_target = new THREE.Vector3(0.0,0.0,0.0);
+var target_distance;
+
 
 var w = window.innerWidth;
 var h = window.innerHeight;
@@ -642,15 +684,15 @@ var h = window.innerHeight;
 var aspect = w/h;
 
 var system = {
-    hash : 0.74,
-    shininess : 0.0
+    hash : .3423423,
+    shininess : 10.0
 };
 
 var planet = {
-    radius : 10,
+    radius : 1,
     rotational_speed : 0.05,
     orbital_speed : 0.001,
-    ocean_level : 10.0
+    ocean_level : 0.5
 };
 
 var star = {
@@ -667,22 +709,27 @@ var star_folder = gui.addFolder('star');
 //window.onload = function() { 
 //console.log('test');
 
-system_folder.add(system,'hash',0,1).onChange(guiUpdated);
-system_folder.add(system,'shininess',0,100).onChange(guiUpdated);
+system_folder.add(system,'hash',0.000001,1.0).onChange(guiUpdated);
+system_folder.add(system,'shininess',0.0,10.0).onChange(guiUpdated);
+//system_folder.add(system,'marching_steps',0,256).onChange(guiUpdated); 
+//system_folder.add(system,'trace_distance',0,1).onChange(guiUpdated);
+//system_folder.add(system,'intensity',0,1000).onChange(guiUpdated);
+//system_folder.add(system,'light_position',0,256).onChange(guiUpdated); 
 
-planet_folder.add(planet,'radius',0.0,255.0).onChange(guiUpdated);
-planet_folder.add(planet,'rotational_speed',0.0,1.0).onChange(guiUpdated);
+//planet_folder.add(planet,'radius',0.1,1.0).onChange(guiUpdated);
+planet_folder.add(planet,'rotational_speed',0.0,1.5).onChange(guiUpdated);
 planet_folder.add(planet,'orbital_speed',0.0,1.0).onChange(guiUpdated);
-planet_folder.add(planet,'ocean_level',0.0, 10.0).onChange(guiUpdated);
+planet_folder.add(planet,'ocean_level',0.0, 1.0).onChange(guiUpdated);
 
 star_folder.add(star,'distance',1000.0,10000.0).onChange(guiUpdated);
 //star_folder.add(star,'type','helium fusion');
 //guiUpdated(); 
 
 init();
-animate();
+//animate();
 
 guiUpdated();
+animate();
 
 function init() {
 
@@ -691,14 +738,17 @@ renderer = new THREE.WebGLRenderer();
 //hash = .143433526; 
 
 camera = new THREE.PerspectiveCamera(50,aspect,1,2000);
-camera.position.set(0.0,0.0,35.0);
+camera.position.set(0.0,0.0,-5.0);
+
+
+
 //camera.lookAt(camera_target);
 
 var controls = new THREE.OrbitControls(camera,renderer.domElement);
-controls.update();
-controls.minDistance = 10;
-controls.maxDistance = 2000;
-//controls.noPan = true;
+//controls.update();
+controls.minDistance = planet.radius + 0.11111;
+controls.maxDistance = 50.0;
+controls.noPan = true;
 //controls.target = camera_target;
 
 scene = new THREE.Scene();
@@ -714,7 +764,7 @@ uniforms = {
     "u_camera_target": new THREE.Uniform(new THREE.Vector3(camera_target)),
     "u_hash" : { value: system.hash },
     "u_shininess" : { value: system.shininess },
-    "u_radius" : { value: planet.radius },
+    "u_camera_position" : new THREE.Uniform(new THREE.Vector3()),
     "u_rotational_speed" : { value: planet.rotational_speed },
     "u_orbital_speed" : { value: planet.orbital_speed },
     "u_ocean_level" : { value: planet.ocean_level },
@@ -762,12 +812,14 @@ function guiUpdated() {
 
 uniforms["u_hash"].value = system.hash;
 uniforms["u_shininess"].value = system.shininess;
-uniforms["u_radius"].value = planet.radius;
+//uniforms["u_radius"].value = planet.radius;
 uniforms["u_rotational_speed"].value = planet.rotational_speed;
 uniforms["u_orbital_speed"].value = planet.orbital_speed;
 uniforms["u_ocean_level"].value = planet.ocean_level;
 uniforms["u_star_distance"].value = star.distance;
 //uniforms["u_star_type"].value = star.type;
+
+//controls.minDistance = planet.radius + .11111;
 
 }
 
@@ -780,8 +832,16 @@ uniforms["u_mouse"].value = mouse;
 uniforms["u_mouse_pressed"].value = mouse_pressed;
 uniforms["u_camera_target"].value = camera_target;
 
-//uniforms["u_hash"].value = hash;
+uniforms["u_camera_position"].value = controls.getPos();
 //controls.target = camera_target;
+//controls.minDistance = planet.radius + .11111;
+ 
+//if(camera.position.distanceTo(new THREE.Vector3(0.0,0.0,0.0)) > 1.5) {
+//console.log("test"); 
+//} else { 
+ 
+ 
+
 //controls.update();
 renderer.render(scene,camera);
 }
