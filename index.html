@@ -9,8 +9,6 @@
 
 <body>
 
-<!--<div id="container"></div>-->
- 
 <script src="https://unpkg.com/jquery@3.4.1/dist/jquery.min.js"></script> 
 <script src="https://unpkg.com/three/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.108.0/examples/js/controls/OrbitControls.js"></script>
@@ -52,27 +50,39 @@ uniform int u_mouse_pressed;
 //uniform vec3 u_camera_position; 
 uniform vec3 u_camera_target;
 uniform float u_hash;
-//uniform vec3 u_light_position;
-uniform float u_shininess;
-//uniform vec3 u_light_color;
+//uniform int u_sphere;
+//uniform int u_sphere_coherent;
 
-//Planetary system settings;
-uniform float u_radius;
-uniform float u_rotational_speed; 
-uniform float u_orbital_speed;
-uniform float u_ocean_level;
-uniform float u_star_type;
-//uniform float u_star_distance;
-
+//uniform int u_sphere;
+//uniform int u_cube;
+//uniform float u_light_shininess;
+//uniform float epsilon;
+//uniform float u_background_color;
+//uniform float u_trace_distance;
+//uniform float u_marching_steps; 
+//uniform int u_noise_coherent;
+//uniform int u_noise_fb;
+//uniform int u_noise_cell;
+//uniform int u_noise_distortion; 
+//uniform int u_light_default;
+//uniform int u_displace_distance;
+//uniform int u_displace_diffuse; 
+//uniform float u_orbiting_light;
+//uniform float u_light_ambient;
+//uniform float u_light_diffuse;
+//uniform float u_light_specular;
 
 const float PI  =  3.1415926535;
+const float PI_2 = 2.0 * PI;
+const float PI_6 = 6.0 * PI;
+
 const float PHI =  1.618033988749894;
 
-const float EPSILON = 0.001;
+const float EPSILON = 0.00001;
 const float NORMAL_EPSILON = 0.001;
 
 const int RAYMARCH_STEPS = 64;
-const float TRACE_DISTANCE = 1000.0;
+const float TRACE_DISTANCE = 100.0;
  
 const float NORMAL_LIMIT = 1.0;
 const float NORMAL_LIMIT_NEG = -1.0;
@@ -86,10 +96,6 @@ float hash(float h) { return fract( h * u_hash ); }
 float rand2d(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
 }
-
-//float hash3(vec3 st) {
-//return fract(sin(dot(st.xyz,vec3(12.9898*u_hash,78.233*u_hash,128.852*u_hash))) * 43758.5453); 
-//}
 
 float sin3(vec3 p,float n,float l) {
 return sin(p.x * n) * sin(p.y * n) * sin(p.z * n) * l;  
@@ -128,49 +134,45 @@ x *= s;
 vec3 p = floor(x);
 vec3 f = fract(x);
 
-//float res = 0.0;
 float min_dist = 1.0;
-for(int i = -1; i <= 1; i++) {
-   for(int j = -1; j <= 1; j++) {
-      for(int k = -1; k <= 1; k++) { 
+
+    for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+            for(int k = -1; k <= 1; k++) { 
 
 vec3 b = vec3(float(k),float(j),float(i));
-//vec3 r = vec3(b) - f + hash3(p + b);
+
 vec3 r = hash3(p + b);
 vec3 diff = (b + r - f);
-
 
 float d = length(diff);
 min_dist = min(min_dist,d);
 
-//res += exp(-32.0*d);
 
       }
    }
 }
+
 return min_dist;
-//return -(1.0/32.0) * log(res);
+
 }
  
 float fb2d(in vec2 st_) {
 
 float value = 0.0; 
 float amp = 0.5;
-//vec2 shift = vec2(100.0);
-
-//mat2 rot = mat2(cos(0.5),sin(0.5),-sin(0.5),cos(0.5);
 
 for(int i = 0; i < 6; ++i) {
 value += amp * noise2d(st_);
 st_ *= 2.0; 
-//st_ = rot * st_ * 2.0 + shift;
 amp *= 0.5;
 
 }
+
 return value;
+
 }
 
-//float noise3d(vec3 x,float r) {
 float noise3d(vec3 x) {
 
 vec3 p = floor(x);
@@ -465,7 +467,7 @@ float rounding(float d,float h) {
 return d - h;
 }
 
-float onion(float d,float h) {
+float concentric(float d,float h) {
 return abs(d) - h;
 }
 
@@ -484,45 +486,41 @@ vec2 map(in vec3 p) {
     
 vec2 res = vec2(1.0,0.0);
 
-/*
-float mouse_scale = PI * 2.0;
-vec2 m = u_mouse.xy ;
-
-mat4 rotate_mx = rotationAxis(vec3(0.0,1.0,0.0),mouse_scale * m.x);
-mat4 rotate_my = rotationAxis(vec3(1.0,0.0,0.0),mouse_scale * m.y);
-
-if(u_mouse_pressed == 1) {
-p = (vec4(p,1.0) * rotate_mx * rotate_my).xyz;
-}
-*/
-
-//float n = fb3d( p ) ;
-float n = noise3d(p);
-
 //mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.1 );
 //p = (vec4(p,1.0) * roty).xyz;
- 
 //vec3 roty  = (rotY(u_time) * vec4(p,1.0)).xyz;
-//float planet_radius = u_radius;   
-//float planet_radius = 10.0;
 
-res = opU(res,vec2(sphereSDF(p,1.0),0.0));
-//res = opU(res,vec2(sphereSDF(p-vec3(10.0),2.0+n),1.0));
+//res = opU(res,vec2(sphereSDF(p,1.0),0.0));
 
 //res = opU(res,vec2(boxSDF( p,vec3(1.0 )),1.0));
 
+vec2 s = vec2(sphereSDF(p,1.0),0.0);
+//vec2 s2 = vec2(sphereSDF(p + vec3(1.0,0.0,0.0),.25),0.0);
 
-
-//vec2 planet = vec2(sphereSDF(p,u_radius  )+n,0.0);
-//vec2 ocean = vec2(sphereSDF(p + vec3(15.0) ,u_ocean_level),1.0);
-
-
-
-
-//return min(planet,ocean);
-return res;
+//return min(s,s2);
+//return res;
 
 }
+/*
+float rayMarch(vec3 ro,vec3 rd,float start,float end) {
+
+float depth = start;
+
+    for(int i = 0; i < STEPS; ++i) {
+        float distance = map(ro + depth * rd);
+            if(distance < EPSILON) { 
+            return depth;
+            }
+
+depth += distance;
+
+    if(depth >= end) {
+    return end ;
+    }
+} 
+
+return end;
+}*/
 
 vec2 rayMarch(in vec3 ro,in vec3 rd) {
 
@@ -534,8 +532,6 @@ for(int i = 0; i < RAYMARCH_STEPS; ++i) {
 vec3 p = ro + rd * depth;
 
 vec2 distance = map(p);
-//vec2 distance = vec2(  texture(tex0,texcoord).x  ,0.0);
-//vec2 distance = vec2(10.0,0.0);
 
     if(distance.x < EPSILON || TRACE_DISTANCE < distance.x) { break  ;} 
 
@@ -567,10 +563,6 @@ rgb = rgb * rgb - (3.0 - 2.0) * rgb;
 return c.z * mix(vec3(1.0),rgb,c.y);
 }
 
-//vec3 phongIntensity(vec3 intensity) {
-//return intensity;
-//}
-
 vec3 phongModel(vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray,vec3 light_pos,vec3 intensity) {  
 
 vec3 n = calcNormal(p);
@@ -597,16 +589,11 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
-//vec3 light = vec3(10.0,10.0,10.0);
-
-mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * u_rotational_speed);
+mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
 vec3 light = vec3(-10.0,-10.0,-10.0);
 light = (vec4(light,1.0) * rot).xyz;
 
-//vec3 light = u_light_position;
-
-//vec3 intensity = vec3(0.5,0.5,0.5);
-vec3 intensity = vec3(1.0);
+vec3 intensity = vec3(.5);
 
 color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
 return color;
@@ -624,61 +611,32 @@ return mat3(u,v,camera_forward);
 
 }
 
-//vec2 mapNegative(vec2 uv) {
-//return uv = uv * 2.0 - 1.0;
-//}
-
 vec3 render(vec3 ro,vec3 rd) {
 
 vec2 rend = rayMarch(ro,rd);
 
-//float distance = rayMarch(ro,rd);
-
 float distance = rend.x;
 float d = rend.y;
 
-vec3 position =  ro + rd * distance;
-//vec3 normal = calcNormal(position);
-
-//vec3 light_position = vec3(-10000.0);
-//vec3 light_position = u_light_position;
-//vec3 light_dir = normalize(light_position - position);
+vec3 p =  ro + rd * distance;
 
 vec3 ka = vec3(0.0);
-vec3 kd = vec3(.5,0.5,0.5);
-vec3 ks = vec3(.1);
-float n =fbDistort(position);
+vec3 kd = vec3(.5);
+vec3 ks = vec3(.5); 
 
-if(d == 0.0) {
-mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01);
-//n =  (vec4(n,1.0) * roty).xyz;
-//if(position > vec3(5.0)) { 
+float shininess = 10.0;
 
-//fade effect
-if(u_time < 10.0) {
-//n = n * u_time * 0.1 ; 
-}
-
-//n = n + sin(u_time * 0.1);
+float n = 0.0;
+n = fbDistort(p);
 
 kd = vec3(n);
-}
-
-// color =  phongLight(vec3(0.0),vec3(1.0),vec3(1.0),0.0,position,ro);
-//} else {
-
-if(d == 1.0) {
-//color = phongLight(vec3(0.0),vec3(0.0,1.0,0.0),vec3(1.0),0.0,position,ro); 
-kd = vec3(0.5,0.5,0.5);
-} 
-
-
-
-//float shininess = 10.0;
-float shininess = u_shininess;
  
-vec3 color = phongLight(ka,kd,ks,shininess,position,ro);
-//color += vec3(1.0,0.0,0.0);
+//fade effect
+//if(u_time < 10.0) {
+//n = n * u_time * 0.1 ; 
+//}
+ 
+vec3 color = phongLight(ka,kd,ks,shininess,p,ro);
 return color;
 
 }
@@ -726,10 +684,12 @@ var controls;
 
 //var hash;
 
-var mouse = new THREE.Vector2();
 var mouse_pressed = false;
 
-//var gui = new dat.GUI();
+var mouse = new THREE.Vector2();
+var raycaster = new THREE.Raycaster();
+
+var gui = new dat.GUI();
 
 //$('#container').click(function() {
 //});
@@ -744,61 +704,93 @@ mouse_pressed = true;
 
 var camera_target = new THREE.Vector3(0.0,0.0,0.0);
 var target_distance;
-
+        
 
 var w = window.innerWidth;
 var h = window.innerHeight;
 
 var aspect = w/h;
 
-var system = {
-    hash : .3423423,
-    shininess : 10.0
+var renderer = {
+    hash : .34425
+    //epsilon : 0.001,
+    //epsilon_normal : 0.0,
+    //marching_steps : 32.0,
+    //trace_distance : 100.0
+
 };
 
-var planet = {
-    radius : 1,
-    rotational_speed : 0.05,
-    orbital_speed : 0.001,
-    ocean_level : 0.5
-};
-
-var star = {
-    distance : 1000.0
+var lighting = {
+    intensity : 0.5,
+    shininess : 10.0,
+    enabled : true,
+    orbiting : 0.01,
+    ambient : 0.0,
+    diffuse : 0.5,
+    specular : 0.5
+    
      
 };
-  
-var gui = new dat.GUI();
 
-var system_folder = gui.addFolder('system');
-var planet_folder = gui.addFolder('planet');
-var star_folder = gui.addFolder('star');
+var noise = {
+    hash : 0.23254,
+    octaves : 4.0,
+    displace_distance : false,
+    displace_diffuse : true 
+};
 
-//window.onload = function() { 
-//console.log('test');
+var noise_type = {
+    coherent : false,
+    fractal_brownian : false,
+    cell : false,
+    distortion : false
 
-system_folder.add(system,'hash',0.000001,1.0).onChange(guiUpdated);
-system_folder.add(system,'shininess',0.0,10.0).onChange(guiUpdated);
-//system_folder.add(system,'marching_steps',0,256).onChange(guiUpdated); 
-//system_folder.add(system,'trace_distance',0,1).onChange(guiUpdated);
-//system_folder.add(system,'intensity',0,1000).onChange(guiUpdated);
-//system_folder.add(system,'light_position',0,256).onChange(guiUpdated); 
+};  
 
-//planet_folder.add(planet,'radius',0.1,1.0).onChange(guiUpdated);
-planet_folder.add(planet,'rotational_speed',0.0,1.5).onChange(guiUpdated);
-planet_folder.add(planet,'orbital_speed',0.0,1.0).onChange(guiUpdated);
-planet_folder.add(planet,'ocean_level',0.0, 1.0).onChange(guiUpdated);
+var scene = {
+    swirly_sphere : true,
+    sphere_coherent : false
+};
 
-star_folder.add(star,'distance',1000.0,10000.0).onChange(guiUpdated);
-//star_folder.add(star,'type','helium fusion');
-//guiUpdated(); 
+
+var renderer_folder = gui.addFolder('renderer');
+//var scene_folder = gui.addFolder('scene');
+//var noise_folder = gui.addFolder('noise');
+//var noise_type_folder = gui.addFolder('noise_type');
+//var distance_field_folder = gui.addFolder('distance_field');
+
+renderer_folder.add(renderer,'hash',0.0,1.0).onChange(guiUpdated);
+//renderer_folder.add(renderer,'epsilon',0.0,0.0001).onChange(guiUpdated);
+//renderer_folder.add(renderer,'marching_steps',0,256).onChange(guiUpdated); 
+//renderer_folder.add(renderer,'trace_distance',0,1).onChange(guiUpdated);
+
+//scene_folder.add(scene,'swirly_sphere',false).onChange(guiUpdated);
+//scene_folder.add(scene,'sphere_coherent',false).onChange(guiUpdated); 
+
+//lighting_folder.add(lighting,'orbiting',0.0,1.0).onChange(guiUpdated);
+//lighting_folder.add(lighting,'ambient',0.0,1.0).onChange(guiUpdated);
+//lighting_folder.add(lighting,'diffuse',0.0,1.0).onChange(guiUpdated); 
+//lighting_folder.add(lighting,'specular',0.0,1.0).onChange(guiUpdated);
+//lighting_folder.add(lighting,'enabled',true).onChange(guiUpdated);
+
+//noise_folder.add(noise,'hash',0.0,1.0).onChange(guiUpdated);
+//noise_folder.add(noise,'octaves',0.0,12.0).onChange(guiUpdated);
+//noise_folder.add(noise,'displace_distance',false).onChange(guiUpdated);
+//noise_folder.add(noise,'displace_diffuse',true).onChange(guiUpdated);
+
+//noise_type_folder.add(noise_type,'coherent',true).onChange(guiUpdated);
+//noise_type_folder.add(noise_type,'fractal_brownian',false).onChange(guiUpdated);
+//noise_type_folder.add(noise_type,'cell',false).onChange(guiUpdated);
+//noise_type_folder.add(noise_type,'distortion',false).onChange(guiUpdated);
+
+//distance_field_folder.add(distance_field,'sphere',true).onChange(guiUpdated);
+//distance_field_folder.add(distance_field,'cube',false).onChange(guiUpdated);
 
 init();
-//animate();
+animate();
 
 guiUpdated();
-animate();
-//controls.getPos();
+
 function init() {
 
 renderer = new THREE.WebGLRenderer();
@@ -806,18 +798,14 @@ renderer = new THREE.WebGLRenderer();
 //hash = .143433526; 
 
 camera = new THREE.PerspectiveCamera(50,aspect,1,2000);
-camera.position.set(0.0,0.0,-5.0);
 
-
-
-//camera.lookAt(camera_target);
+camera.position.set(0.0,0.0,1.01);
 
 controls = new THREE.OrbitControls(camera,renderer.domElement);
-//controls.update();
-controls.minDistance = planet.radius + 0.11111;
+controls.minDistance = 1.5;
 controls.maxDistance = 50.0;
 controls.noPan = true;
-//controls.target = camera_target;
+controls.target = camera_target; 
 
 scene = new THREE.Scene();
 
@@ -830,14 +818,37 @@ uniforms = {
     "u_mouse": new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed": { value : mouse_pressed },
     "u_camera_target": new THREE.Uniform(new THREE.Vector3(camera_target)),
-    "u_hash" : { value: system.hash },
-    "u_shininess" : { value: system.shininess },
+
+    //"u_background_color" : { value: renderer.background_color },
+    //"u_octaves" : { value: noise.octaves },
     //"u_camera_position" : new THREE.Uniform(new THREE.Vector3()),
-    "u_rotational_speed" : { value: planet.rotational_speed },
-    "u_orbital_speed" : { value: planet.orbital_speed },
-    "u_ocean_level" : { value: planet.ocean_level },
-    "u_star_distance" : { value: star.distance }
-    //"u_star_type" : { value: star.type } 
+    //"u_marching_steps" : { value: renderer.marching_steps },
+    //"u_trace_distance" : { value: renderer.trace_distance },
+    //"u_light_intensity" : { value: lighting.intensity },
+    //"u_light_ambient" : { value: lighting.ambient },
+    //"u_light_diffuse" : { value: lighting.diffuse },
+    //"u_light_specular" : { value: lighting.specular },
+    //"u_epsilon" : { value: renderer.epsilon },    
+    //"u_default_light" : { value: lighting.enabled },
+    //"u_orbiting_light" : { value: lighting.orbiting },
+
+    "u_hash"                : { value: renderer.hash }
+    //"u_swirly_sphere"       : { value: scene.swirly_sphere },
+    //"u_sphere_coherent"     : { value: scene.sphere_coherent }
+    //"u_shininess" : { value: lighting.shininess },
+    //"u_noise_coherent" : { value: noise_type.coherent },
+    //"u_noise_fb" : { value: noise_type.fractal_brownian },
+    //"u_noise_cell" : { value: noise_type.cell },
+    //"u_noise_distortion" : { value: noise_type.distortion }, 
+    //"u_sphere" : { value: distance_field.sphere },
+    //"u_cube" : { value: distance_field.cube }
+ 
+
+
+
+
+
+
  
 };   
 
@@ -866,26 +877,44 @@ window.addEventListener('mousemove',onMouseMove,false);
 
 function onWindowResize() {
 
-w = window.innerWidth;
-h = window.innerHeight;
+//w = window.innerWidth;
+//h = window.innerHeight;
 renderer.setSize(w,h);
 camera.aspect = w/h; 
 camera.updateProjectionMatrix();
 
-
-
 }
+
+function onMouseMove(event) {
+    mouse.x = (event.clientX / w.innerWidth) * 2.0 - 1.0; 
+    mouse.y = -(event.clientY / h.innerHeight) * 2.0 + 1.0;
+}
+
 
 function guiUpdated() { 
 
-uniforms["u_hash"].value = system.hash;
-uniforms["u_shininess"].value = system.shininess;
-//uniforms["u_radius"].value = planet.radius;
-uniforms["u_rotational_speed"].value = planet.rotational_speed;
-uniforms["u_orbital_speed"].value = planet.orbital_speed;
-uniforms["u_ocean_level"].value = planet.ocean_level;
-uniforms["u_star_distance"].value = star.distance;
-//uniforms["u_star_type"].value = star.type;
+uniforms["u_hash"].value = noise.hash;
+//uniforms["u_swirly_sphere"].value = scene.swirly_sphere;
+//uniforms["u_sphere_coherent"].value = scene.sphere_coherent;
+
+//uniforms["u_shininess"].value = lighting.shininess;
+//uniforms["u_trace_distance"].value = renderer.trace_distance;
+//uniforms["u_light_intensity"].value = lighting.intensity;
+//uniforms["u_orbiting_light"].value = lighting.orbiting_light;
+//uniforms["u_marching_steps"].value = renderer.marching_steps;
+//uniforms["u_octaves"].value = noise.octaves;
+//uniforms["u_noise_coherent"].value = noise_type.coherent;
+//uniforms["u_noise_cell"].value = noise_type.cell;
+//uniforms["u_noise_fb"].value = noise_type.fractal_brownian; 
+//uniforms["u_noise_distortion"].value = noise_type.distortion;
+//uniforms["u_light_ambient"].value = lighting.ambient;
+//uniforms["u_light_diffuse"].value = lighting.diffuse;
+//uniforms["u_light_specular"].value = lighting.specular;
+//uniforms["u_background_color"].value = renderer.background;
+//uniforms["u_epsilon"].value = renderer.epsilon;
+//uniforms["u_default_light"].value = lighting.enabled;
+//uniforms["u_sphere"].value = distance_field.sphere;
+//uniforms["u_cube"].value = distance_field.cube;
 
 //controls.minDistance = planet.radius + .11111;
 
@@ -895,31 +924,33 @@ function animate(timestamp) {
 
 requestAnimationFrame(animate);
 
+//raycaster.setFromCamera(mouse,camera);
+
 uniforms["u_time"].value = timestamp / 1000;
 uniforms["u_mouse"].value = mouse;
 uniforms["u_mouse_pressed"].value = mouse_pressed;
 uniforms["u_camera_target"].value = camera_target;
 
 //uniforms["u_camera_position"].value = controls.getPos();
-//controls.target = camera_target;
+//camera.lookAt = new THREE.Vector3(0.0,0.0,0.0) ;
 //controls.minDistance = planet.radius + .11111;
  
 //if(camera.position.distanceTo(new THREE.Vector3(0.0,0.0,0.0)) > 1.5) {
 //console.log("test"); 
 //} else { 
  
- 
+//raycaster.setFromCamera(mouse,camera);
 
-//controls.update();
+
 renderer.render(scene,camera);
 }
 
-function onMouseMove(event) { 
+//function onMouseMove(event) { 
 
-mouse.x = (event.clientX / w ) * 2.0 - 1.0;
-mouse.y = - (event.clientY / h) * 2.0 + 1.0; 
+//mouse.x = (event.clientX / w ) * 2.0 - 1.0;
+//mouse.y = - (event.clientY / h) * 2.0 + 1.0; 
  
-}
+//}
 
 </script>
 
