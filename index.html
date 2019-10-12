@@ -26,14 +26,10 @@
 
 
 varying vec2 vUv;
-//out vec2 vUv;
-
-//attribute vec3 position;
 
 void main() {
 
 vUv = uv;
-//uVu.xy = position;
 
 gl_Position = vec4(position,1.0);
 //gl_Position = projectionMatrix * modelViewMatrix * vec4(1.0,position);
@@ -47,10 +43,10 @@ gl_Position = vec4(position,1.0);
 //precision highp float;
 
 varying vec2 vUv;
-//vUv = uv;
 
 uniform float u_time;
 uniform vec2 u_resolution;
+
 //uniform mat4 viewMatrix;
 //uniform mat4 cameraWorldMatrix;
 //uniform mat4 cameraProjectionMatrixInverse;
@@ -61,9 +57,6 @@ uniform int u_mouse_pressed;
 //uniform vec3 cameraPosition; 
 uniform vec3 u_camera_target;
 uniform float u_hash;
-
-
-
 
 //uniform int u_sphere;
 //uniform int u_sphere_coherent;
@@ -569,9 +562,9 @@ vec3 calcNormal(vec3 p) {
 
 return normalize(vec3(
 
-                scene(p + vec3(p.x + EPSILON,p.y,p.y)) - scene(p + vec3(p.x - EPSILON,p.y,p.y)), 
-                scene(p  +  vec3(p.x,p.y + EPSILON,p.z)) - scene(p + vec3(p.x,p.y - EPSILON ,p.z)),
-                scene(p   +   vec3(p.x,p.y,p.z + EPSILON)) - scene(p + vec3(p.x,p.y,p.z - EPSILON))
+                scene(p+ vec3(p.x + EPSILON,p.y,p.y)) - scene(p+ vec3(p.x - EPSILON,p.y,p.y)), 
+                scene(p+ vec3(p.x,p.y + EPSILON,p.z)) - scene(p+ vec3(p.x,p.y - EPSILON ,p.z)),
+                scene(p+ vec3(p.x,p.y,p.z + EPSILON)) - scene(p+ vec3(p.x,p.y,p.z - EPSILON))
 
 ));
 
@@ -610,7 +603,7 @@ const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
 //mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
-vec3 light = vec3(-10.0,-10.0,-10.0);
+vec3 light = vec3(100.0,0.0,0.0);
 //light = (vec4(light,1.0) * rot).xyz;
 
 vec3 intensity = vec3(.5);
@@ -638,6 +631,19 @@ return mat3(u,v,camera_forward);
 
 }
 
+vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget) {
+
+vec3 camForward = normalize(camTarget - camPosition);
+vec3 camRight = normalize(cross(vec3(0.0,1.0,1.0),camForward));
+vec3 camUp = normalize(cross(camForward,camRight));
+
+float fPersp = 2.0;
+
+vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
+
+return vDir;
+}
+
 vec3 render(vec3 ro,vec3 rd) {
 
 vec3 color = vec3(0.0);
@@ -651,15 +657,15 @@ float distance = rayScene(ro,rd,0.0,100.0);
 vec3 p =  ro + rd * distance;
 
 vec3 ka = vec3(0.0);
-vec3 kd = vec3(0.5);
+vec3 kd = vec3(0.5,1.0,.4);
 vec3 ks = vec3(0.5); 
 
-float shininess = 0.0;
+float shininess = 10.0;
 
-float n = 0.0;
+//float n = 0.0;
 //n = fbDistort(p);
 
-kd = vec3(n);
+//kd = vec3(n);
  
 //fade effect
 //if(u_time < 10.0) {
@@ -667,10 +673,12 @@ kd = vec3(n);
 //}
 
 if(distance > 100.0 - EPSILON) {
-color = vec3(.0);
+color = vec3(0.0);
+} else {
+color = vec3(calcNormal(p));
+//color = phongLight(ka,kd,ks,shininess,p,ro);
 } 
-//color = vec3(.5);
-color = phongLight(ka,kd,ks,shininess,p,ro);
+
 return color;
 
 }
@@ -678,24 +686,26 @@ return color;
 void main() {
  
 vec3 camera_position = cameraPosition;
-vec3 camera_target = u_camera_target;
-//vec3 camera_position = vec3(0.0,0.0,35.0);
-//vec3 camera_target = vec3(0.0);
+//vec3 camera_target = u_camera_target;
+//vec3 camera_position = vec3(5.0,0.0,0.0);
+vec3 cam_target = vec3(0.0);
 
-vec2 uvu = -1.0 + 2.0 * gl_FragCoord.xy;
+vec2 uvu = -1.0 + 2.0 * vUv.xy;
+//vec2 uvu = vUv.xya;
 
 //vec2 uvu =  gl_FragCoord.xy - u_resolution.x / min(u_resolution.x,u_resolution.y) ;
 
-uvu.x *= u_resolution.x/u_resolution.y;
+//uvu.x *= u_resolution.x/u_resolution.y;
 
 //vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uvu ,1.0));
 //vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uvu ,1.0));
 
-vec3 direction = rayDirectionAngle(50.0,u_resolution,gl_FragCoord.xy); 
+//vec3 direction = rayDirectionAngle(45.0,u_resolution,gl_FragCoord.xy) ; 
+vec3 direction = rayCamDir(uvu,camera_position,cam_target);
 
 //vec2 screen_position =  (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution; 
-//vec2 screen_position =   (gl_FragCoord.xy - .5* u_resolution) / min( u_resolution.x,u_resolution.y);
-//vec2 uv = screen_position;
+//vec2 screen_position =   (gl_FragCoord.xy * 2.0 - u_resolution) ;
+//vec2 uvu = screen_position;
 
 //vec4 ray_normal = vec4(screen_position,1.0,1.0);
 //vec3 direction = vec3(cameraWorldMatrix * cameraProjectionMatrixInverse * ray_normal).xyz;  
@@ -705,7 +715,7 @@ vec3 direction = rayDirectionAngle(50.0,u_resolution,gl_FragCoord.xy);
 //direction = normalize(direction);
 
 vec3 color = render(camera_position,direction);
-//vec3 color = vec3(uv.x,uv.y,0.0 );
+//vec3 color = vec3(uvu.x,uvu.y,0.0 );
 gl_FragColor = vec4(color,0.0);
 
 }
@@ -851,9 +861,11 @@ renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
 //hash = .143433526; 
 
-camera = new THREE.PerspectiveCamera(50,canvas.width/canvas.height,1,2000);
+camera = new THREE.PerspectiveCamera(2.0,canvas.width/canvas.height,1,2000);
 
-camera.position.set(0.0,0.0,1.5);
+
+
+camera.position.set(0.0,0.0,-10.0);
 
 //controls = new THREE.OrbitControls(camera,renderer.domElement);
 controls = new THREE.OrbitControls(camera,canvas);
@@ -915,7 +927,8 @@ mesh = new THREE.Mesh(geometry,material);
 scene.add(mesh);
 
 renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(w,h);
+//renderer.setSize(w,h);
+renderer.setSize(512,512);
 
 //container.append(renderer.domElement);
 gui_container.append(gui.domElement);
@@ -935,8 +948,6 @@ camera.aspect = canvas.width / canvas.height;
 camera.updateProjectionMatrix();
 
 uniforms["u_resolution"].value = new THREE.Uniform(new THREE.Vector2(canvas.width,canvas.height));
-
-
 //uniforms["cameraProjectionMatrixInverse"].value = new THREE.Matrix4().getInverse(camera.projectionMatrix);
 //material.uniforms.resolution.value.set(canvas.width,canvas.height);
 //material.uniforms.cameraProjectionMatrixInverse.value.getInverse(camera.projectionMatrix);
