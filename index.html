@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title> Signed Distance Planetary Simulation Demo in Webgl  </title>
+<title> Distance Field Rendering Engine in Webgl  </title>
 <meta http-equiv="Content-Type" content="html/text"; charset="utf-8"/> 
 <link rel="stylesheet" href="stylesheet.css">
 <link rel="manifest" href="/manifest.json">
@@ -40,44 +40,28 @@ gl_Position = vec4(position,1.0);
 
 <script id="fragShader" type="x-shader/x-fragment">
 
-//precision highp float;
+precision highp float;
 
 varying vec2 vUv;
-
-uniform float u_time;
-uniform vec2 u_resolution;
 
 //uniform mat4 viewMatrix;
 //uniform mat4 cameraWorldMatrix;
 //uniform mat4 cameraProjectionMatrixInverse;
 
-
+uniform float u_hash;
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
-//uniform vec3 cameraPosition; 
+uniform vec2 u_resolution;
 uniform vec3 u_camera_target;
-uniform float u_hash;
+uniform float u_time;
+uniform float u_default_light;
 
-//uniform int u_sphere;
-//uniform int u_sphere_coherent;
-//uniform int u_sphere;
-//uniform int u_cube;
-//uniform float u_light_shininess;
-//uniform float epsilon;
-//uniform float u_background_color;
-//uniform float u_trace_distance;
-//uniform float u_marching_steps; 
-//uniform int u_noise_coherent;
-//uniform int u_noise_fb;
-//uniform int u_noise_cell;
-//uniform int u_noise_distortion; 
-//uniform int u_light_default;
-//uniform int u_displace_distance;
-//uniform int u_displace_diffuse; 
-//uniform float u_orbiting_light;
-//uniform float u_light_ambient;
-//uniform float u_light_diffuse;
-//uniform float u_light_specular;
+uniform int u_rgb_normals;
+uniform int u_grey_colors;
+uniform int u_distance_flood;
+uniform int u_demo_planet;
+uniform int u_demo_2;
+uniform int u_demo_3;
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -85,15 +69,12 @@ const float PI_6 = 6.0 * PI;
 
 const float PHI =  1.6180339;
 
-const float EPSILON = 0.00001;
+const float EPSILON = 0.0001;
 const float NORMAL_EPSILON = 0.001;
 
 const int MARCH_STEPS = 64;
-const float TRACE_DISTANCE = 100.0;
+const float TRACE_DISTANCE = 1000.0;
  
-const float NORMAL_LIMIT = 1.0;
-const float NORMAL_LIMIT_NEG = -1.0;
-
 float hash(float h) { return fract( h * u_hash ); }
 //float hash(float h) { return fract(sin(h) * u_hash * 43758.5453; }
 //float hash(float h) { 
@@ -377,32 +358,20 @@ return mat4(
 
 //3d Distance Fields
 
-float xSDF(vec3 p) {
-return p.x;
-}
-
-float ySDF(vec3 p) {
-return p.y;
-}
-
-float zSDF(vec3 p) {
-return p.z;
-}
-
-float sphereSDF(vec3 p,float r) { 
+float sphere(vec3 p,float r) { 
 return length(p) - r;
 }
 
-float coneSDF(vec3 p,vec2 c) {
+float cone(vec3 p,vec2 c) {
 float q = length(p.xy);
 return dot(c,vec2(q,p.z));
 }
 
-float planeSDF(vec3 p,vec4 n) {
+float plane(vec3 p,vec4 n) {
 return dot(p,n.xyz) + n.w;
 }
 
-float capsuleSDF(vec3 p,vec3 a,vec3 b,float r) {
+float capsule(vec3 p,vec3 a,vec3 b,float r) {
 
 vec3 pa = p - a;
 vec3 ba = b - a;
@@ -412,33 +381,33 @@ float h = clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
 return length(pa - ba * h) - r;
 } 
 
-float triangularPrismSDF(vec3 p,vec2 h) {
+float triangularPrism(vec3 p,vec2 h) {
 vec3 q = abs(p);
 return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
 }
 
-float boxSDF(vec3 p,vec3 b) {
+float box(vec3 p,vec3 b) {
 vec3 d = abs(p) - b;
 return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float torusSDF(vec3 p,vec2 t) {
+float torus(vec3 p,vec2 t) {
 vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
 return length(q) - t.y; 
 }
 
-float cylinderSDF(vec3 p,float h,float r) {
+float cylinder(vec3 p,float h,float r) {
 vec2 d = abs(vec2(length(vec2(p.x,p.z)),p.y) - vec2(h,r));
 return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
-float hexPrismSDF(vec3 p,vec2 h) {
+float hexPrism(vec3 p,vec2 h) {
 
 const vec3 k = vec3(-0.8660254,0.5,0.57735);
 p = abs(p);
 p.xy -= 2.0 * min(dot(k.xy,p.xy),0.0) * k.xy;
 
-vec2 d = vec2(length(p.xy - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x)) * sign(p.x-h.x),p.z-h.x);
+vec2 d = vec2(length(p.xy - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x)) * sign(p.x-h.x),p.z-h.y);
 return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
@@ -482,36 +451,20 @@ float repeat(float d,float domain) {
 return mod(d,domain) - domain/2.0;
 }
 
-//Scene union
-vec2 opU(in vec2 d1,in vec2 d2) {
-return d1.x < d2.x ? d1 : d2;
-}
-
-//Raymarching
-
-vec2 map(vec3 p) {
-    
-vec2 res = vec2(1.0,0.0);
-
-//mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.1 );
-//p = (vec4(p,1.0) * roty).xyz;
-//vec3 roty  = (rotY(u_time) * vec4(p,1.0)).xyz;
-
-//res = opU(res,vec2(sphereSDF(p,1.0),0.0));
-
-res = opU(res,vec2(boxSDF( p,vec3(1.0 )),1.0));
-
-vec2 s = vec2(sphereSDF(p,1.0),0.0);
-//vec2 s2 = vec2(sphereSDF(p + vec3(1.0,0.0,0.0),.25),0.0);
-
-//return min(s,s2);
-return res;
-
-}
-
 float scene(vec3 p) {
 
-return sphereSDF(p,1.0);
+//float sphere = sphere(p,1.0);
+//float cone =  cone(p,vec2(.9,.45));
+//float torus = torus(p,vec2(1.0,.5));
+//float plane = plane(p,vec4(1.0,0.0,0.0,1.0));
+//float capsule = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),.5);
+//float triangleprism triangularPrism(p,vec2(3.0,1.0));
+float box = box(p,vec3(1.0,1.0,1.0));
+
+
+
+
+
 
 }
 
@@ -535,30 +488,7 @@ depth += distance;
 return end;
 }
 
-vec2 rayMarch(vec3 ro,vec3 rd) {
-
-float depth = 0.0;
-float d = -1.0;
-
-for(int i = 0; i < MARCH_STEPS; ++i) {
-
-vec3 p = ro + rd * depth;
-
-vec2 distance = map(p);
-
-    if(distance.x < EPSILON || TRACE_DISTANCE < distance.x) { break  ;} 
-
-    depth += distance.x;
-    d = distance.y;
-    }
-    
-    if(TRACE_DISTANCE < depth) { d = -1.0; }
-    return vec2(depth,d);
-}
-
 vec3 calcNormal(vec3 p) {
-
-//vec2 e = vec2(1.0,-1.0) * NORMAL_EPSILON;
 
 return normalize(vec3(
 
@@ -602,6 +532,8 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
+//vec3 light = u_default_light;
+
 //mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
 vec3 light = vec3(100.0,0.0,0.0);
 //light = (vec4(light,1.0) * rot).xyz;
@@ -613,31 +545,13 @@ return color;
 
 }
 
-vec3 rayDirectionAngle(float fov, vec2 size, vec2 fragCoord) {
-
-vec2 xy = fragCoord - size / 2.0;
-float z = size.y  / tan(radians(fov) / 2.0);
-return normalize(vec3(xy,-z));
-}
-
-mat3 rayDirection(in vec3 camera_position,in vec3 camera_target,in float r) {
-
-vec3 camera_forward = normalize(camera_target - camera_position);
-vec3 camera_up = vec3(sin(r),cos(r),0.0);
-vec3 u = normalize(cross(camera_forward,camera_up));
-vec3 v = normalize(cross(u,camera_forward));
-
-return mat3(u,v,camera_forward);
-
-}
-
 vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget) {
 
 vec3 camForward = normalize(camTarget - camPosition);
 vec3 camRight = normalize(cross(vec3(0.0,1.0,1.0),camForward));
 vec3 camUp = normalize(cross(camForward,camRight));
 
-float fPersp = 2.0;
+float fPersp = 1.0;
 
 vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
 
@@ -648,16 +562,12 @@ vec3 render(vec3 ro,vec3 rd) {
 
 vec3 color = vec3(0.0);
 
-//vec2 rend = rayMarch(ro,rd);
-float distance = rayScene(ro,rd,0.0,100.0);
-
-//float distance = rend.x;
-//float d = rend.y;
+float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
 
 vec3 p =  ro + rd * distance;
 
 vec3 ka = vec3(0.0);
-vec3 kd = vec3(0.5,1.0,.4);
+vec3 kd = vec3(0.5);
 vec3 ks = vec3(0.5); 
 
 float shininess = 10.0;
@@ -672,11 +582,22 @@ float shininess = 10.0;
 //n = n * u_time * 0.1 ; 
 //}
 
-if(distance > 100.0 - EPSILON) {
+if(distance > TRACE_DISTANCE - EPSILON) {
 color = vec3(0.0);
 } else {
+
+if(u_rgb_normals == 1) { 
 color = vec3(calcNormal(p));
+}
+
+if(u_grey_colors == 1) {
+color = vec3(.5);
+} 
+
 //color = phongLight(ka,kd,ks,shininess,p,ro);
+
+
+
 } 
 
 return color;
@@ -691,31 +612,12 @@ vec3 camera_position = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
-//vec2 uvu = vUv.xya;
 
-//vec2 uvu =  gl_FragCoord.xy - u_resolution.x / min(u_resolution.x,u_resolution.y) ;
+uvu.x *= u_resolution.x/u_resolution.y; 
 
-//uvu.x *= u_resolution.x/u_resolution.y;
-
-//vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uvu ,1.0));
-//vec3 direction = rayDirection(camera_position,camera_target,0.0) * normalize(vec3(uvu ,1.0));
-
-//vec3 direction = rayDirectionAngle(45.0,u_resolution,gl_FragCoord.xy) ; 
 vec3 direction = rayCamDir(uvu,camera_position,cam_target);
 
-//vec2 screen_position =  (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution; 
-//vec2 screen_position =   (gl_FragCoord.xy * 2.0 - u_resolution) ;
-//vec2 uvu = screen_position;
-
-//vec4 ray_normal = vec4(screen_position,1.0,1.0);
-//vec3 direction = vec3(cameraWorldMatrix * cameraProjectionMatrixInverse * ray_normal).xyz;  
-//vec3 direction = vec3(cameraWorldMatrix * cameraProjectionMatrixInverse * ray_normal).xyz;  
-
-//vec3 direction = vec3(0.0).xyz;
-//direction = normalize(direction);
-
 vec3 color = render(camera_position,direction);
-//vec3 color = vec3(uvu.x,uvu.y,0.0 );
 gl_FragColor = vec4(color,0.0);
 
 }
@@ -725,9 +627,11 @@ gl_FragColor = vec4(color,0.0);
 <script>
 
 if(THREE.WEBGL.isWebGL2Available() === false) {
+
 console.log('webgl2 is not enabled');
 
 } else {
+
 console.log('webgl2 available');
 
 }
@@ -742,8 +646,6 @@ var gui_container = $('#gui_container');
 var camera,scene,renderer;
 var uniforms,geometry,material,mesh;
 var controls;
-
-//var hash;
 
 var mouse_pressed = false;
 
@@ -764,91 +666,39 @@ mouse_pressed = true;
 });
 
 var camera_target = new THREE.Vector3(0.0,0.0,0.0);
-var target_distance;
-        
+var default_light = new THREE.Vector3(0.0,0.0,100.0);
 
 var w = window.innerWidth;
 var h = window.innerHeight;
 
-//var w = canvas.width;
-//var h = canvas.height;
-
 var aspect = w/h;
 
 var renderer = {
-    hash : .34425
-    //epsilon : 0.001,
-    //epsilon_normal : 0.0,
-    //marching_steps : 32.0,
-    //trace_distance : 100.0
-
-};
-
-var lighting = {
-    intensity : 0.5,
-    shininess : 10.0,
-    enabled : true,
-    orbiting : 0.01,
-    ambient : 0.0,
-    diffuse : 0.5,
-    specular : 0.5
+    rgb_normals : false,
+    distance_flood : false,
+    grey_colors  : false
     
-     
 };
-
-var noise = {
-    hash : 0.23254,
-    octaves : 4.0,
-    displace_distance : false,
-    displace_diffuse : true 
-};
-
-var noise_type = {
-    coherent : false,
-    fractal_brownian : false,
-    cell : false,
-    distortion : false
-
-};  
 
 var scene = {
-    swirly_sphere : true,
-    sphere_coherent : false
+    hash : 0.342,
+    demo_planet : false,
+    demo_2: false,
+    demo_3: false
+
 };
 
-
 var renderer_folder = gui.addFolder('renderer');
-//var scene_folder = gui.addFolder('scene');
-//var noise_folder = gui.addFolder('noise');
-//var noise_type_folder = gui.addFolder('noise_type');
-//var distance_field_folder = gui.addFolder('distance_field');
+var scene_folder = gui.addFolder('scene');
 
-renderer_folder.add(renderer,'hash',0.0,1.0).onChange(guiUpdated);
-//renderer_folder.add(renderer,'epsilon',0.0,0.0001).onChange(guiUpdated);
-//renderer_folder.add(renderer,'marching_steps',0,256).onChange(guiUpdated); 
-//renderer_folder.add(renderer,'trace_distance',0,1).onChange(guiUpdated);
+renderer_folder.add(renderer,'rgb_normals',0.0,1.0).onChange(guiUpdated);
+renderer_folder.add(renderer,'distance_flood',0.0,0.0001).onChange(guiUpdated);
+renderer_folder.add(renderer,'grey_colors',0,256).onChange(guiUpdated); 
 
-//scene_folder.add(scene,'swirly_sphere',false).onChange(guiUpdated);
-//scene_folder.add(scene,'sphere_coherent',false).onChange(guiUpdated); 
-
-//lighting_folder.add(lighting,'orbiting',0.0,1.0).onChange(guiUpdated);
-//lighting_folder.add(lighting,'ambient',0.0,1.0).onChange(guiUpdated);
-//lighting_folder.add(lighting,'diffuse',0.0,1.0).onChange(guiUpdated); 
-//lighting_folder.add(lighting,'specular',0.0,1.0).onChange(guiUpdated);
-//lighting_folder.add(lighting,'enabled',true).onChange(guiUpdated);
-
-//noise_folder.add(noise,'hash',0.0,1.0).onChange(guiUpdated);
-//noise_folder.add(noise,'octaves',0.0,12.0).onChange(guiUpdated);
-//noise_folder.add(noise,'displace_distance',false).onChange(guiUpdated);
-//noise_folder.add(noise,'displace_diffuse',true).onChange(guiUpdated);
-
-//noise_type_folder.add(noise_type,'coherent',true).onChange(guiUpdated);
-//noise_type_folder.add(noise_type,'fractal_brownian',false).onChange(guiUpdated);
-//noise_type_folder.add(noise_type,'cell',false).onChange(guiUpdated);
-//noise_type_folder.add(noise_type,'distortion',false).onChange(guiUpdated);
-
-//distance_field_folder.add(distance_field,'sphere',true).onChange(guiUpdated);
-//distance_field_folder.add(distance_field,'cube',false).onChange(guiUpdated);
+scene_folder.add(scene,'hash',false).onChange(guiUpdated);
+scene_folder.add(scene,'demo_planet',false).onChange(guiUpdated); 
+scene_folder.add(scene,'demo_2',false).onChange(guiUpdated);
+scene_folder.add(scene,'demo_3',false).onChange(guiUpdated);
 
 init();
 animate();
@@ -859,11 +709,7 @@ function init() {
 
 renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
-//hash = .143433526; 
-
-camera = new THREE.PerspectiveCamera(2.0,canvas.width/canvas.height,1,2000);
-
-
+camera = new THREE.PerspectiveCamera(45.0,canvas.width/canvas.height,1,2000);
 
 camera.position.set(0.0,0.0,-10.0);
 
@@ -873,7 +719,7 @@ controls = new THREE.OrbitControls(camera,canvas);
 controls.minDistance = 1.5;
 controls.maxDistance = 50.0;
 //controls.noPan = true;
-//controls.target = camera_target; 
+controls.target = camera_target; 
 
 scene = new THREE.Scene();
 
@@ -882,34 +728,22 @@ geometry = new THREE.PlaneBufferGeometry(2,2);
 uniforms = {
 
     "u_time": { value : 1.0 },
-    "u_resolution": new THREE.Uniform(new THREE.Vector2(canvas.width,canvas.height)),
+    "u_resolution": new THREE.Uniform(new THREE.Vector2(w,h)),
     "u_mouse": new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed": { value : mouse_pressed },
     "u_camera_target": new THREE.Uniform(new THREE.Vector3(camera_target)),
+    "u_default_light": new THREE.Uniform(new THREE.Vector3(default_light)),
 
     //"cameraWorldMatrix" : { value: camera.matrixWorld },
     //"cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
-    //"u_camera_position" : new THREE.Uniform(new THREE.Vector3()),
-    //"u_marching_steps" : { value: renderer.marching_steps },
-    //"u_trace_distance" : { value: renderer.trace_distance },
-    //"u_light_intensity" : { value: lighting.intensity },
-    //"u_light_ambient" : { value: lighting.ambient },
-    //"u_light_diffuse" : { value: lighting.diffuse },
-    //"u_light_specular" : { value: lighting.specular },
-    //"u_epsilon" : { value: renderer.epsilon },    
-    //"u_default_light" : { value: lighting.enabled },
-    //"u_orbiting_light" : { value: lighting.orbiting },
 
-    "u_hash"                : { value: renderer.hash }
-    //"u_swirly_sphere"       : { value: scene.swirly_sphere },
-    //"u_sphere_coherent"     : { value: scene.sphere_coherent }
-    //"u_shininess" : { value: lighting.shininess },
-    //"u_noise_coherent" : { value: noise_type.coherent },
-    //"u_noise_fb" : { value: noise_type.fractal_brownian },
-    //"u_noise_cell" : { value: noise_type.cell },
-    //"u_noise_distortion" : { value: noise_type.distortion }, 
-    //"u_sphere" : { value: distance_field.sphere },
-    //"u_cube" : { value: distance_field.cube }
+    "u_hash"          : { value: scene.hash },
+    "u_demo_planet "       : { value: scene.demo_planet },
+    "u_demo_2 "     : { value: scene.demo_2 }
+    "u_demo_3 " : { value: scene.demo_3 },
+    "u_rgb_normals" : { value: renderer.rgb_normals },
+    "u_grey_colors" : { value: renderer.grey_colors },
+    "u_distance_flood" : { value: renderer.distance_flood } 
 
 };   
 
@@ -927,8 +761,8 @@ mesh = new THREE.Mesh(geometry,material);
 scene.add(mesh);
 
 renderer.setPixelRatio(window.devicePixelRatio);
-//renderer.setSize(w,h);
-renderer.setSize(512,512);
+renderer.setSize(w,h);
+//renderer.setSize(512,512);
 
 //container.append(renderer.domElement);
 gui_container.append(gui.domElement);
@@ -963,28 +797,13 @@ function onMouseMove(event) {
 
 function guiUpdated() { 
 
-uniforms["u_hash"].value = noise.hash;
-//uniforms["u_swirly_sphere"].value = scene.swirly_sphere;
-//uniforms["u_sphere_coherent"].value = scene.sphere_coherent;
-
-//uniforms["u_shininess"].value = lighting.shininess;
-//uniforms["u_trace_distance"].value = renderer.trace_distance;
-//uniforms["u_light_intensity"].value = lighting.intensity;
-//uniforms["u_orbiting_light"].value = lighting.orbiting_light;
-//uniforms["u_marching_steps"].value = renderer.marching_steps;
-//uniforms["u_octaves"].value = noise.octaves;
-//uniforms["u_noise_coherent"].value = noise_type.coherent;
-//uniforms["u_noise_cell"].value = noise_type.cell;
-//uniforms["u_noise_fb"].value = noise_type.fractal_brownian; 
-//uniforms["u_noise_distortion"].value = noise_type.distortion;
-//uniforms["u_light_ambient"].value = lighting.ambient;
-//uniforms["u_light_diffuse"].value = lighting.diffuse;
-//uniforms["u_light_specular"].value = lighting.specular;
-//uniforms["u_background_color"].value = renderer.background;
-//uniforms["u_epsilon"].value = renderer.epsilon;
-//uniforms["u_default_light"].value = lighting.enabled;
-//uniforms["u_sphere"].value = distance_field.sphere;
-//uniforms["u_cube"].value = distance_field.cube;
+uniforms["u_hash"].value = scene.hash;
+uniforms["u_demo_planet"].value = scene.demo_planet;
+uniforms["u_demo_2"].value = scene.demo_2;
+uniforms["u_demo_3"].value = scene.demo_3;
+uniforms["u_rgb_normals"].value = renderer.rgb_normals;
+uniforms["u_grey_colors"].value = renderer.grey_colors;
+uniforms["u_distance_flood"].value = renderer.distance_flood;
 
 //controls.minDistance = planet.radius + .11111;
 
@@ -1000,7 +819,7 @@ uniforms["u_time"].value = timestamp / 1000;
 uniforms["u_mouse"].value = mouse;
 uniforms["u_mouse_pressed"].value = mouse_pressed;
 uniforms["u_camera_target"].value = camera_target;
-//uniforms["u_camera_position"].value = controls.;
+uniforms["u_default_light"].value = default_light;
 
 //camera.lookAt = new THREE.Vector3(0.0,0.0,0.0) ;
 //controls.minDistance = planet.radius + .11111;
