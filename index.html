@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title> Distance Field Rendering Engine in Webgl  </title>
+<title> Distance Field Rendering Engine in Webgl, Copyright 2019  </title>
 <meta http-equiv="Content-Type" content="html/text"; charset="utf-8"/> 
 <link rel="stylesheet" href="stylesheet.css">
 <link rel="manifest" href="/manifest.json">
@@ -24,7 +24,6 @@
 
 <script id="vertShader" type="x-shader/x-vertex">
 
-
 varying vec2 vUv;
 
 void main() {
@@ -39,6 +38,8 @@ gl_Position = vec4(position,1.0);
 </script>
 
 <script id="fragShader" type="x-shader/x-fragment">
+
+//Copyright 2019, Dan Olson
 
 precision highp float;
 
@@ -55,13 +56,15 @@ uniform vec2 u_resolution;
 uniform vec3 u_camera_target;
 uniform float u_time;
 uniform vec3 u_default_light;
-
+uniform vec3 u_mouse_ray;
+uniform int u_repeat;
 uniform int u_rgb_normals;
 uniform int u_grey_color;
-uniform int u_distance_flood;
-uniform int u_planet_demo;
-uniform int u_cube_mod_demo;
-uniform int u_capsule_demo;
+uniform int u_distort_color;
+uniform int u_sphere;
+uniform int u_cube;
+uniform int u_capsule;
+ 
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -313,6 +316,10 @@ float a = PI * (k * x - 1.0);
 return sin(a)/a;
 }
 
+vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
+return a + b * cos(PI_2*(c*t+d));
+}
+
 //Rotations
 
 mat4 rotY(float theta) {
@@ -429,7 +436,7 @@ return mix(d2,d1,h) - k * h * (1.0 - h);
 }
 
 float smoS(float d1,float d2,float k) {
-float h = clamp(0.5 + 0.5 * (d2+d1)/k,0.0,1.0);
+float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
 return mix(d2,-d1,h) + k * h * (1.0 - h);
 }
 
@@ -447,8 +454,9 @@ float concentric(float d,float h) {
 return abs(d) - h;
 }
 
-float repeat(float d,float domain) {
-return mod(d,domain) - domain/2.0;
+vec3 repeat(vec3 p,vec3 s) {
+vec3 q = mod(p,s) - .5*s;
+return q;
 }
 
 float scene(vec3 p) {
@@ -460,22 +468,26 @@ float scene(vec3 p) {
 //float capsule = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),.5);
 //float triangleprism triangularPrism(p,vec2(3.0,1.0));
 
-if(u_planet_demo == 1) {
+if(u_repeat == 1) {
+p = repeat(p,vec3(3.5));
+}
+
+if(u_sphere == 1) {
+
 float sphere = sphere(p,1.0);
 return sphere;
 }
 
-if(u_cube_mod_demo == 1) {
-float box = box(p,vec3(1.0,1.0,1.0));
+if(u_cube == 1) {
+//p = repeat(p,vec3(2.5));
+float box = box(p,vec3(.5)); 
 return box;
 }
 
-if(u_capsule_demo == 1) {
-float capsule = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),.5); 
+if(u_capsule == 1) {
+float capsule = capsule(p,vec3(0.0,0.0,1.0),vec3(0.0,1.0,0.0),.5); 
 return capsule; 
 }
-
-//return demo;
 
 }
 
@@ -484,6 +496,7 @@ float rayScene(vec3 ro,vec3 rd,float start,float end) {
 float depth = start;
 
     for(int i = 0; i < MARCH_STEPS; ++i) {
+
         float distance =  scene(ro + depth * rd);
             if(distance < EPSILON) { 
             return depth;
@@ -498,6 +511,28 @@ depth += distance;
 
 return end;
 }
+
+float rayShadow(vec3 ro,vec3 rd,float start,float end) {
+
+float depth = start;
+
+    for(int i = 0; i < MARCH_STEPS; ++i) {
+
+        float distance =  scene(ro + depth * rd);
+            if(distance < EPSILON) { 
+            return depth;
+            }
+
+depth += distance;
+
+    //if(depth >= end) {
+    //return end ;
+    //}
+} 
+
+return end;
+}
+
 
 vec3 calcNormal(vec3 p) {
 
@@ -590,12 +625,13 @@ float shininess = 10.0;
 
 if(distance > TRACE_DISTANCE - EPSILON) {
 color = vec3(0.0);
+//color = vec3(distance);
+
 } else {
 
-//if(u_default_shading == 1) {
-//float n = fbDistort(p);
-//color = vec3(n);
-//} 
+//if(u_mouse_ray ) {
+//color = vec3(1.0,0.0,0.0);
+//}
 
 if(u_rgb_normals == 1) { 
 color = vec3(calcNormal(p));
@@ -605,11 +641,15 @@ if(u_grey_color == 1) {
 color = vec3(.5);
 } 
 
-if(u_planet_demo == 1) {
+//if(u_ray_dir == 1) {
+//color = vec3(rd);
+//}
+
+if(u_distort_color == 1) {
 float n = fbDistort(p);
+kd += fmCol(p.y,vec3(.5),vec3(.5),vec3(1.0),vec3(.5*u_hash,u_hash,.25*u_hash));
 color = phongLight(ka,kd,ks,shininess,p+n,ro);
 }
-
 
 } 
 
@@ -692,8 +732,8 @@ var aspect = w/h;
 var render_scene = {
 
     hash : 0.45,
-    rgb_normals : true,
-    distance_flood : false,
+    rgb_normals : false,
+    distort_color : true,
     grey_color  : false
     
 };
@@ -706,28 +746,30 @@ var scene = {
 };
 */
 
-var demos = {
+var df = {
 
-    planet : true,
-    cube_mod: false,
+    repeat : true,
+    sphere : true,
+    cube: false,
     capsule: false
 
 };
 
 var render_folder = gui.addFolder('render_scene');
-var demo_folder = gui.addFolder('demos');
+var df_folder = gui.addFolder('df');
 
 //var demo_folder = gui.addFolder('demos');
 
-render_folder.add(render_scene,'rgb_normals',0.0,1.0).onChange(guiUpdated);
-render_folder.add(render_scene,'distance_flood',0.0,0.0001).onChange(guiUpdated);
-render_folder.add(render_scene,'grey_color',0,256).onChange(guiUpdated); 
+render_folder.add(render_scene,'rgb_normals',false).onChange(guiUpdated);
+render_folder.add(render_scene,'distort_color',false).onChange(guiUpdated);
+render_folder.add(render_scene,'grey_color',false).onChange(guiUpdated); 
 
 render_folder.add(render_scene,'hash',false).onChange(guiUpdated);
 
-demo_folder.add(demos,'planet',false).onChange(guiUpdated); 
-demo_folder.add(demos,'cube_mod',false).onChange(guiUpdated);
-demo_folder.add(demos,'capsule',false).onChange(guiUpdated);
+df_folder.add(df,'repeat',false).onChange(guiUpdated);
+df_folder.add(df,'sphere',false).onChange(guiUpdated); 
+df_folder.add(df,'cube',false).onChange(guiUpdated);
+df_folder.add(df,'capsule',false).onChange(guiUpdated);
 
 init();
 animate();
@@ -762,19 +804,19 @@ uniforms = {
     "u_mouse_pressed": { value : mouse_pressed },
     "u_camera_target": new THREE.Uniform(new THREE.Vector3(camera_target)),
     "u_default_light": new THREE.Uniform(new THREE.Vector3(default_light)),
-
+    "u_mouse_ray": new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     //"cameraWorldMatrix" : { value: camera.matrixWorld },
     //"cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
-
     "u_hash"          : { value: render_scene.hash },
 
-    "u_planet_demo"       : { value: demos.planet },
-    "u_cube_mod_demo"     : { value: demos.cube_mod },
-    "u_capsule_demo" : { value: demos.capsule },
+    "u_repeat" : { value: df.repeat },
+    "u_sphere"       : { value: df.sphere },
+    "u_cube"     : { value: df.cube },
+    "u_capsule" : { value: df.capsule },
 
     "u_rgb_normals" : { value: render_scene.rgb_normals },
     "u_grey_color" : { value: render_scene.grey_color },
-    "u_distance_flood" : { value: render_scene.distance_flood } 
+    "u_distort_color" : { value: render_scene.distort_color } 
 
 };   
 
@@ -792,18 +834,21 @@ mesh = new THREE.Mesh(geometry,material);
 scene.add(mesh);
 
 renderer.setPixelRatio(window.devicePixelRatio);
+
 renderer.setSize(w,h);
+
 //renderer.setSize(512,512);
 
 //container.append(renderer.domElement);
 gui_container.append(gui.domElement);
 
+}
 
 //onWindowResize();
+//onMouseMove();
+
 window.addEventListener('resize',onWindowResize,false);
 window.addEventListener('mousemove',onMouseMove,false);
-
-}
 
 function onWindowResize() {
 
@@ -813,6 +858,7 @@ camera.aspect = canvas.width / canvas.height;
 camera.updateProjectionMatrix();
 
 uniforms["u_resolution"].value = new THREE.Uniform(new THREE.Vector2(canvas.width,canvas.height));
+
 //uniforms["cameraProjectionMatrixInverse"].value = new THREE.Matrix4().getInverse(camera.projectionMatrix);
 //material.uniforms.resolution.value.set(canvas.width,canvas.height);
 //material.uniforms.cameraProjectionMatrixInverse.value.getInverse(camera.projectionMatrix);
@@ -821,34 +867,49 @@ uniforms["u_resolution"].value = new THREE.Uniform(new THREE.Vector2(canvas.widt
 }
 
 function onMouseMove(event) {
-    mouse.x = (event.clientX / w.innerWidth) * 2.0 - 1.0; 
-    mouse.y = -(event.clientY / h.innerHeight) * 2.0 + 1.0;
+    mouse.x = (event.clientX / w) * 2.0 - 1.0; 
+    mouse.y = -(event.clientY / h) * 2.0 + 1.0;
 }
 
 
 function guiUpdated() { 
 
 uniforms["u_hash"].value = render_scene.hash;
-uniforms["u_planet_demo"].value = demos.planet;
-uniforms["u_cube_mod_demo"].value = demos.cube_mod;
-uniforms["u_capsule_demo"].value = demos.capsule;
+uniforms["u_sphere"].value = df.sphere;
+uniforms["u_cube"].value = df.cube;
+uniforms["u_capsule"].value = df.capsule;
 uniforms["u_rgb_normals"].value = render_scene.rgb_normals;
 uniforms["u_grey_color"].value = render_scene.grey_color;
-uniforms["u_distance_flood"].value = render_scene.distance_flood;
+uniforms["u_distort_color"].value = render_scene.distort_color;
+uniforms["u_repeat"].value = df.repeat;
 
 //controls.minDistance = planet.radius + .11111;
 
 }
 
+//var x,y,z;
+
 function animate(timestamp) {
 
+//window.addEventListener('mouseove',onMouseMove);
 requestAnimationFrame(animate);
 
+//var res = new THREE.Vector2(w,h);
+//var mouse_normal = (mouse / res) * 2.0 - 1.0;
+//x = (2.0 * mouse.x) / w - 1.0;
+//y = 1.0 - (2.0 * mouse.y) / h;
+//z = 1.0;
+
+var mouse_ray = new THREE.Vector3(mouse.x,mouse.y,-1.0).unproject(camera);
+//console.log(mouse_ray); 
+
 //raycaster.setFromCamera(mouse,camera);
+//console.log(raycaster);
+
 controls.target = camera_target;
 
 //var orbit_target = new THREE.Quaternion();
-orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( Math.PI / 2.0 ) * 0.0001);
+orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( Math.PI / 2.0 ) * 0.01);
 default_light.applyQuaternion(orbit_target);
 
 uniforms["u_time"].value = timestamp / 1000;
@@ -856,6 +917,7 @@ uniforms["u_mouse"].value = mouse;
 uniforms["u_mouse_pressed"].value = mouse_pressed;
 uniforms["u_camera_target"].value = camera_target;
 uniforms["u_default_light"].value = default_light;
+uniforms["u_mouse_ray"].value = mouse_ray;
 
 //camera.lookAt = new THREE.Vector3(0.0,0.0,0.0) ;
 //controls.minDistance = planet.radius + .11111;
@@ -869,6 +931,10 @@ uniforms["u_default_light"].value = default_light;
 
 renderer.render(scene,camera);
 }
+
+//requestAnimationFrame(animate);
+
+
 
 //function onMouseMove(event) { 
 
