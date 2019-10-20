@@ -58,12 +58,15 @@ uniform float u_time;
 uniform vec3 u_default_light;
 uniform vec3 u_mouse_ray;
 uniform int u_repeat;
-uniform int u_rgb_normals;
-uniform int u_grey_color;
-uniform int u_distort_color;
-uniform int u_sphere;
-uniform int u_cube;
-uniform int u_capsule;
+uniform int u_octaves;
+uniform float u_epsilon;
+uniform vec3 u_diffuse_color;
+uniform vec3 u_ambient_color;
+uniform vec3 u_specular_color;
+uniform int u_color_field;
+uniform int u_distance_field;
+uniform int u_position_field;
+//uniform int u_color_field;
  
 
 const float PI  =  3.1415926;
@@ -71,6 +74,8 @@ const float PI_2 = 2.0 * PI;
 const float PI_6 = 6.0 * PI;
 
 const float PHI =  1.6180339;
+const float PHI_INV = 1.0/PHI;
+const float PHI_INV_REVERSE = 1.0 - PHI_INV;
 
 const float EPSILON = 0.0001;
 const float NORMAL_EPSILON = 0.001;
@@ -78,8 +83,8 @@ const float NORMAL_EPSILON = 0.001;
 const int MARCH_STEPS = 64;
 const float TRACE_DISTANCE = 1000.0;
  
-float hash(float h) { return fract( h * u_hash ); }
-//float hash(float h) { return fract(sin(h) * u_hash * 43758.5453; }
+//float hash(float h) { return fract( h * u_hash ); }
+float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 //float hash(float h) { 
 //return fract(PHI/log(23324.0 ) * h  * 981123324.0  );
 //}
@@ -88,8 +93,8 @@ float rand2d(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
 }
 
-float sin3(vec3 p,float n,float l) {
-return sin(p.x * n) * sin(p.y * n) * sin(p.z * n) * l;  
+float sin3(vec3 p) {
+return sin(p.x * u_hash) * sin(p.y * u_hash) * sin(p.z * u_hash); 
 }
 
 float noise2d(in vec2 st_) {
@@ -115,10 +120,10 @@ x = vec3(dot(x,vec3(45.0,325.0,2121.455)),
          dot(x,vec3(122.34,109.0,592.0)),
          dot(x,vec3(67.0,322.4364,1235.0)));
 
-return fract(sin(x) * 92352.3635);
+return fract(sin(x) * 92352.3635 * u_hash);
 }
     
-float cellNoise(vec3 x,float s) {
+float cell(vec3 x,float s) {
 
 x *= s;
 
@@ -180,9 +185,9 @@ return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x),
 
 } 
 
-float fb312(vec3 x) {
+float fractal312(vec3 x) {
 
-int octaves = 6;
+int octaves = u_octaves;
 float value = 0.0;
 float h  = .5;
 float g = exp2(-h);
@@ -267,19 +272,21 @@ amp *= g;
 return value;
 }
 
-float fbDistort(vec3 p) {
+float distort(vec3 p) {
     
-vec3 q = vec3(fb312(p + vec3(0.0,0.0,1.0)),      
-              fb312(p + vec3(4.5,1.8,6.3)),
-              fb312(p + vec3(1.1,7.2,2.4))
+//const int octaves = u_octaves;
+
+vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0)),      
+              fractal312(p + vec3(4.5,1.8,6.3)),
+              fractal312(p + vec3(1.1,7.2,2.4))
 );
 
-vec3 r = vec3(fb312(p + 4.0*q + vec3(2.1,9.4,5.1)),
-              fb312(p + 4.0*q + vec3(5.6,3.7,8.9)),
-              fb312(p + 4.0*q + vec3(4.3,0.0,3.1)) 
+vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1)),
+              fractal312(p + 4.0*q + vec3(5.6,3.7,8.9)),
+              fractal312(p + 4.0*q + vec3(4.3,0.0,3.1)) 
 );
 
-return fb312(p + 4.0* r);
+return fractal312(p + 4.0* r);
 } 
 
       
@@ -388,7 +395,7 @@ float h = clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
 return length(pa - ba * h) - r;
 } 
 
-float triangularPrism(vec3 p,vec2 h) {
+float prism(vec3 p,vec2 h) {
 vec3 q = abs(p);
 return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
 }
@@ -459,37 +466,101 @@ vec3 q = mod(p,s) - .5*s;
 return q;
 }
 
+float boxSphereDiff(vec3 p,vec3 bd,float sr) {
+ 
+float sphere = sphere(p,sr);
+float box = box(p,bd);
+return max(-sphere,box);
+}
+
+float xCapsule(vec3 p) {
+float cap_x = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,0.0,1.0),.25);
+float cap_y = capsule(p,vec3(.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25);
+return min(cap_x,cap_y);
+}
+
 float scene(vec3 p) {
 
+float n = 0.0;
+float res = 0.0;
+
 //float sphere = sphere(p,1.0);
+//float orbiter = torus(p+vec3(1.0),vec2(.05,.025));
+
 //float cone =  cone(p,vec2(.9,.45));
 //float torus = torus(p,vec2(1.0,.5));
 //float plane = plane(p,vec4(1.0,0.0,0.0,1.0));
 //float capsule = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),.5);
 //float triangleprism triangularPrism(p,vec2(3.0,1.0));
+//float cube = box(p,vec3(1.0  ));
+
+//return sphere;
+//return min(sphere,orbiter);
 
 if(u_repeat == 1) {
 p = repeat(p,vec3(3.5));
 }
 
-if(u_sphere == 1) {
-
-float sphere = sphere(p,1.0);
-return sphere;
+if(u_position_field == 0) {
+n = 0.0;
 }
 
-if(u_cube == 1) {
-//p = repeat(p,vec3(2.5));
-float box = box(p,vec3(.5)); 
-return box;
+if(u_position_field == 1) {
+n = fractal312(p);
 }
 
-if(u_capsule == 1) {
-float capsule = capsule(p,vec3(0.0,0.0,1.0),vec3(0.0,1.0,0.0),.5); 
-return capsule; 
+if(u_position_field == 2) {
+n = cell(p,6.0);
 }
 
+if(u_position_field == 3) {
+n = distort(p);
 }
+
+if(u_distance_field == 0) {
+res = sphere(p+n,1.0);
+return res;
+}
+
+if(u_distance_field == 1) {
+res = box(p+n,vec3(.5)); 
+return res;
+}
+
+if(u_distance_field == 2) {
+res = capsule(p+n,vec3(1.0,0.0,0.0),vec3(0.0,0.0,1.0),.25); 
+}
+
+if(u_distance_field == 3) {
+res = boxSphereDiff(p+n,vec3(1.0),(1.0-PHI_INV)+1.0);
+return res;
+}
+
+if(u_distance_field == 4) {
+res = torus(p+n,vec2(1.0,0.5));
+return res;
+}
+
+if(u_distance_field == 5) {
+res = plane(p+n,vec4(1.0,0.0,0.0,1.));
+return res;
+}
+
+if(u_distance_field == 6) {
+res = cone(p+n,vec2(.9,.45));
+return res;
+}
+
+if(u_distance_field == 7) {
+res = prism(p+n,vec2(1.0,1.0));
+return res;
+}
+
+if(u_distance_field == 8) {
+res = xCapsule(p);
+}
+
+} 
 
 float rayScene(vec3 ro,vec3 rd,float start,float end) {
 
@@ -538,9 +609,9 @@ vec3 calcNormal(vec3 p) {
 
 return normalize(vec3(
 
-                scene(p+ vec3(p.x + EPSILON,p.y,p.y)) - scene(p+ vec3(p.x - EPSILON,p.y,p.y)), 
-                scene(p+ vec3(p.x,p.y + EPSILON,p.z)) - scene(p+ vec3(p.x,p.y - EPSILON ,p.z)),
-                scene(p+ vec3(p.x,p.y,p.z + EPSILON)) - scene(p+ vec3(p.x,p.y,p.z - EPSILON))
+                scene(p+ vec3(p.x + EPSILON,p.y,p.y)) - scene(p- vec3(p.x - EPSILON,p.y,p.z)), 
+                scene(p+ vec3(p.x,p.y + EPSILON,p.z)) - scene(p- vec3(p.x,p.y - EPSILON, p.z)),
+                scene(p+ vec3(p.x,p.y,p.z + EPSILON)) - scene(p- vec3(p.x,p.y,p.z - EPSILON))
 
 ));
 
@@ -609,11 +680,13 @@ vec3 render(vec3 ro,vec3 rd) {
 vec3 color = vec3(0.0);
 
 float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
+//float d2 = rayScene(ro,u_mouse_ray,0.0,TRACE_DISTANCE);
 
 vec3 p =  ro + rd * distance;
+//vec3 p2 = u_mouse_ray + rd * d2;
 
 vec3 ka = vec3(0.0);
-vec3 kd = vec3(0.5);
+vec3 kd = vec3(0.0);
 vec3 ks = vec3(0.5); 
 
 float shininess = 10.0;
@@ -629,33 +702,54 @@ color = vec3(0.0);
 
 } else {
 
-//if(u_mouse_ray ) {
-//color = vec3(1.0,0.0,0.0);
-//}
+    float n = 0.0;
+ 
+    kd = vec3(u_diffuse_color/255.0);
+    ka = vec3(u_ambient_color/255.0);
+    ks = vec3(u_specular_color/255.0);
 
-if(u_rgb_normals == 1) { 
-color = vec3(calcNormal(p));
+    if(u_color_field == 0) {
+    n = 0.0;
+    }
+
+    if(u_color_field == 1 ) {
+    n = sin3(p);
+    //kd = vec3(p);
+    }
+
+    if(u_color_field == 2) {
+    n = noise3d(p);
+    //kd = vec3(calcNormal(p));
+    }
+
+    if(u_color_field == 3) {
+    n = fractal312(p);
+    }
+
+    if(u_color_field == 4) { 
+    n = distort(p);
+    }
+
+    if(u_color_field == 5) {
+    n = cell(p,6.0);
+    }
+    
+
+    //kd = fmCol(p.x,vec3(1.),vec3(.5),vec3(1.,.0,.0),vec3(.0,0.0,1.0));
+    //kd = fmCol(p.y+n,vec3(.5),vec3(.2),vec3(.1,.4,.4+n),vec3(0.8,.5,.5));
+    //kd = fmCol(p.y,vec3(1.),vec3(.5),vec3(.24),vec3(.2,.1,.6));
+    //p *= n;
+    color = kd * n;
+    
+    //color = phongLight(ka,kd+n,ks,shininess,p,ro);
+
+
 }
-
-if(u_grey_color == 1) {
-color = vec3(.5);
-} 
-
-//if(u_ray_dir == 1) {
-//color = vec3(rd);
-//}
-
-if(u_distort_color == 1) {
-float n = fbDistort(p);
-kd += fmCol(p.y,vec3(.5),vec3(.5),vec3(1.0),vec3(.5*u_hash,u_hash,.25*u_hash));
-color = phongLight(ka,kd,ks,shininess,p+n,ro);
-}
-
-} 
 
 return color;
 
 }
+
 
 void main() {
  
@@ -722,54 +816,93 @@ mouse_pressed = true;
 var camera_target = new THREE.Vector3(0.0,0.0,0.0);
 var default_light = new THREE.Vector3(100.0,0.0,0.0);
 var orbit_target  = new THREE.Quaternion();
-//orbit_target = new 
+
+var distance_field = 0;
+var position_field = 0;
+var color_field = 0;
 
 var w = window.innerWidth;
 var h = window.innerHeight;
 
 var aspect = w/h;
+//var hash = .34;
+var hash = Math.random(0,1); 
+
+//var hash = rand();
+//var rand_r = Math.random() *hash;
+//var rand_g = Math.random() *hash;
+//var rand_b = Math.random() *hash;
+
+//var planet_type = Math.random();
+//console.log(rand_r);
 
 var render_scene = {
 
-    hash : 0.45,
-    rgb_normals : false,
-    distort_color : true,
-    grey_color  : false
-    
-};
-
-/*
-var scene = {
-
-    hash : 0.3452
-
-};
-*/
-
-var df = {
-
-    repeat : true,
-    sphere : true,
-    cube: false,
-    capsule: false
+    hash : hash,
+    octaves : 4,
+    epsilon : 0.001
 
 };
 
-var render_folder = gui.addFolder('render_scene');
-var df_folder = gui.addFolder('df');
+var lighting = {
+    diffuse_color  : [255.0,0.0,0.0],
+    ambient_color  : [0.0,0.0,0.0],
+    specular_color : [0.5,0.5,0.5]
+};
 
-//var demo_folder = gui.addFolder('demos');
+var field = {
 
-render_folder.add(render_scene,'rgb_normals',false).onChange(guiUpdated);
-render_folder.add(render_scene,'distort_color',false).onChange(guiUpdated);
-render_folder.add(render_scene,'grey_color',false).onChange(guiUpdated); 
+    repeat         :  false,
+    distance_field : 'distance_field',
+    color_field    : 'color_field',
+    position_field : 'position_field'
+
+};
+
+var render_folder = gui.addFolder('rendering');
+var field_folder = gui.addFolder('fields');
+var lighting_folder = gui.addFolder('lighting');
 
 render_folder.add(render_scene,'hash',false).onChange(guiUpdated);
+render_folder.add(render_scene,'octaves',false).onChange(guiUpdated);
+render_folder.add(render_scene,'epsilon',false).onChange(guiUpdated);
 
-df_folder.add(df,'repeat',false).onChange(guiUpdated);
-df_folder.add(df,'sphere',false).onChange(guiUpdated); 
-df_folder.add(df,'cube',false).onChange(guiUpdated);
-df_folder.add(df,'capsule',false).onChange(guiUpdated);
+lighting_folder.addColor(lighting,'diffuse_color').onChange(guiUpdated); 
+lighting_folder.addColor(lighting,'ambient_color').onChange(guiUpdated);
+lighting_folder.addColor(lighting,'specular_color').onChange(guiUpdated);
+
+field_folder.add(field,'repeat',false).onChange(guiUpdated);
+
+field_folder.add(field,'position_field', {
+none:'none',
+fractal:'fractal',
+cell:'cell'
+}).onChange(guiUpdated);
+
+field_folder.add(field,'color_field', {
+none:'none',
+sine:'sine',
+noise:'noise',
+fractal:'fractal',
+distort:'distort',
+cell:'cell'
+}).onChange(guiUpdated);
+
+field_folder.add(field,'distance_field', {
+sphere:'sphere',
+cube:'cube',
+capsule:'capsule',
+boxSphereDiff:'boxSphereDiff',
+torus:'torus',
+plane:'plane',
+cone:'cone',
+prism:'prism',
+xCapsule:'xCapsule'
+
+}).onChange(guiUpdated); 
+
+//df_folder.add(df,'cube',false).onChange(guiUpdated);
+//df_folder.add(df,'capsule',false).onChange(guiUpdated);
 
 init();
 animate();
@@ -796,6 +929,7 @@ scene = new THREE.Scene();
 
 geometry = new THREE.PlaneBufferGeometry(2,2);
 
+//console.log(render_scene.diffuse_color
 uniforms = {
 
     "u_time": { value : 1.0 },
@@ -807,16 +941,16 @@ uniforms = {
     "u_mouse_ray": new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     //"cameraWorldMatrix" : { value: camera.matrixWorld },
     //"cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
-    "u_hash"          : { value: render_scene.hash },
-
-    "u_repeat" : { value: df.repeat },
-    "u_sphere"       : { value: df.sphere },
-    "u_cube"     : { value: df.cube },
-    "u_capsule" : { value: df.capsule },
-
-    "u_rgb_normals" : { value: render_scene.rgb_normals },
-    "u_grey_color" : { value: render_scene.grey_color },
-    "u_distort_color" : { value: render_scene.distort_color } 
+    "u_hash"               : { value: hash },
+    "u_octaves"            : { value: render_scene.octaves },
+    "u_epsilon"            : { value: render_scene.epsilon },
+    "u_repeat"             : { value: field.repeat },
+    "u_distance_field"     : { value: distance_field },
+    "u_position_field"     : { value: position_field },
+    "u_color_field"        : { value: color_field },
+    "u_specular_color"     :  new THREE.Uniform(new THREE.Vector3(lighting.specular_color)),
+    "u_diffuse_color"      :  new THREE.Uniform(new THREE.Vector3(lighting.diffuse_color)),
+    "u_ambient_color"      :  new THREE.Uniform(new THREE.Vector3(lighting.ambient_color))
 
 };   
 
@@ -874,14 +1008,40 @@ function onMouseMove(event) {
 
 function guiUpdated() { 
 
+//console.log(df.distance_field);
+
+if (field.distance_field === 'sphere') { distance_field = 0; }
+if (field.distance_field === 'cube') { distance_field = 1; }
+if (field.distance_field === 'capsule') { distance_field = 2; }
+if (field.distance_field === 'boxSphereDiff') { distance_field = 3; }
+if (field.distance_field === 'torus') { distance_field = 4; }
+if (field.distance_field === 'plane') { distance_field = 5; }
+if (field.distance_field === 'cone') { distance_field = 6; }
+if (field.distance_field === 'prism') { distance_field = 7; }
+if (field.distance_field === 'xCapsule') { distance_field = 8;}
+
+if (field.position_field === 'none') { position_field = 0; }
+if (field.position_field === 'fractal') { position_field = 1; }
+if (field.position_field === 'cell') { position_field = 2; }
+
+if (field.color_field === 'none') { color_field = 0; }
+if (field.color_field === 'sine') { color_field = 1; }
+if (field.color_field === 'noise') { color_field = 2; }
+if (field.color_field === 'fractal') { color_field = 3; }
+if (field.color_field === 'distort') { color_field = 4; }
+if (field.color_field === 'cell') { color_field =5; }
+
+//console.log(distance_field);
 uniforms["u_hash"].value = render_scene.hash;
-uniforms["u_sphere"].value = df.sphere;
-uniforms["u_cube"].value = df.cube;
-uniforms["u_capsule"].value = df.capsule;
-uniforms["u_rgb_normals"].value = render_scene.rgb_normals;
-uniforms["u_grey_color"].value = render_scene.grey_color;
-uniforms["u_distort_color"].value = render_scene.distort_color;
-uniforms["u_repeat"].value = df.repeat;
+uniforms["u_octaves"].value = render_scene.octaves;
+uniforms["u_epsilon"].value = render_scene.epsilon;
+uniforms["u_distance_field"].value = distance_field;
+uniforms["u_position_field"].value = position_field;
+uniforms["u_color_field"].value = color_field;
+uniforms["u_ambient_color"].value = lighting.ambient_color;
+uniforms["u_diffuse_color"].value = lighting.diffuse_color;
+uniforms["u_specular_color"].value = lighting.specular_color;
+uniforms["u_repeat"].value = field.repeat;
 
 //controls.minDistance = planet.radius + .11111;
 
@@ -909,7 +1069,7 @@ var mouse_ray = new THREE.Vector3(mouse.x,mouse.y,-1.0).unproject(camera);
 controls.target = camera_target;
 
 //var orbit_target = new THREE.Quaternion();
-orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( Math.PI / 2.0 ) * 0.01);
+orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( Math.PI / 2.0 ) * 0.001);
 default_light.applyQuaternion(orbit_target);
 
 uniforms["u_time"].value = timestamp / 1000;
@@ -930,6 +1090,11 @@ uniforms["u_mouse_ray"].value = mouse_ray;
 
 
 renderer.render(scene,camera);
+}
+
+function rand(r) {
+var x = Math.sin(r++) * 10000;
+return x = Math.floor(x);
 }
 
 //requestAnimationFrame(animate);
