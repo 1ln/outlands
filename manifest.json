@@ -3,10 +3,18 @@
 "name": "Pwa Demo",
 "icons": [
 {
-"src": "launcher-icon-4x.png",
+"src": "icon192.png",
 "type": "image/png",
 "sizes": " 192x192"
+},
+{
+"src": "icon512.png", 
+"type": "image/png",
+"sizes": "512x512"
 }
 ],
-"start_url": "index.html?launcher=true"
+"start_url": "https://github.com/spiderbox/pwa/?source=pwa",
+"display": "standalone",
+"background": "#000000",
+"theme-color": "#000000"
 }
