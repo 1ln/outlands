@@ -9,6 +9,10 @@
 
 <body>
 
+<!--<div id="container"> -->
+<canvas id="canvas"></canvas>  <!--<div>-->
+<div id="gui_container"> </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
@@ -16,12 +20,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
 
+<!--
 <div id="container">  
 <canvas id = "canvas"></canvas>
 
 </div>
 
 <div id="gui_container"></div>
+-->
 
 <script id="vertShader" type="x-shader/x-vertex">
 
@@ -42,7 +48,7 @@ gl_Position = vec4(position,1.0);
 
 //Copyright 2019, Dan Olson
 
-//precision highp float;
+precision highp float;
 
 varying vec2 vUv;
 
@@ -86,7 +92,7 @@ const float NORMAL_EPSILON = 0.001;
 const int MARCH_STEPS = 64;
 const float TRACE_DISTANCE = 1000.0;
 
-#define MAP_TYPE demo 
+//#define MAP_TYPE demo
  
 //float hash(float h) { return fract( h * u_hash ); }
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
@@ -187,7 +193,6 @@ return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x),
                mix(hash(n + 157.0),hash(n + 158.0),f.x),f.y),
            mix(mix(hash(n + 113.0),hash(n + 114.0),f.x),
                mix(hash(n + 270.0),hash(n + 271.0),f.x),f.y),f.z);
-
 } 
 
 float fractal312(vec3 x) {
@@ -486,14 +491,11 @@ float cap_y = capsule(p,vec3(.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25);
 return min(cap_x,cap_y);
 }
 
-float scene(vec3 p) {
 
-float n = 0.0;
+//float n = 0.0;
 //float res = 0.0;
 
 //float sphere = sphere(p,.5);
-//float orbiter = torus(p+vec3(1.0),vec2(.05,.025));
-
 //float cone =  cone(p,vec2(.9,.45));
 //float torus = torus(p,vec2(1.0,.5));
 //float plane = plane(p,vec4(1.0,0.0,0.0,1.0));
@@ -502,28 +504,36 @@ float n = 0.0;
 
 //p = repeat(p,vec3(3.5));
 //float res  = sphere (p,1.0 );
-float res = box(p,vec3(1.0)); 
+//float res = box(p,vec3(1.0)); 
 
-return res;
-
-
-} 
-
-float demo(vec3 p) {
+float scene(vec3 p) {
 
 float res = 0.0;
 
 if(u_demo == 0) {
-res = sphere(repeat(p,vec3(3.5)),1.0);
+res = sphere( p,1.0);
+//res = sphere(p,1.0+fractal312(p)*.5);
+//res = sphere(repeat(p,vec3(3.5)),1.0);
 }
 
 if(u_demo == 1) {
-res = plane(p+fractal312(p),vec4(1.0,0.0,0.0,1.0));
+//res = plane(p+fractal312(p),vec4(1.0,0.0,0.0,.5));
+res = p.y + fractal312(p);
+//res = p.y;
 }
 
+//if(u_demo == 2) {
+
+
+
 if(u_demo == 2) {
-res = box(p+noise3d(p),vec3(.5));
+
+res = box(repeat(p,vec3(3.5)),vec3(.5));
+//res = sphere(p+fractal312(p),1.0);
+
 }
+
+
 
 return res;
 
@@ -535,9 +545,9 @@ float depth = start;
 
     for(int i = 0; i < MARCH_STEPS; ++i) {
         
-        float distance =  MAP_TYPE(ro + depth * rd);
+        float distance =  scene(ro + depth * rd);
 
-            if(distance < EPSILON) { 
+            if(distance < EPSILON )  { 
             return depth;
             }
 
@@ -556,7 +566,7 @@ float rayScene2(vec3 ro,vec3 rd,float start,float end) {
 //float depth = start;
 
     //for(int i = 0; i < 10; ++i) {
-     float distance =  sphere(ro + start * rd,1.0);
+     float distance =  scene(ro + start * rd);
 
             //if(distance < 0.001) { 
             //return start;
@@ -576,13 +586,13 @@ return distance;
 
 vec3 calcNormal(vec3 p) {
 
-return normalize(vec3(
+    return normalize( vec3(
 
-                scene( vec3(p.x + EPSILON,p.y,p.y)) - scene( vec3(p.x - EPSILON,p.y,p.z)), 
-                scene( vec3(p.x,p.y + EPSILON,p.z)) - scene( vec3(p.x,p.y - EPSILON, p.z)),
-                scene( vec3(p.x,p.y,p.z + EPSILON)) - scene( vec3(p.x,p.y,p.z - EPSILON))
+    scene(  vec3( p.x + EPSILON,p.y,p.z)) - scene( vec3(p.x - EPSILON,p.y,p.z)), 
+    scene(  vec3( p.x,p.y + EPSILON,p.z)) - scene( vec3(p.x,p.y - EPSILON, p.z)),
+    scene(  vec3( p.x,p.y,p.z + EPSILON)) - scene( vec3(p.x,p.y,p.z - EPSILON)) 
 
-));
+    )  );
 
 }     
 
@@ -601,6 +611,7 @@ vec3 v = normalize(cam_ray - p);
 vec3 r = normalize(reflect(-l,n));
 
 float ln = clamp(dot(l,n),0.0,1.0);
+//float ln = dot(l,n);
 float rv = dot(r,v);
 
 if(ln < 0.0) {
@@ -634,7 +645,7 @@ return color;
 vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget) {
 
 vec3 camForward = normalize(camTarget - camPosition);
-vec3 camRight = normalize(cross(vec3(0.0,1.0,1.0),camForward));
+vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
 vec3 camUp = normalize(cross(camForward,camRight));
 
 float fPersp = 1.0;
@@ -644,25 +655,28 @@ vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);
 return vDir;
 }
 
+ 
+
 vec3 render(vec3 ro,vec3 rd) {
 
 vec3 color = vec3(0.0);
 
-vec3 ray2 = normalize(  u_mouse_ray_near - ro);
-//vec3 ray2 = u_mouse_ray_near - ro;
+//vec3 ray2 = normalize(  u_mouse_ray_near - ro);
+vec3 ray2 = u_mouse_ray_near - ro;
 
 float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
-float dist2 = rayScene2(ro, ray2,0.0,TRACE_DISTANCE);
+float dist2 = rayScene(ro, ray2,0.0,TRACE_DISTANCE);
 
 vec3 p =  ro + rd * distance;
 vec3 p2 = ro +  ray2 * dist2;
 
-vec3 ka = vec3(0.0);
+//vec3 ka = vec3(0.0);
 vec3 kd = vec3(0.0);
-vec3 ks = vec3(0.5); 
+//vec3 ks = vec3(0.5); 
 
-//float shininess = 0.0;
-//float shininess = u_shininess;
+//float shininess = 10.0;
+
+float shininess = u_shininess;
 
 //fade effect
 //if(u_time < 10.0) {
@@ -677,29 +691,30 @@ color = vec3(0.0);
 
     float n = 0.0;
     
-    //float n3 = sphere(p2,.5 );
+    //float n3 = sphere(p2,1. );
 
-    //if(   sign( dist2) == 0.0 ) {
-    //kd = vec3(1.0,0.0,0.0);
-    //} else {
-    //kd = vec3(.5);
-    //}
+    if(  dist2 < 0.0 ) {
+    kd = vec3(1.0,0.0,0.0);
+    } else {
+    kd = vec3(.5);
+    }
 
     //if( == 1) {
     //kd = vec3(u_diffuse_color/255.0);
     //ka = vec3(u_ambient_color/255.0);
     //ks = vec3(u_specular_color/255.0);
 
-    kd = fmCol(p.y,vec3(u_diffuse_color/255.0),vec3(u_diffuse_b/255.0),vec3(u_diffuse_c/255.0),vec3(u_diffuse_d/255.0));
+    //vec3 kd = fmCol(p.y,vec3(u_diffuse_color/255.0),vec3(u_diffuse_b/255.0),vec3(u_diffuse_c/255.0),vec3(u_diffuse_d/255.0));
 
     //kd = vec3(u_diffuse_color/255.0);
-    ka = vec3(u_ambient_color/255.0);
-    ks = vec3(u_specular_color/255.0);
+    vec3 ka = vec3(u_ambient_color/255.0);
+    vec3 ks = vec3(u_specular_color/255.0);
 
-    //kd = vec3(.5);
- 
-    color = kd;
-    //color = phongLight(ka,kd,ks,u_shininess,p,ro);
+    //kd = vec3(calcNormal(p);
+    //kd = p;
+    //  kd = vec3(.5);
+    //color = kd;
+    color = phongLight(ka,kd,ks,shininess,p,ro);
 
 
 }
@@ -721,7 +736,6 @@ vec2 uvu = -1.0 + 2.0 * vUv.xy;
 uvu.x *= u_resolution.x/u_resolution.y; 
 
 vec3 direction = rayCamDir(uvu,camera_position,cam_target);
-
 
 //float res = sphere(u_mouse_ray,1.0);
 //vec3 color = vec3(res,0.0,0.0);
@@ -754,6 +768,8 @@ var vert = $('#vertShader').text();
 var frag = $('#fragShader').text();
 
 var canvas = $('#canvas')[0];
+//var ctx = $('#canvas')[0].getContext('2d');
+var ctx;
 
 var container = $('#container');
 var gui_container = $('#gui_container');
@@ -781,8 +797,9 @@ mouse_pressed = true;
 });
 
 var camera_target = new THREE.Vector3(0.0,0.0,0.0);
-var default_light = new THREE.Vector3(-100.0,0.0,0.0);
+var default_light = new THREE.Vector3(0.0,0.0,100.0);
 var orbit_target  = new THREE.Quaternion();
+
 var distance = 0.1;
 
 var w = window.innerWidth;
@@ -802,8 +819,8 @@ var render_scene = {
 var lighting = {
     //diffuse_color  : [255.0,0.0,0.0],
     ambient_color  : [0.0,0.0,0.0],
-    specular_color : [0.5,0.5,0.5],
-    shininess      : .5,
+    specular_color : [0.0,0.0,0.0],
+    shininess      : .9,
     diffuse_theta  : .5,
     diffuse_color  : [255.0,0.0,0.0],
     diffuse_b      : [0.0,0.0,0.0],
@@ -815,7 +832,9 @@ var lighting = {
 var demo_select = 0;
 var demos = {
 
-    demo         : 'demo'
+    save512 : outCanvas512,
+    demo    : 'demo'
+
     //spheres : 'spheres',
     //fractal_land : 'fractal_land',
     //box_noise    : 'box_noise'
@@ -842,7 +861,7 @@ lighting_folder.addColor(lighting,'diffuse_b').onChange(guiUpdated);
 lighting_folder.addColor(lighting,'diffuse_c').onChange(guiUpdated);
 lighting_folder.addColor(lighting,'diffuse_d').onChange(guiUpdated);
 
-//demo_folder.add(field,'',false).onChange(guiUpdated);
+demo_folder.add(demos,'save512');
 
 demo_folder.add(demos,'demo', {
 spheres:'spheres',
@@ -882,11 +901,16 @@ guiUpdated();
 
 function init() {
 
+canvas.width = w;
+canvas.height = h;
+
+//ctx = canvas.getContext('2d');
+
 renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
 camera = new THREE.PerspectiveCamera(45.0,canvas.width/canvas.height,1,2000);
 
-camera.position.set(0.0,0.0,-2.5);
+camera.position.set(0.0,0.0,-5.0);
 //camera.lookAt(0.0);
 
 //controls = new THREE.OrbitControls(camera,renderer.domElement);
@@ -894,8 +918,9 @@ camera.position.set(0.0,0.0,-2.5);
 controls = new THREE.OrbitControls(camera,canvas);
 //controls.minDistance = 1.1;
 //controls.maxDistance = 50.0;
-controls.noPan = true;
-controls.target = camera_target; 
+//controls.noPan = true;
+//controls.target = camera_target;
+//controls.enabled = false; 
 
 
 scene = new THREE.Scene();
@@ -920,7 +945,7 @@ uniforms = {
     //"u_trace_distance"             : { value: field.repeat },
     //"u_march_steps"     : { value: distance_field },
     //"u_position_field"     : { value: position_field },
-    "u_demo"        : { value: demos.demo2  },
+    "u_demo"        : { value: demos.demo  },
 
     "u_specular_color"     :  new THREE.Uniform(new THREE.Vector3(lighting.specular_color)),
     "u_diffuse_color"      :  new THREE.Uniform(new THREE.Vector3(lighting.diffuse_color)),
@@ -967,6 +992,7 @@ function onWindowResize() {
 renderer.setSize(w,h);
 
 camera.aspect = canvas.width / canvas.height; 
+
 camera.updateProjectionMatrix();
 
 uniforms["u_resolution"].value = new THREE.Uniform(new THREE.Vector2(canvas.width,canvas.height));
@@ -986,7 +1012,6 @@ function onMouseMove(event) {
 
 function guiUpdated() { 
 
-//var demo = 0;
 //if (demos.demo === 'demo_0') { demo = 0; }
 if (demos.demo === 'spheres') { demo_select = 0; }
 if (demos.demo === 'fractal_land') { demo_select = 1; }
@@ -1008,6 +1033,19 @@ uniforms["u_diffuse_b"].value = lighting.diffuse_b;
 uniforms["u_diffuse_c"].value = lighting.diffuse_c;
 uniforms["u_diffuse_d"].value = lighting.diffuse_d;
 //uniforms["u_repeat"].value = field.repeat;
+
+}
+
+function outCanvas512() {
+
+//ctx = canvas.getContext('2d');
+
+//ctx.beginPath();
+
+//ctx.fillRect(w/4,h/4,512,512);
+
+//ctx.toDataUrl();
+
 
 }
 
