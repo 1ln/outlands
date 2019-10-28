@@ -57,7 +57,9 @@ uniform vec3 u_default_light;
 uniform vec3 u_mouse_ray_far;
 uniform vec3 u_mouse_ray_near;
 uniform int u_repeat;
+uniform int u_repeat_distance;
 uniform int u_octaves;
+uniform float u_noise_rounding;
 uniform float u_epsilon;
 uniform float u_trace_distance;
 uniform int u_march_steps;
@@ -72,6 +74,13 @@ uniform vec3 u_diffuse_d;
 uniform int u_diffuse_distort;
 uniform int u_diffuse_fractal;
 uniform int u_diffuse_cell;
+uniform int u_fractal_displace;
+uniform int u_distort_displace;
+uniform int u_cell_displace;
+uniform float u_cell_iterations;
+uniform int u_sin3_displace;
+
+
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -562,32 +571,31 @@ return length(p) + fractal312(p)*h - r;
 float scene(vec3 p) {
 
 float res = 0.0;
+float n = 0.0;
 
-if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
+if(u_repeat           == 1) { p = repeat(p,vec3(u_repeat_distance)); }
 
-if(u_df == 0)  { res = sphere( p,1.0); }
-if(u_df == 1)  { res = box(p,vec3(1.0)); }
-if(u_df == 2)  { res = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0); }
-if(u_df == 3)  { res = cone(p,vec2(.9,.45)); } 
-if(u_df == 4)  { res = torus(p,vec2(1.0,0.5)); }
-if(u_df == 5)  { res = prism(p,vec2(1.0,0.5)); }
-if(u_df == 6)  { res = sphereFractal(p,1.0,0.5); }
-if(u_df == 7)  { res = binarySpheresSmoothUnion(p,0.75,0.5,1.0,0.5); } 
-if(u_df == 8)  { res = boxSphereDiff(p,vec3(PHI_SPHERE),1.0); }
-if(u_df == 9)  { res = hexPrism(p,vec2(1.0,.5)); }
-if(u_df == 10) {  res = cylinder(p, 1.0,.5); }
+//if(u_sin3_displace    == 1) { n = sin3(p) ; } 
+if(u_fractal_displace == 1) { n = fractal312(p) * u_noise_rounding; }
+if(u_sin3_displace    == 1) { n = sin3(p); }
+if(u_cell_displace    == 1) { n = cell(p,6.0); }
+if(u_distort_displace == 1) { n = distort(p); }
 
+if(u_df == 0)  { res = sphere(p+n,1.0); }
+if(u_df == 1)  { res = box(p+n,vec3(1.0)); }
+if(u_df == 2)  { res = capsule(p+n,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0); }
+if(u_df == 3)  { res = cone(p+n,vec2(.25,.45)); } 
+if(u_df == 4)  { res = torus(p+n,vec2(1.0,0.5)); }
+if(u_df == 5)  { res = prism(p+n,vec2(1.0,0.5)); }
+if(u_df == 6)  { res = binarySpheresSmoothUnion(p+n,0.75,0.5,1.0,0.5); } 
+if(u_df == 7)  { res = boxSphereDiff(p+n,vec3(PHI_SPHERE),1.0); }
+if(u_df == 8)  { res = hexPrism(p+n,vec2(1.0,.5)); }
+if(u_df == 9)  { res = cylinder(p+n, 1.0,.5); }
+if(u_df == 10) { res = link(p+n,1.0,1.0,0.5); }
+if(u_df == 11) { res = roundedCone(p+n,0.25,0.5,1.0); }
+if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 
-
-//res = link(p,1.0,1.,.5);
-//res = roundedCone(p,0.25,0.5,1.0);
-//res = ellipsoid(p,vec3(0.5,0.5,1.0));
-//res = logSphericalSpheres(p,1.0);
-
-
-
-
-
+//if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
 return res;
 
@@ -880,9 +888,11 @@ console.log(hash);
 
 var render_scene = {
 
-    hash         : hash,
-    octaves      : Math.floor(prng()*5.0) + 1,
-    epsilon      : 0.001
+    hash           : hash,
+    octaves        : Math.floor(prng()*4.0) + 1,
+    epsilon        : 0.001,
+    trace_distance : 1000,
+    march_steps    : 32      
 
 };
 
@@ -895,14 +905,13 @@ var lighting = {
     ambient_color   : [0.0,0.0,0.0],
     specular_color  : [prng()*255.0,prng()*255.0,prng()*255.0],
     shininess       : prng()*255.0,
-    diffuse_theta   : .5,
     diffuse_color   : [prng()*255.0,prng()*255.0,prng()*255.0],
     diffuse_b       : [prng()*255.0,prng()*255.0,prng()*255.0],
     diffuse_c       : [prng()*255.0,prng()*255.0,prng()*255.0],
     diffuse_d       : [prng()*255.0,prng()*255.0,prng()*255.0],
-    diffuse_distort : Math.round(prng()),
-    diffuse_fractal : Math.round(prng()),
-    diffuse_cell    : Math.round(prng())
+    diffuse_distort : Math.round(prng()) ? true : false,
+    diffuse_fractal : Math.round(prng()) ? true : false,
+    diffuse_cell    : Math.round(prng()) ? true : false
 
 };
 
@@ -911,19 +920,35 @@ var df_select = Math.floor(hash * 10);
 var distance_fields= {
 
     save512 : outCanvas512,
-    df      : 'df',
-    repeat  : 0.0
+    df      : 'df'
 
 };
 
-var render_folder = gui.addFolder('rendering');
-var lighting_folder = gui.addFolder('lighting');
-var df_folder = gui.addFolder('Distance_fields');
+var repeat = {
+    repeat   : false,
+    distance : 5.0
+};
+
+var displace = {
+    sin3            : false,
+    fractal         : false,
+    cell            : false,
+    cell_iterations : 6.0,
+    noise_rounding  : 1.0
+};
+
+var render_folder = gui.addFolder('Rendering');
+var lighting_folder = gui.addFolder('Lighting');
+var df_folder = gui.addFolder('Distance_Fields');
+var repeat_folder = gui.addFolder('Repeat');
+var displace_folder = gui.addFolder('Displacement');
 
 render_folder.add(render_scene,'hash',false).onChange(guiUpdated);
 //render_folder.add(render_scene,'hash_reset').onChange(hashReset);
 render_folder.add(render_scene,'octaves',false).onChange(guiUpdated);
 render_folder.add(render_scene,'epsilon',false).onChange(guiUpdated);
+render_folder.add(render_scene,'trace_distance').onChange(guiUpdated);
+render_folder.add(render_scene,'march_steps').onChange(guiUpdated);
 
 lighting_folder.addColor(lighting,'ambient_color').onChange(guiUpdated);
 lighting_folder.addColor(lighting,'specular_color').onChange(guiUpdated);
@@ -950,11 +975,21 @@ sphereFractal:'sphereFractal',
 binarySpheresSmoothUnion:'binarySpheresSmoothUnion',
 boxSphereDiff:'boxSphereDiff',
 hexPrism:'hexPrism',
-cylinder:'cylinder'
+cylinder:'cylinder',
+link:'link',
+roundedCone:'roundedCone',
+ellipsoid:'ellipsoid'
 
 }).onChange(guiUpdated);
 
-df_folder.add(distance_fields,'repeat');
+repeat_folder.add(repeat,'repeat');
+repeat_folder.add(repeat,'distance');
+
+displace_folder.add(displace,'sin3');
+displace_folder.add(displace,'fractal');
+displace_folder.add(displace,'cell');
+displace_folder.add(displace,'cell_iterations');
+displace_folder.add(displace,'noise_rounding');
 
 init();
 animate();
@@ -1007,7 +1042,7 @@ uniforms = {
     "u_trace_distance" : { value: render_scene.trace_distance },
     "u_march_steps"    : { value: render_scene.march_steps },
     "u_df"               : { value: distance_fields.df  },
-    "u_repeat"           : { value: 0.0 }, 
+    //"u_repeat"           : { value: 0.0 }, 
     "u_specular_color"   : new THREE.Uniform(new THREE.Vector3(lighting.specular_color)),
     "u_diffuse_color"    : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_color)),
     "u_ambient_color"    : new THREE.Uniform(new THREE.Vector3(lighting.ambient_color)),
@@ -1017,7 +1052,14 @@ uniforms = {
     "u_diffuse_d"        : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_d)),
     "u_diffuse_distort"  : { value: 0.0 },
     "u_diffuse_fractal"  : { value: 0.0 },
-    "u_diffuse_cell"     : { value: 0.0 }
+    "u_diffuse_cell"     : { value: 0.0 },
+    "u_repeat"           : { value: 0.0 },
+    "u_repeat_distance"  : { value: 0.0 },
+    "u_sin3_displace"    : { value: 0.0 },
+    "u_fractal_displace" : { value: 0.0 },
+    "u_cell_displace"    : { value: 0.0 },
+    "u_cell_iterations"  : { value: 0.0 },
+    "u_noise_rounding"   : { value: 0.0 }
 
 
 };   
@@ -1079,12 +1121,14 @@ if (distance_fields.df === 'capsule'                  )  { df_select = 2;  }
 if (distance_fields.df === 'cone'                     )  { df_select = 3;  }
 if (distance_fields.df === 'torus'                    )  { df_select = 4;  }
 if (distance_fields.df === 'prism'                    )  { df_select = 5;  }
-if (distance_fields.df === 'sphereFractal'            )  { df_select = 6;  }
-if (distance_fields.df === 'binarySpheresSmoothUnion' )  { df_select = 7;  }
-if (distance_fields.df === 'boxSphereDiff'            )  { df_select = 8;  }
-if (distance_fields.df === 'hexPrism'                 )  { df_select = 9;  }
-if (distance_fields.df === 'cylinder'                 )  { df_select = 10; }
-
+//if (distance_fields.df === 'sphereFractal'            )  { df_select = 6;  }
+if (distance_fields.df === 'binarySpheresSmoothUnion' )  { df_select = 6;  }
+if (distance_fields.df === 'boxSphereDiff'            )  { df_select = 7;  }
+if (distance_fields.df === 'hexPrism'                 )  { df_select = 8;  }
+if (distance_fields.df === 'cylinder'                 )  { df_select = 9;  }
+if (distance_fields.df === 'link'                     )  { df_select = 10; }
+if (distance_fields.df === 'roundedCone'              )  { df_select = 11; }
+if (distance_fields.df === 'ellipsoid'                )  { df_select = 12; }
 
 
 uniforms["u_hash"].value = render_scene.hash;
@@ -1104,7 +1148,13 @@ uniforms["u_diffuse_d"].value = lighting.diffuse_d;
 uniforms["u_diffuse_distort"].value = lighting.diffuse_distort;
 uniforms["u_diffuse_fractal"].value = lighting.diffuse_fractal;
 uniforms["u_diffuse_cell"].value = lighting.diffuse_cell;
-uniforms["u_repeat"].value = distance_fields.repeat;
+uniforms["u_repeat"].value = repeat.repeat;
+uniforms["u_repeat_distance"].value = repeat.distance;
+uniforms["u_sin3_displace"].value = displace.sin3;
+uniforms["u_fractal_displace"].value = displace.fractal;
+uniforms["u_cell_displace"].value = displace.cell;
+uniforms["u_cell_iterations"].value = displace.cell_iterations;
+uniforms["u_noise_rounding"].value = displace.noise_rounding;
 
 }
 
@@ -1153,6 +1203,8 @@ uniforms["u_mouse_ray_near"].value = mouse_ray_near;
 //console.log("test"); 
 //} else { 
 //}
+
+guiUpdated();
 
 renderer.render(scene,camera);
 
