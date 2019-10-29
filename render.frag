@@ -760,6 +760,7 @@ vec3 cam_target = u_camera_target;
 //vec3 cam_target = u_mouse_ray;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
+//vec2 uvu = gl_FragCoord.xy / u_resolution.xy;
 
 uvu.x *= u_resolution.x/u_resolution.y; 
 
@@ -771,7 +772,7 @@ vec3 direction = rayCamDir(uvu,camera_position,cam_target);
 //vec dir = rayCamDir(uvu,camera_position,u_mouse_ray);
 vec3 color = render(camera_position,direction);
 //vec3 color = render(camera_position,dir);
-
+//vec3 color = vec3(1.0,0.0,0.0);
 
 gl_FragColor = vec4(color,0.0);
 
