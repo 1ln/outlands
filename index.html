@@ -1,4 +1,4 @@
-<html>
+<!DOCTYPE html>
 
 <head>
 <title> Distance Field Rendering Engine in Webgl, Copyright 2019  </title>
@@ -234,8 +234,8 @@ uniforms = {
     "u_default_light"    : new THREE.Uniform(new THREE.Vector3(default_light)),
     "u_mouse_ray_far"    : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     "u_mouse_ray_near"   : new THREE.Uniform(new THREE.Vector3(0.0)),
-    //"cameraWorldMatrix" : { value: camera.matrixWorld },
-    //"cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
+    "cameraWorldMatrix" : { value: camera.matrixWorld },
+    "cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
     "u_hash"             : { value: hash },
     "u_octaves"          : { value: render_scene.octaves },
     "u_epsilon"          : { value: render_scene.epsilon },
@@ -267,7 +267,7 @@ uniforms = {
 
 ShaderLoader("render.vert","render.frag",
     function(vertex,fragment) {
-        material = new THREE.ShaderMaterial({
+        material = new THREE.RawShaderMaterial({
 
         uniforms : uniforms,
         vertexShader : vertex,

@@ -3,11 +3,12 @@
 
 precision highp float;
 
-varying vec2 vUv;
+//varying vec2 vUv;
 
-//uniform mat4 viewMatrix;
-//uniform mat4 cameraWorldMatrix;
-//uniform mat4 cameraProjectionMatrixInverse;
+uniform mat4 viewMatrix;
+uniform mat4 cameraWorldMatrix;
+uniform mat4 cameraProjectionMatrixInverse;
+uniform vec3 cameraPosition;
 
 uniform float u_hash;
 uniform vec2 u_mouse;
@@ -759,18 +760,17 @@ vec3 cam_target = u_camera_target;
 //vec3 camera_position = vec3(5.0,0.0,0.0);
 //vec3 cam_target = u_mouse_ray;
 
-vec2 uvu = -1.0 + 2.0 * vUv.xy;
-//vec2 uvu = gl_FragCoord.xy / u_resolution.xy;
+//vec2 uvu = -1.0 + 2.0 * vUv.xy;
+//vec2 uvu = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution;
+vec2 uvu =   -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy) ;
 
 uvu.x *= u_resolution.x/u_resolution.y; 
 
 vec3 direction = rayCamDir(uvu,camera_position,cam_target);
 
-//float res = sphere(u_mouse_ray,1.0);
-//vec3 color = vec3(res,0.0,0.0);
-
 //vec dir = rayCamDir(uvu,camera_position,u_mouse_ray);
 vec3 color = render(camera_position,direction);
+
 //vec3 color = render(camera_position,dir);
 //vec3 color = vec3(1.0,0.0,0.0);
 
