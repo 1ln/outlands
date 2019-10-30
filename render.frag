@@ -5,9 +5,9 @@ precision highp float;
 
 //varying vec2 vUv;
 
-uniform mat4 viewMatrix;
-uniform mat4 cameraWorldMatrix;
-uniform mat4 cameraProjectionMatrixInverse;
+//uniform mat4 viewMatrix;
+//uniform mat4 cameraWorldMatrix;
+//uniform mat4 cameraProjectionMatrixInverse;
 uniform vec3 cameraPosition;
 
 uniform float u_hash;
@@ -536,14 +536,16 @@ float scene(vec3 p) {
 float res = 0.0;
 float n = 0.0;
 
-if(u_repeat           == 1) { p = repeat(p,vec3(u_repeat_distance)); }
+//if(u_repeat           == 1) { p = repeat(p,vec3(u_repeat_distance)); }
 
 //if(u_sin3_displace    == 1) { n = sin3(p) ; } 
+
 if(u_fractal_displace == 1) { n = fractal312(p) * u_noise_rounding; }
 if(u_sin3_displace    == 1) { n = sin3(p); }
-if(u_cell_displace    == 1) { n = cell(p,6.0); }
-if(u_distort_displace == 1) { n = distort(p); }
+//if(u_cell_displace    == 1) { n = cell(p,6.0); }
+//if(u_distort_displace == 1) { n = distort(p); }
 
+/*
 if(u_df == 0)  { res = sphere(p+n,1.0); }
 if(u_df == 1)  { res = box(p+n,vec3(1.0)); }
 if(u_df == 2)  { res = capsule(p+n,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0); }
@@ -557,9 +559,11 @@ if(u_df == 9)  { res = cylinder(p+n, 1.0,.5); }
 if(u_df == 10) { res = link(p+n,1.0,1.0,0.5); }
 if(u_df == 11) { res = roundedCone(p+n,0.25,0.5,1.0); }
 if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
-
+*/
 //if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
+
+res = sphere(p+n,1.0); 
 return res;
 
 }
@@ -762,17 +766,28 @@ vec3 cam_target = u_camera_target;
 
 //vec2 uvu = -1.0 + 2.0 * vUv.xy;
 //vec2 uvu = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution;
-vec2 uvu =   -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy) ;
+vec2 uvu =  -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy ) * 0.5 ;
+//vec2 uvu = 0.5 * (gl_FragCoord.xy/u_resolution.xy) * 2.0 - 1.0 ;
+
+
+//vec2 s = (gl_FragCoord.xy * 2.0 - u_resolution)/u_resolution ;
+//vec4 ndcRay =vec4(s.xy,1.0,-1.0);
+//vec3 ray = (cameraWorldMatrix * cameraProjectionMatrixInverse * ndcRay).xyz;
+//ray = normalize(ray);
+//uvu = normalize(uvu);
 
 uvu.x *= u_resolution.x/u_resolution.y; 
 
 vec3 direction = rayCamDir(uvu,camera_position,cam_target);
 
-//vec dir = rayCamDir(uvu,camera_position,u_mouse_ray);
+//vec dir = rayCamDir(s,camera_position,cam_target);
 vec3 color = render(camera_position,direction);
 
 //vec3 color = render(camera_position,dir);
-//vec3 color = vec3(1.0,0.0,0.0);
+//vec3 color = vec3(uvu.xy,0.0);
+
+//vec3 color = render(camera_position,ray);
+
 
 gl_FragColor = vec4(color,0.0);
 

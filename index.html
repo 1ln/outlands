@@ -10,7 +10,7 @@
 <body>
 
 <!--<div id="container"> -->
-<canvas id="canvas"></canvas>  <!--<div>-->
+<canvas id="canvas" style="display:block" ></canvas>  <!--<div>-->
 <div id="gui_container"> </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
@@ -71,6 +71,8 @@ var distance = 0.1;
 
 var w = window.innerWidth;
 var h = window.innerHeight;
+canvas.width  = w;
+canvas.height = h; 
 
 var aspect = w/h;
 
@@ -192,20 +194,24 @@ displace_folder.add(displace,'cell');
 displace_folder.add(displace,'cell_iterations');
 displace_folder.add(displace,'noise_rounding');
 
+console.log(w);
+console.log(canvas.width);
+
+
 init();
 //animate();
 guiUpdated();
 
 function init() {
 
-canvas.width = w;
-canvas.height = h;
+//canvas.width = w;
+//canvas.height = h;
 
 //ctx = canvas.getContext('2d');
 
 renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
-camera = new THREE.PerspectiveCamera(45.0,canvas.width/canvas.height,1,2000);
+camera = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2000);
 
 camera.position.set(0.0,0.0,-5.0);
 //camera.lookAt(0.0);
@@ -234,8 +240,8 @@ uniforms = {
     "u_default_light"    : new THREE.Uniform(new THREE.Vector3(default_light)),
     "u_mouse_ray_far"    : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     "u_mouse_ray_near"   : new THREE.Uniform(new THREE.Vector3(0.0)),
-    "cameraWorldMatrix" : { value: camera.matrixWorld },
-    "cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
+    //"cameraWorldMatrix" : { value: camera.matrixWorld },
+    //"cameraProjectionMatrixInverse" : { value: new THREE.Matrix4().getInverse(camera.projectionMatrix) },
     "u_hash"             : { value: hash },
     "u_octaves"          : { value: render_scene.octaves },
     "u_epsilon"          : { value: render_scene.epsilon },
