@@ -1,7 +1,7 @@
 window.onload = function() {
 
-canvas.addEventListener("touchstart",start,false);
-canvas.addEventListener("touchmove",move,false);
+canvas.addEventListener("touchstart",startTouch,false);
+canvas.addEventListener("touchmove",moveTouch,false);
 
 var initx = null;
 var inity = null;
