@@ -9,14 +9,15 @@ precision highp float;
 //uniform mat4 cameraWorldMatrix;
 //uniform mat4 cameraProjectionMatrixInverse;
 uniform vec3 cameraPosition;
-
 uniform float u_hash;
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
 uniform vec2 u_resolution;
 uniform vec3 u_camera_target;
 uniform float u_time;
-uniform vec3 u_default_light;
+uniform vec3 u_light;
+uniform vec3 u_light2;
+uniform vec3 u_light3;
 uniform vec3 u_mouse_ray_far;
 uniform vec3 u_mouse_ray_near;
 uniform int u_repeat;
@@ -30,7 +31,7 @@ uniform vec3 u_diffuse_color;
 uniform vec3 u_ambient_color;
 uniform vec3 u_specular_color;
 uniform float u_shininess;
-uniform int u_df;
+//uniform int u_df;
 uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
@@ -563,7 +564,7 @@ if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 //if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
 
-res = sphere(p+n,1.0); 
+res = sphere(p ,1.0); 
 return res;
 
 }
@@ -659,7 +660,9 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
-vec3 light = vec3( u_default_light ) ;
+vec3 light  = vec3( u_light  ) ;
+vec3 light2 = vec3( u_light2 ) ;
+vec3 light3 = vec3( u_light3 ) ;
 
 //mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
 //vec3 light = vec3(100.0,0.0,0.0);
@@ -668,6 +671,9 @@ vec3 light = vec3( u_default_light ) ;
 vec3 intensity = vec3(.5);
 
 color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
+color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
+color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
+
 return color;
 
 }
@@ -715,7 +721,8 @@ float shininess = u_shininess;
 
 if(distance > TRACE_DISTANCE - EPSILON) {
 color = vec3(0.0);
-//color = vec3(distance);
+
+//color = phongLight(vec3(.2),vec3(.3,.4,.5),vec3(.1,.5,.1),.5,p,ro);
 
 } else {
 
@@ -737,11 +744,11 @@ color = vec3(0.0);
     if(u_diffuse_fractal == 1) { n = fractal312(p); }
     if(u_diffuse_cell    == 1) { n = cell(p,6.0); }
 
-    vec3 kd = fmCol(p.y+n,vec3(u_diffuse_color/255.0),vec3(u_diffuse_b/255.0),vec3(u_diffuse_c/255.0),vec3(u_diffuse_d/255.0));
-
+    vec3 kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+      
     //kd = vec3(u_diffuse_color/255.0);
-    vec3 ka = vec3(u_ambient_color/255.0);
-    vec3 ks = vec3(u_specular_color/255.0);
+    vec3 ka = vec3(u_ambient_color);
+    vec3 ks = vec3(u_specular_color);
     
     //kd = vec3(calcNormal(p);
     //kd = p;

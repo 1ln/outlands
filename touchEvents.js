@@ -23,19 +23,28 @@ function moveTouch(e) {
    var dx = initx - x;
    var dy = inity - y;
 
+   swipe_left  = false;
+   swipe_right = false;
+   swipe_up    = false;
+   swipe_down  = false;
+
    if(Math.abs(dx) > Math.abs(dy)) { 
 
        if(dx > 0) {
+       swipe_left = true;
        console.log('left');
        } else {
+       swipe_right = true;
        console.log('right');
        }
    
    } else {
    
        if(dy > 0) {
+       swipe_up = true;
        console.log('up');
        } else {
+       swipe_down = true;
        console.log('down');
        }
    } 
@@ -46,5 +55,14 @@ inity = null;
 e.preventDefault();
 
 };
-
 }
+
+var swipe_left  = false;
+var swipe_right = false;
+var swipe_up    = false;
+var swipe_down  = false;
+
+var swipeLeft  = function() { return swipe_left;  }
+var swipeRight = function() { return swipe_right; }
+var swipeUp    = function() { return swipe_up;    }
+var swipeDown  = function() { return swipe_down;  }  
