@@ -58,7 +58,7 @@ const float PHI_SPHERE = 1.0 - PHI/6.0;
 const float EPSILON = 0.0001;
 const float NORMAL_EPSILON = 0.001;
 
-const int MARCH_STEPS = 64;
+const int MARCH_STEPS = 164;
 const float TRACE_DISTANCE = 1000.0;
 
 //#define MAP_TYPE demo
@@ -102,6 +102,8 @@ x = vec3(dot(x,vec3(45.0,325.0,2121.455)),
 
 return fract(sin(x) * 92352.3635 * u_hash);
 }
+
+
     
 float cell(vec3 x,float s) {
 
@@ -111,7 +113,7 @@ vec3 p = floor(x);
 vec3 f = fract(x);
 
 float min_dist = 1.0;
-
+    
     for(int i = -1; i <= 1; i++) {
         for(int j = -1; j <= 1; j++) {
             for(int k = -1; k <= 1; k++) { 
@@ -124,6 +126,8 @@ vec3 diff = (b + r - f);
 float d = length(diff);
 min_dist = min(min_dist,d);
 
+//min_dist = min( abs(min_dist),d );
+//min_dist = max(min_dist,d);
 
       }
    }
@@ -164,6 +168,28 @@ return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x),
                mix(hash(n + 270.0),hash(n + 271.0),f.x),f.y),f.z);
 } 
 
+mat3 m = mat3(0.0,.8,.6,
+             -.8,.36,-.48,
+             -.6,-.48,.64);
+
+float fractal312(vec3 x) {
+    float f = 0.0;
+    f = .5 * noise3d(x);
+    x = 2.01 * x * m;
+    f += .25 * noise3d(x);
+    x = 2.02  * x * m;
+    f += .125 * noise3d(x);
+    x = 2.03 * x * m;
+    f += .0625 * noise3d(x);
+    x = 2.04 * x * m;
+    f += .03125 * noise3d(x);
+    x = 2.05 * x * m;
+    f += .015625 * noise3d(x);
+
+return f;
+
+}
+/*
 float fractal312(vec3 x) {
 
 int octaves = u_octaves;
@@ -252,7 +278,7 @@ amp *= g;
 
 return value;
 }
-
+*/
 float distort(vec3 p) {
     
 //const int octaves = u_octaves;
@@ -399,6 +425,10 @@ float sphere(vec3 p,float r) {
 return length(p) - r;
 }
 
+float sphereNegativeInterior(vec3 p,float r) {
+return abs(length(p)-r);
+}
+
 float ellipsoid(vec3 p,vec3 r) {
 
 float k0 = length(p/r);
@@ -493,6 +523,10 @@ d = max(d, p.y - h);
 return d; 
 }
 
+//float cylinderAxis(vec3 p,vec3 c) {
+//return length(vec2(p.x,p.z)- length( vec2(c.x,c.y)) ) - c.z;
+//}
+
 float hexPrism(vec3 p,vec2 h) {
 
 const vec3 k = vec3(-0.8660254,0.5,0.57735);
@@ -541,8 +575,8 @@ float n = 0.0;
 
 //if(u_sin3_displace    == 1) { n = sin3(p) ; } 
 
-if(u_fractal_displace == 1) { n = fractal312(p) * u_noise_rounding; }
-if(u_sin3_displace    == 1) { n = sin3(p); }
+//if(u_fractal_displace == 1) { n = fractal312(p) * u_noise_rounding; }
+//if(u_sin3_displace    == 1) { n = sin3(p); }
 //if(u_cell_displace    == 1) { n = cell(p,6.0); }
 //if(u_distort_displace == 1) { n = distort(p); }
 
@@ -563,8 +597,20 @@ if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 */
 //if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
+//p = repeat(p,vec3(1.0));
 
-res = sphere(p ,1.0); 
+
+float sphere   = sphere(p,1.0); 
+float cone1 = cone(p ,vec2(1.45,.9));
+float cone2 = cone(p,vec2(1.45,-.9));
+
+//float res2 = box(p+vec3(0.0,0.0,1.0), vec3(0.15));
+//p = repeat(p,vec3(.05));
+
+//return cone;
+res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
+
+
 return res;
 
 }
@@ -672,7 +718,7 @@ vec3 intensity = vec3(.5);
 
 color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
 color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
-color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
+//color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
 return color;
 
@@ -740,9 +786,26 @@ color = vec3(0.0);
     //kd = vec3(u_diffuse_color/255.0);
     //ka = vec3(u_ambient_color/255.0);
     //ks = vec3(u_specular_color/255.0);
-    if(u_diffuse_distort == 1) { n = distort(p); }
-    if(u_diffuse_fractal == 1) { n = fractal312(p); }
-    if(u_diffuse_cell    == 1) { n = cell(p,6.0); }
+    //if(u_diffuse_distort == 1) { n = distort(p); }
+    //if(u_diffuse_fractal == 1) { n = fractal312(p); }
+    //if(u_diffuse_cell    == 1) { n = cell(p,6.0); }
+    
+    n += u_time *.001;
+        n = distort(p);
+        n += sincPhase(p.x,n*p.y);
+      //n = distort(p) + sincPhase(p.x,n*p.y);
+      //n = distort(p) * sincPhase(p.x,p.y) ;
+    
+
+
+
+
+    //n += fractal312(p) +u_time;
+    //n += cell(p,6.0);
+
+    //n += distort(p);     
+    //n += cell(p,16.); 
+    //n += distort(p);
 
     vec3 kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
       
@@ -768,6 +831,7 @@ void main() {
  
 vec3 camera_position = cameraPosition;
 vec3 cam_target = u_camera_target;
+
 //vec3 camera_position = vec3(5.0,0.0,0.0);
 //vec3 cam_target = u_mouse_ray;
 

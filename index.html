@@ -54,6 +54,7 @@ var raycaster = new THREE.Raycaster();
 //var gui = new dat.GUI();
 
 var clock          = new THREE.Clock();
+var t = 0.0 ;
 
 var camera_target  = new THREE.Vector3(0.0);
 
@@ -134,27 +135,29 @@ function init() {
 hash = prng();
 
 clock.start();
+//t = clock.start();
 
 renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
 camera = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
 
-camera.position.set(0.0,0.0,-2.5);
+camera.position.set(3.0,2.5,-1.0);
 camera.lookAt(0.0);
 
 //controls = new THREE.OrbitControls(camera,renderer.domElement);
 
 controls = new THREE.OrbitControls(camera,canvas);
 controls.minDistance = 1.5;
-controls.maxDistance = 10.0;
+controls.maxDistance = 24.5;
 controls.target = camera_target;
 controls.enableDamping = true;
 controls.enablePan = false;
+//controls.maxPolarAngle = .95;
 //controls.enabled = false; 
 
-light  = new THREE.Vector3(0.0,0.0,-100.0);
-light2 = new THREE.Vector3(0.0,-100.0,0.0);
-light3 = new THREE.Vector3(0.0);
+light  = new THREE.Vector3(0.0,(5.0 *Math.tan(.45))+.5 ,5.0);
+light2 = new THREE.Vector3(0.0,(5.0 * Math.tan(.45))+.5,-5.0);
+//light3 = new THREE.Vector3(100.0);
 
 scene = new THREE.Scene();
 //scene.add(axes_helper);
@@ -227,14 +230,17 @@ ShaderLoader("render.vert","render.frag",
         
 
 
-        mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
-        mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
-/*
-        $('#canvas').mousedown(function() {
-            
-            held = setTimeout(function() {
+        //mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
+        //mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
 
-            if(new_scene != true) {
+        //$('#canvas').mousedown(function() {
+            
+            //held = setTimeout(function() {
+
+            //if(new_scene != true) {
+
+
+            /*
             render_scene.hash        = prng();
             lighting.diffuse_color   = new THREE.Vector3(prng(),prng(),prng());
             lighting.diffuse_b       = new THREE.Vector3(prng(),prng(),prng());
@@ -244,33 +250,60 @@ ShaderLoader("render.vert","render.frag",
             lighting.diffuse_cell    = Math.round(prng()) ? true : false;
             lighting.diffuse_fractal = Math.round(prng()) ? true : false;
             //console.log("test");
-            new_scene = true;            
-            } 
-            
-        },2500);
-        });
-*/
-        $('#canvas').mouseup(function() {
-           
-            new_scene = false;
+            //new_scene = true;            
+            //} 
+            */
+        //},12500);
+        //});
 
-        });      
+        //$('#canvas').mouseup(function() {
+           
+            //new_scene = false;
+
+        //});      
         //controls.target = camera_target;
 
         //Rotation around orbital target
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( Math.PI / 2.0 *0.001) );
+        //orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
 
         //light.applyQuaternion(orbit_target);
-        
-        camera.position.applyQuaternion(orbit_target );
 
-        if(swipeLeft() === true) {
+
+         //t += clock.getElapsedTime() ;
+
+         
+         //if(! light.equals(new THREE.Vector3(0.0))) {
+         if( light.z < 1.0) {
+         //light.z = .25 * Math.sin(t)  ;
+         //light.z -= .05;
+         //light.z = 0;
+         //lighting.intensity -= .01;
+         //console.log("test");
+         } else {
+         light.z -= .05;
+         
+         }
+         
+         //if(! light2.equals(new THREE.Vector3(0.0))) {
+         if( light.z > -1.0) {
+         light2.z += .05;
+         } else {
+         //light2.z = 0; 
+         //console.log("test");
+         //lighting.shininess -= .1;
+         }
+
+         //console.log(light.y);
+
+        //camera.position.applyQuaternion(orbit_target );
+
+        //if(swipeLeft() === true) {
         //console.log("test");
-        }
+        //}
 
-        if(swipeRight() === true) {
+        //if(swipeRight() === true) {
 
-        }
+        //}
         //Move camera forward
         //camera.translateZ(-distance);
 
@@ -282,8 +315,8 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_mouse_pressed"].value   = mouse_pressed;
         uniforms["u_camera_target"].value   = camera_target;
         uniforms["u_light"].value           = light;
+        uniforms["u_light"].value          = light;
         uniforms["u_light2"].value          = light2;
-        uniforms["u_light3"].value          = light3;
         uniforms["u_mouse_ray_far"].value   = mouse_ray_far;
         uniforms["u_mouse_ray_near"].value  = mouse_ray_near;
         uniforms["u_hash"].value            = render_scene.hash;
