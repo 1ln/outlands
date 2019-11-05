@@ -20,6 +20,25 @@ var light  = new THREE.Vector3(0.0,0.0,0.0);
 var light2 = new THREE.Vector3(0.0,0.0,0.0);
 var light3 = new THREE.Vector3(0.0,0.0,0.0);
 
+//Create simplex noise texture for gpu
+var size = 256;
+var data = new Uint8Array(3 * size);
+
+var r = 1.0;
+var g = 0.0;
+var b = 0.0;
+
+for(var i = 0; i < size; ++i) {
+    var stride = i * 3;
+    
+    data[stride    ] = r;
+    data[stride + 1] = g;
+    data[stride + 2] = b;
+}
+
+var texture = new THREE.DataTexture(data,16,16,THREE.RGBFormat); 
+//texture.needsUpdate = true; 
+
 var mouse_ray_near = new THREE.Vector3(0.0);
 var mouse_ray_far  = new THREE.Vector3(0.0);
 
@@ -110,10 +129,10 @@ controls.maxDistance = 24.5;
 controls.target = camera_target;
 controls.enableDamping = true;
 controls.enablePan = false;
-//controls.maxPolarAngle = .95;
+controls.maxPolarAngle = .95;
 //controls.enabled = false; 
 
-light  = new THREE.Vector3(0.0,(5.0 *Math.tan(.45))+.5 ,5.0);
+light  = new THREE.Vector3(0.0,1.0,0.0);
 light2 = new THREE.Vector3(0.0,(5.0 * Math.tan(.45))+.5,-5.0);
 //light3 = new THREE.Vector3(100.0);
 
@@ -152,7 +171,7 @@ uniforms = {
     "u_diffuse_fractal"  : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_fractal)),
     "u_diffuse_cell"     : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_cell)),
     "u_repeat"           : { value: 0 },
-    "u_repeat_distance"  : { value: 0.0 },
+    "u_texture"          : { type : "t", value: texture },
     "u_sin3_displace"    : { value: displace.sin3  },
     "u_fractal_displace" : { value: displace.fractal },
     "u_cell_displace"    : { value: 0.0 },
@@ -165,7 +184,7 @@ uniforms = {
 
 ShaderLoader("render.vert","render.frag",
     function(vertex,fragment) {
-        material = new THREE.RawShaderMaterial({
+        material = new THREE.ShaderMaterial({
 
         uniforms : uniforms,
         vertexShader : vertex,
@@ -188,8 +207,8 @@ ShaderLoader("render.vert","render.frag",
         
 
 
-        //mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
-        //mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
+        mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
+        mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
 
         //$('#canvas').mousedown(function() {
             
@@ -222,34 +241,40 @@ ShaderLoader("render.vert","render.frag",
         //controls.target = camera_target;
 
         //Rotation around orbital target
-        //orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
 
-        //light.applyQuaternion(orbit_target);
+        light.applyQuaternion(orbit_target);
 
 
          //t += clock.getElapsedTime() ;
 
+
+         
+         console.log(mouse_ray_far.length());
+         if((mouse_ray_near.length() - 1.0) < .75) {
+         console.log("test");
+         }
          
          //if(! light.equals(new THREE.Vector3(0.0))) {
-         if( light.z < 1.0) {
+         //if( light.z < 1.0) {
          //light.z = .25 * Math.sin(t)  ;
          //light.z -= .05;
          //light.z = 0;
          //lighting.intensity -= .01;
          //console.log("test");
-         } else {
-         light.z -= .05;
+         //} else {
+         //light.z -= .05;
          
-         }
+         //}
          
          //if(! light2.equals(new THREE.Vector3(0.0))) {
-         if( light.z > -1.0) {
-         light2.z += .05;
-         } else {
+         //if( light.z > -1.0) {
+         //light2.z += .05;
+         //} else {
          //light2.z = 0; 
          //console.log("test");
          //lighting.shininess -= .1;
-         }
+         //}
 
          //console.log(light.y);
 
@@ -293,7 +318,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_fractal"].value = lighting.diffuse_fractal;
         uniforms["u_diffuse_cell"].value = lighting.diffuse_cell;
         uniforms["u_repeat"].value = 0;
-        uniforms["u_repeat_distance"].value = 0;
+        uniforms["u_texture"].value = texture;
         uniforms["u_sin3_displace"].value = displace.sin3;
         uniforms["u_fractal_displace"].value = displace.fractal;
         uniforms["u_cell_displace"].value = displace.cell;

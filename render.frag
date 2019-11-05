@@ -3,12 +3,12 @@
 
 precision highp float;
 
-//varying vec2 vUv;
+varying vec2 vUv;
 
 //uniform mat4 viewMatrix;
 //uniform mat4 cameraWorldMatrix;
 //uniform mat4 cameraProjectionMatrixInverse;
-uniform vec3 cameraPosition;
+//uniform vec3 cameraPosition;
 uniform float u_hash;
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
@@ -21,7 +21,8 @@ uniform vec3 u_light3;
 uniform vec3 u_mouse_ray_far;
 uniform vec3 u_mouse_ray_near;
 uniform int u_repeat;
-uniform int u_repeat_distance;
+uniform sampler2D u_texture;
+//uniform int u_repeat_distance;
 uniform int u_octaves;
 uniform float u_noise_rounding;
 uniform float u_epsilon;
@@ -598,17 +599,23 @@ if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 //if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
 //p = repeat(p,vec3(1.0));
+vec3 r = (rotY(u_time ) * vec4(p,1.0)).xyz; 
 
+mat4 roty = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.001);
+p = (vec4(p,1.0) * roty).xyz;
 
-float sphere   = sphere(p,1.0); 
-float cone1 = cone(p ,vec2(1.45,.9));
-float cone2 = cone(p,vec2(1.45,-.9));
+float sphere   = sphere(p,1.0);
+ 
+//float cone1 = cone(p ,vec2(1.45,.9));
+//float cone2 = cone(p,vec2(1.45,-.9));
 
 //float res2 = box(p+vec3(0.0,0.0,1.0), vec3(0.15));
 //p = repeat(p,vec3(.05));
+// vec3 c = (rotY(u_time) * vec4(p,1.0)).xyz;
 
-//return cone;
-res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
+res = sphere;
+//res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
+//p = rotY(u_time) * vec4(p,1.0)).xyz;
 
 
 return res;
@@ -637,29 +644,27 @@ depth += distance;
 return end;
 }
 
-/*
-float rayScene2(vec3 ro,vec3 rd,float start,float end) {
+float rayReflect(vec3 ro,vec3 rd,float start,float end) {
 
-//float depth = start;
+float depth = start;
 
-    //for(int i = 0; i < 10; ++i) {
-     float distance =  scene(ro + start * rd);
+    for(int i = 0; i < 10; ++i) {
+    float distance =  scene(ro + start * rd);
 
-            //if(distance < 0.001) { 
-            //return start;
-            //}
+            if(distance < EPSILON) { 
+            return depth;
+            }
 
-start += distance;
+depth += distance;
 
 
     if(start >= end) {
     return end;
     }
-//} 
-return distance;
-//return end;
+ 
+return end;
 }
-*/
+}
 
 vec3 calcNormal(vec3 p) {
 
@@ -706,18 +711,18 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
 vec3 color = ka * ambient_light;  
 
-vec3 light  = vec3( u_light  ) ;
-vec3 light2 = vec3( u_light2 ) ;
-vec3 light3 = vec3( u_light3 ) ;
+//vec3 light  = vec3( u_light  ) ;
+//vec3 light2 = vec3( u_light2 ) ;
+//vec3 light3 = vec3( u_light3 ) ;
 
-//mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
-//vec3 light = vec3(100.0,0.0,0.0);
-//light = (vec4(light,1.0) * rot).xyz;
+mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01);
+vec3 light = vec3(0.0,10.0,0.0);
+light = (vec4(light,1.0) * rot).xyz;
 
 vec3 intensity = vec3(.5);
 
 color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
-color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
+//color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
 //color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
 return color;
@@ -790,9 +795,11 @@ color = vec3(0.0);
     //if(u_diffuse_fractal == 1) { n = fractal312(p); }
     //if(u_diffuse_cell    == 1) { n = cell(p,6.0); }
     
-    n += u_time *.001;
+    //n = u_time *.01;
         n = distort(p);
         n += sincPhase(p.x,n*p.y);
+
+
       //n = distort(p) + sincPhase(p.x,n*p.y);
       //n = distort(p) * sincPhase(p.x,p.y) ;
     
@@ -835,17 +842,19 @@ vec3 cam_target = u_camera_target;
 //vec3 camera_position = vec3(5.0,0.0,0.0);
 //vec3 cam_target = u_mouse_ray;
 
-//vec2 uvu = -1.0 + 2.0 * vUv.xy;
-//vec2 uvu = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution;
-vec2 uvu =  -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy ) * 0.5 ;
-//vec2 uvu = 0.5 * (gl_FragCoord.xy/u_resolution.xy) * 2.0 - 1.0 ;
+vec2 uvu = -1.0 + 2.0 * vUv.xy;
 
+
+//vec2 uvu = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution;
+//vec2 uvu =  -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy ) * 0.5 ;
+//vec2 uvu = 0.5 * (gl_FragCoord.xy/u_resolution.xy) * 2.0 - 1.0 ;
 
 //vec2 s = (gl_FragCoord.xy * 2.0 - u_resolution)/u_resolution ;
 //vec4 ndcRay =vec4(s.xy,1.0,-1.0);
 //vec3 ray = (cameraWorldMatrix * cameraProjectionMatrixInverse * ndcRay).xyz;
 //ray = normalize(ray);
 //uvu = normalize(uvu);
+
 
 uvu.x *= u_resolution.x/u_resolution.y; 
 
@@ -856,9 +865,10 @@ vec3 color = render(camera_position,direction);
 
 //vec3 color = render(camera_position,dir);
 //vec3 color = vec3(uvu.xy,0.0);
-
 //vec3 color = render(camera_position,ray);
+//vec4 color = texture2D(u_texture,vec2(0.0));
 
+//gl_FragColor = vec4(1.0,0.0,0.0,0.0);
 
 gl_FragColor = vec4(color,0.0);
 
