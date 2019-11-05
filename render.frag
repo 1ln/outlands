@@ -337,6 +337,12 @@ return a + b * cos(PI_2*(c*t+d));
 
 //Rotations
 
+mat2 rot(float a) {
+    float s = sin(a);
+    float c = cos(a);
+    return mat2(c,-s,s,c);
+}
+
 mat4 rotY(float theta) {
 float c = cos(theta);
 float s = sin(theta);
@@ -599,13 +605,17 @@ if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 //if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
 
 //p = repeat(p,vec3(1.0));
-vec3 r = (rotY(u_time ) * vec4(p,1.0)).xyz; 
+//vec3 r = (rotY(u_time ) * vec4(p,1.0)).xyz; 
 
-mat4 roty = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.001);
-p = (vec4(p,1.0) * roty).xyz;
+//mat4 roty = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.001);
+//p *= (vec4(p,1.0) * roty).xyz;
+p.xy *= rot(u_time);
 
 float sphere   = sphere(p,1.0);
  
+//mat4 rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.01);
+//p *= (vec4(p,1.0) * rot).xyz;
+
 //float cone1 = cone(p ,vec2(1.45,.9));
 //float cone2 = cone(p,vec2(1.45,-.9));
 
