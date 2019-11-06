@@ -435,20 +435,27 @@ return length(pa - ba * h) - r;
 float prism(vec3 p,vec2 h) {
 
 vec3 q = abs(p);
-return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
+    return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
 }
 
 float box(vec3 p,vec3 b) {
 
-vec3 d = abs(p) - b;
-return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
+    vec3 d = abs(p) - b;
+    return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
+}
+
+float roundBox(vec3,vec3 b,float r) {
+
+   vec3 q = abs(p) - b;
+   return length(max(q,0.0)) + min(max(q.y,q.z)),0.0) - r);
 }
 
 float torus(vec3 p,vec2 t) {
 
-vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
-return length(q) - t.y; 
+   vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
+   return length(q) - t.y; 
 }
+
 /*
 float torusAngle(vec3 p,vec2 t) {
 
@@ -551,15 +558,15 @@ float sphere   = sphere(p,1.0);
 //mat4 rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.01);
 //p *= (vec4(p,1.0) * rot).xyz;
 
-//float cone1 = cone(p ,vec2(1.45,.9));
-//float cone2 = cone(p,vec2(1.45,-.9));
+float cone1 = cone(p ,vec2(1.45,.9));
+float cone2 = cone(p,vec2(1.45,-.9));
 
 //float res2 = box(p+vec3(0.0,0.0,1.0), vec3(0.15));
 //p = repeat(p,vec3(.05));
 // vec3 c = (rotY(u_time) * vec4(p,1.0)).xyz;
 
-res = sphere;
-//res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
+//res = sphere;
+res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
 //p = rotY(u_time) * vec4(p,1.0)).xyz;
 
 
