@@ -447,7 +447,7 @@ float box(vec3 p,vec3 b) {
 float roundBox(vec3,vec3 b,float r) {
 
    vec3 q = abs(p) - b;
-   return length(max(q,0.0)) + min(max(q.y,q.z)),0.0) - r);
+   return length(max(q,0.0)) + min(max(q.y,q.z)),0.0) - r;
 }
 
 float torus(vec3 p,vec2 t) {
