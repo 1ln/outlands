@@ -12,13 +12,10 @@ var raycaster = new THREE.Raycaster();
 //var gui = new dat.GUI();
 
 var clock          = new THREE.Clock();
-var t = 0.0 ;
 
 var camera_target  = new THREE.Vector3(0.0);
 
 var light  = new THREE.Vector3(0.0,0.0,0.0);
-var light2 = new THREE.Vector3(0.0,0.0,0.0);
-var light3 = new THREE.Vector3(0.0,0.0,0.0);
 
 //Create simplex noise texture for gpu
 var size = 256;
@@ -41,8 +38,6 @@ var texture = new THREE.DataTexture(data,16,16,THREE.RGBFormat);
 
 var mouse_ray_near = new THREE.Vector3(0.0);
 var mouse_ray_far  = new THREE.Vector3(0.0);
-
-var axes_helper    = new THREE.AxesHelper(10);
 
 var orbit_target   = new THREE.Quaternion();
 
@@ -112,7 +107,6 @@ function init() {
 hash = prng();
 
 clock.start();
-//t = clock.start();
 
 renderer = new THREE.WebGLRenderer({ canvas:canvas });
 
@@ -120,8 +114,6 @@ camera = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
 
 camera.position.set(3.0,2.5,-1.0);
 camera.lookAt(0.0);
-
-//controls = new THREE.OrbitControls(camera,renderer.domElement);
 
 controls = new THREE.OrbitControls(camera,canvas);
 controls.minDistance = 1.5;
@@ -133,11 +125,8 @@ controls.enablePan = false;
 //controls.enabled = false; 
 
 light  = new THREE.Vector3(0.0,1.0,0.0);
-//light2 = new THREE.Vector3(0.0,(5.0 * Math.tan(.45))+.5,-5.0);
-//light3 = new THREE.Vector3(100.0);
 
 scene = new THREE.Scene();
-//scene.add(axes_helper);
 
 geometry = new THREE.PlaneBufferGeometry(2,2);
 
@@ -198,62 +187,25 @@ ShaderLoader("render.vert","render.frag",
 
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(w,h);
-
-//container.append(renderer.domElement);
     //gui_container.append(gui.domElement);
 
     var render = function(timestamp) {
         requestAnimationFrame(render);
         
-
-
         mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
         mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
 
         //$('#canvas').mousedown(function() {
-            
-            //held = setTimeout(function() {
-
-            //if(new_scene != true) {
-
-
-            /*
-            render_scene.hash        = prng();
-            lighting.diffuse_color   = new THREE.Vector3(prng(),prng(),prng());
-            lighting.diffuse_b       = new THREE.Vector3(prng(),prng(),prng());
-            lighting.diffuse_c       = new THREE.Vector3(prng(),prng(),prng());
-            lighting.diffuse_d       = new THREE.Vector3(prng(),prng(),prng());
-            lighting.diffuse_distort = Math.round(prng()) ? true : false;
-            lighting.diffuse_cell    = Math.round(prng()) ? true : false;
-            lighting.diffuse_fractal = Math.round(prng()) ? true : false;
-            //console.log("test");
-            //new_scene = true;            
-            //} 
-            */
-        //},12500);
         //});
 
         //$('#canvas').mouseup(function() {
-           
-            //new_scene = false;
-
         //});      
         //controls.target = camera_target;
 
         //Rotation around orbital target
         orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
-
         //light.applyQuaternion(orbit_target);
 
-
-         //t += clock.getElapsedTime() ;
-
-
-         
-         console.log(mouse_ray_far.length());
-         if((mouse_ray_near.length() - 1.0) < .75) {
-         console.log("test");
-         }
          
          //if(! light.equals(new THREE.Vector3(0.0))) {
          //if( light.z < 1.0) {
