@@ -60,7 +60,7 @@ const float EPSILON = 0.0001;
 const float NORMAL_EPSILON = 0.001;
 
 const int MARCH_STEPS = 164;
-const float TRACE_DISTANCE = 1000.0;
+const float TRACE_DIST = 1000.0;
 
 //#define MAP_TYPE demo
  
@@ -542,9 +542,9 @@ if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
 //p = repeat(p,vec3(1.0));
 //vec3 r = (rotY(u_time ) * vec4(p,1.0)).xyz; 
 
-//mat4 roty = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.001);
-//p *= (vec4(p,1.0) * roty).xyz;
-p.xy *= rot(u_time);
+mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
+p = (vec4(p,1.0) * roty).xyz;
+//p.xy *= rot(u_time);
 
 float sphere   = sphere(p,1.0);
  
@@ -564,6 +564,36 @@ res = sphere;
 
 
 return res;
+
+}
+
+
+vec2 scene1(vec3 p) {
+vec2 res = vec2(1.0,0.0);
+
+res = vec2(   sphere(p,1.0),0.0 );
+
+return res;
+}
+
+vec2 rayScene1(vec3 ro,vec3 rd) {
+    
+    float depth = 0.0;
+    float d = -1.0;
+
+    for(int i = 0; i < MARCH_STEPS; ++i) {
+
+        vec3 p = ro + depth * rd;
+        vec2 dist = scene1(p);
+   
+        if(dist.x < EPSILON || TRACE_DIST < dist.x ) { break; }
+        depth += dist.x;
+        d = dist.y;
+
+        }
+ 
+        if(TRACE_DIST < depth) { d = -1.0; }
+        return vec2(depth,d);
 
 }
 
@@ -696,11 +726,11 @@ vec3 color = vec3(0.0);
 //vec3 ray2 = normalize(  u_mouse_ray_near - ro);
 //vec3 ray2 = u_mouse_ray_near - ro;
 
-float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
-//float dist2 = rayScene(ro, ray2,0.0,TRACE_DISTANCE);
+//float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
+vec2 d = rayScene1(ro, rd);
 
-vec3 p =  ro + rd * distance;
-//vec3 p2 = ro +  ray2 * dist2;
+//vec3 p =  ro + rd * distance;
+vec3 p = ro + rd * d.x;
 
 //vec3 ka = vec3(0.0);
 //vec3 kd = vec3(0.0);
@@ -715,7 +745,9 @@ float shininess = u_shininess;
 //n = n * u_time * 0.1 ; 
 //}
 
-if(distance > TRACE_DISTANCE - EPSILON) {
+//if(distance > TRACE_DIST - EPSILON) {
+if(d.x > TRACE_DIST - EPSILON) {
+
 color = vec3(0.0);
 
 //color = phongLight(vec3(.2),vec3(.3,.4,.5),vec3(.1,.5,.1),.5,p,ro);
@@ -742,7 +774,7 @@ color = vec3(0.0);
     
     //n = u_time *.01;
         n = distort(p,4);
-        n += sincPhase(p.x,n*p.y);
+        //n += sincPhase(p.x,n*p.y);
 
 
       //n = distort(p) + sincPhase(p.x,n*p.y);
