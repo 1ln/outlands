@@ -173,7 +173,7 @@ mat3 m = mat3(0.0,.8,.6,
              -.8,.36,-.48,
              -.6,-.48,.64);
 
-float fractal312(vec3 x) {
+float fractal3(vec3 x) {
     float f = 0.0;
     f = .5 * noise3d(x);
     x = 2.01 * x * m;
@@ -190,10 +190,9 @@ float fractal312(vec3 x) {
 return f;
 
 }
-/*
+
 float fractal312(vec3 x,int octaves_n) {
 
-//int octaves = u_octaves ;
 int octaves = octaves_n;
 
 float value = 0.0;
@@ -201,8 +200,6 @@ float h  = .5;
 float g = exp2(-h);
 float amp = 0.5;
 float freq = 1.0;
-
-//for(int i = 0; i < octaves; ++i) {
 
 if(octaves >= 1)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
 if(octaves >= 2)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
@@ -220,11 +217,8 @@ if(octaves >= 12) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
 return value;
 }
 
-*/
 float distort(vec3 p,int octaves) {
     
-//const int octaves = u_octaves;
-
 vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
               fractal312(p + vec3(4.5,1.8,6.3),octaves),
               fractal312(p + vec3(1.1,7.2,2.4),octaves)
@@ -508,7 +502,7 @@ return smoU(negative_y,positive_y,k);
 
 
 float sphereFractal(vec3 p,float r,float h) {
-return length(p) + fractal312(p)*h - r;
+return length(p) + fractal312(p,5)*h - r;
 }
 
 
@@ -747,7 +741,7 @@ color = vec3(0.0);
     //if(u_diffuse_cell    == 1) { n = cell(p,6.0); }
     
     //n = u_time *.01;
-        n = distort(p);
+        n = distort(p,4);
         n += sincPhase(p.x,n*p.y);
 
 
