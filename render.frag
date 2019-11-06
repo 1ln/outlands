@@ -690,8 +690,10 @@ vec3 color = ka * ambient_light;
 //vec3 light2 = vec3( u_light2 ) ;
 //vec3 light3 = vec3( u_light3 ) ;
 
+
+vec3 light = vec3(10.0,0.0,0.0);
 mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01);
-vec3 light = vec3(0.0,10.0,0.0);
+//vec3 light = vec3(10.0,0.0,0.0);
 light = (vec4(light,1.0) * rot).xyz;
 
 vec3 intensity = vec3(.5);
