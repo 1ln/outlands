@@ -129,11 +129,11 @@ controls.maxDistance = 24.5;
 controls.target = camera_target;
 controls.enableDamping = true;
 controls.enablePan = false;
-controls.maxPolarAngle = .95;
+//controls.maxPolarAngle = .95;
 //controls.enabled = false; 
 
 light  = new THREE.Vector3(0.0,1.0,0.0);
-light2 = new THREE.Vector3(0.0,(5.0 * Math.tan(.45))+.5,-5.0);
+//light2 = new THREE.Vector3(0.0,(5.0 * Math.tan(.45))+.5,-5.0);
 //light3 = new THREE.Vector3(100.0);
 
 scene = new THREE.Scene();
@@ -243,7 +243,7 @@ ShaderLoader("render.vert","render.frag",
         //Rotation around orbital target
         orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
 
-        light.applyQuaternion(orbit_target);
+        //light.applyQuaternion(orbit_target);
 
 
          //t += clock.getElapsedTime() ;
@@ -293,7 +293,7 @@ ShaderLoader("render.vert","render.frag",
         //Move camera up
         //camera.translateY(distance);
         
-        uniforms["u_time"].value            = timestamp / 1000;
+        uniforms["u_time"].value            = performance.now();
         uniforms["u_mouse"].value           = mouse;
         uniforms["u_mouse_pressed"].value   = mouse_pressed;
         uniforms["u_camera_target"].value   = camera_target;
