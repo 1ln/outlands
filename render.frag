@@ -191,10 +191,10 @@ return f;
 
 }
 /*
-float fractal312(vec3 x) {
+float fractal312(vec3 x,int octaves_n) {
 
-int octaves = u_octaves;
-//int octaves = 6;
+//int octaves = u_octaves ;
+int octaves = octaves_n;
 
 float value = 0.0;
 float h  = .5;
@@ -204,97 +204,38 @@ float freq = 1.0;
 
 //for(int i = 0; i < octaves; ++i) {
 
-if(octaves >= 1) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 2) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 3) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 4) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 5) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 6) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 7) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 8) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 9) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 10) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-
-if(octaves >= 11) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
-
-if(octaves >= 12) {
-value += amp * noise3d(freq * x);
-freq *= 2.0;
-amp *= g;
-}
+if(octaves >= 1)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 2)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 3)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 4)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 5)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 6)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 7)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 8)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 9)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 10) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 11) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+if(octaves >= 12) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
 
 return value;
 }
+
 */
-float distort(vec3 p) {
+float distort(vec3 p,int octaves) {
     
 //const int octaves = u_octaves;
 
-vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0)),      
-              fractal312(p + vec3(4.5,1.8,6.3)),
-              fractal312(p + vec3(1.1,7.2,2.4))
+vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
+              fractal312(p + vec3(4.5,1.8,6.3),octaves),
+              fractal312(p + vec3(1.1,7.2,2.4),octaves)
 );
 
-vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1)),
-              fractal312(p + 4.0*q + vec3(5.6,3.7,8.9)),
-              fractal312(p + 4.0*q + vec3(4.3,0.0,3.1)) 
+vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1),octaves),
+              fractal312(p + 4.0*q + vec3(5.6,3.7,8.9),octaves),
+              fractal312(p + 4.0*q + vec3(4.3,0.0,3.1),octaves) 
 );
 
-return fractal312(p + 4.0* r);
+return fractal312(p + 4.0* r,octaves);
 } 
 
       
