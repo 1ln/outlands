@@ -318,11 +318,10 @@ return mat4(
 );
 }
 
-//vec3 repeatLimit(vec3 p,float c,vec3 l) {
+vec3 repeatLimit(vec3 p,float c,vec3 l) {
 
-//vec3 q = p - c * clamp(round(p/c),-1,1);
-//return q;
-//}
+    return p - c * clamp(round(p/c),-l,l);
+}
 
 float opIf(float d1,float d2) {
 return max(d1,d2);
@@ -409,6 +408,13 @@ if( k < 0.0) return length(q) - r1;
 if( k > a*h) return length(q - vec2(0.0,h)) - r2;
 
 return dot(q,vec2(a,b)) - r1;
+}
+
+float solidAngle(vec3 p,vec2 c,float ra) {
+    vec2 q = vec2(length(vec2(p.x,p.z),p.y);
+    float l = length(q) - ra;
+    float m = length(q - c * clamp(dot(q,c),0.0,ra));
+    return max(l,m * sign(c.y * q.x - c.x * q.y));
 }
 
 float link(vec3 p,float le,float r1,float r2) {
