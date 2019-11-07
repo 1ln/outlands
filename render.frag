@@ -579,7 +579,7 @@ depth += distance;
 } 
 
 return end;
-}*/
+}
 
 float rayReflect(vec3 ro,vec3 rd,float start,float end) {
 
@@ -601,8 +601,23 @@ depth += distance;
  
 return end;
 }
+}*/ 
+
+vec3 calcNormal(vec3 p) {
+
+    vec2 e = vec2(1.0,-1.0) * EPSILON;
+
+    return normalize(vec3(
+    vec3(e.x,e.y,e.y) * scene(p + vec3(e.x,e.y,e.y)).x +
+    vec3(e.y,e.x,e.y) * scene(p + vec3(e.y,e.x,e.y)).x +
+    vec3(e.y,e.y,e.x) * scene(p + vec3(e.y,e.y,e.x)).x + 
+    vec3(e.x,e.x,e.x) * scene(p + vec3(e.x,e.x,e.x)).x
+
+    ));
+
 }
 
+/*
 vec3 calcNormal(vec3 p) {
 
     return normalize( vec3(
@@ -613,7 +628,7 @@ vec3 calcNormal(vec3 p) {
 
     )  );
 
-}     
+} */    
 
 vec3 rgb2hsv(in vec3 c) {
 vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0,4.0,2.0),6.0) - 3.0) - 1.0,0.0,1.0); 
