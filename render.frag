@@ -16,8 +16,8 @@ uniform vec2 u_resolution;
 uniform vec3 u_camera_target;
 uniform float u_time;
 uniform vec3 u_light;
-uniform vec3 u_light2;
-uniform vec3 u_light3;
+//uniform vec3 u_light2;
+//uniform vec3 u_light3;
 uniform vec3 u_mouse_ray_far;
 uniform vec3 u_mouse_ray_near;
 uniform int u_repeat;
@@ -317,11 +317,11 @@ return mat4(
     vec4(0,0,0,1)  
 );
 }
-
+/*
 vec3 repeatLimit(vec3 p,float c,vec3 l) {
 
     return p - c * clamp(round(p/c),-l,l);
-}
+}*/
 
 float opIf(float d1,float d2) {
 return max(d1,d2);
@@ -409,13 +409,13 @@ if( k > a*h) return length(q - vec2(0.0,h)) - r2;
 
 return dot(q,vec2(a,b)) - r1;
 }
-
+/*
 float solidAngle(vec3 p,vec2 c,float ra) {
-    vec2 q = vec2(length(vec2(p.x,p.z),p.y);
+    vec2 q = vec2(length(vec2(p.x,p.z),p.y));
     float l = length(q) - ra;
     float m = length(q - c * clamp(dot(q,c),0.0,ra));
     return max(l,m * sign(c.y * q.x - c.x * q.y));
-}
+}*/
 
 float link(vec3 p,float le,float r1,float r2) {
 
@@ -449,12 +449,12 @@ float box(vec3 p,vec3 b) {
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
-
-float roundBox(vec3,vec3 b,float r) {
+/*
+float roundBox(vec3 p,vec3 b,float r) {
 
    vec3 q = abs(p) - b;
    return length(max(q,0.0)) + min(max(q.y,q.z)),0.0) - r;
-}
+}*/
 
 float torus(vec3 p,vec2 t) {
 
@@ -519,77 +519,26 @@ return length(p) + fractal312(p,5)*h - r;
 }
 
 
-//p = repeat(p,vec3(3.5));
+vec2 scene(vec3 p) {
 
-float scene(vec3 p) {
-
-float res = 0.0;
-float n = 0.0;
-
-//if(u_repeat           == 1) { p = repeat(p,vec3(u_repeat_distance)); }
-
-//if(u_sin3_displace    == 1) { n = sin3(p) ; } 
-
-//if(u_fractal_displace == 1) { n = fractal312(p) * u_noise_rounding; }
-//if(u_sin3_displace    == 1) { n = sin3(p); }
-//if(u_cell_displace    == 1) { n = cell(p,6.0); }
-//if(u_distort_displace == 1) { n = distort(p); }
-
-/*
-if(u_df == 0)  { res = sphere(p+n,1.0); }
-if(u_df == 1)  { res = box(p+n,vec3(1.0)); }
-if(u_df == 2)  { res = capsule(p+n,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0); }
-if(u_df == 3)  { res = cone(p+n,vec2(.25,.45)); } 
-if(u_df == 4)  { res = torus(p+n,vec2(1.0,0.5)); }
-if(u_df == 5)  { res = prism(p+n,vec2(1.0,0.5)); }
-if(u_df == 6)  { res = binarySpheresSmoothUnion(p+n,0.75,0.5,1.0,0.5); } 
-if(u_df == 7)  { res = boxSphereDiff(p+n,vec3(PHI_SPHERE),1.0); }
-if(u_df == 8)  { res = hexPrism(p+n,vec2(1.0,.5)); }
-if(u_df == 9)  { res = cylinder(p+n, 1.0,.5); }
-if(u_df == 10) { res = link(p+n,1.0,1.0,0.5); }
-if(u_df == 11) { res = roundedCone(p+n,0.25,0.5,1.0); }
-if(u_df == 12) { res = ellipsoid(p+n,vec3(0.5,0.5,1.0)); }
-*/
-//if(u_repeat == 1) { p = repeat(p,vec3(3.5)); }
-
-//p = repeat(p,vec3(1.0));
-//vec3 r = (rotY(u_time ) * vec4(p,1.0)).xyz; 
+vec2 res = vec2(1.0,0.0);
 
 mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
 p = (vec4(p,1.0) * roty).xyz;
-//p.xy *= rot(u_time);
 
-float sphere   = sphere(p,1.0);
- 
-//mat4 rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.01);
-//p *= (vec4(p,1.0) * rot).xyz;
+float sphere = sphere(p,1.0);
 
-float cone1 = cone(p ,vec2(1.45,.9));
-float cone2 = cone(p,vec2(1.45,-.9));
+float cone1  = cone(p ,vec2(1.45,.9));
+float cone2  = cone(p,vec2(1.45,-.9));
 
-//float res2 = box(p+vec3(0.0,0.0,1.0), vec3(0.15));
-//p = repeat(p,vec3(.05));
-// vec3 c = (rotY(u_time) * vec4(p,1.0)).xyz;
+res = vec2(  smoU(cone2,  smoU(cone1,sphere,.92),.92 ) ,0.0);
 
-//res = sphere;
-res = smoU(cone2,  smoU(cone1,sphere,.92),.92 );
-//p = rotY(u_time) * vec4(p,1.0)).xyz;
-
-
-return res;
-
-}
-
-
-vec2 scene1(vec3 p) {
-vec2 res = vec2(1.0,0.0);
-
-res = vec2(   sphere(p,1.0),0.0 );
+//res = vec2(   sphere(p,1.0),0.0 );
 
 return res;
 }
 
-vec2 rayScene1(vec3 ro,vec3 rd) {
+vec2 rayScene(vec3 ro,vec3 rd) {
     
     float depth = 0.0;
     float d = -1.0;
@@ -597,7 +546,7 @@ vec2 rayScene1(vec3 ro,vec3 rd) {
     for(int i = 0; i < MARCH_STEPS; ++i) {
 
         vec3 p = ro + depth * rd;
-        vec2 dist = scene1(p);
+        vec2 dist = scene(p);
    
         if(dist.x < EPSILON || TRACE_DIST < dist.x ) { break; }
         depth += dist.x;
@@ -609,8 +558,8 @@ vec2 rayScene1(vec3 ro,vec3 rd) {
         return vec2(depth,d);
 
 }
-
-float rayScene(vec3 ro,vec3 rd,float start,float end) {
+/*
+float rayScene2(vec3 ro,vec3 rd,float start,float end) {
 
 float depth = start;
 
@@ -630,7 +579,7 @@ depth += distance;
 } 
 
 return end;
-}
+}*/
 
 float rayReflect(vec3 ro,vec3 rd,float start,float end) {
 
@@ -704,7 +653,7 @@ vec3 color = ka * ambient_light;
 //vec3 light3 = vec3( u_light3 ) ;
 
 
-vec3 light = vec3(10.0,0.0,0.0);
+vec3 light = vec3(0.0,10.0,0.0);
 mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01);
 //vec3 light = vec3(10.0,0.0,0.0);
 light = (vec4(light,1.0) * rot).xyz;
@@ -742,7 +691,7 @@ vec3 color = vec3(0.0);
 //vec3 ray2 = u_mouse_ray_near - ro;
 
 //float distance = rayScene(ro,rd,0.0,TRACE_DISTANCE);
-vec2 d = rayScene1(ro, rd);
+vec2 d = rayScene(ro, rd);
 
 //vec3 p =  ro + rd * distance;
 vec3 p = ro + rd * d.x;

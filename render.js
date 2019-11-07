@@ -138,8 +138,6 @@ uniforms = {
     "u_mouse_pressed"    : { value : mouse_pressed },
     "u_camera_target"    : new THREE.Uniform(new THREE.Vector3(camera_target)),
     "u_light"            : new THREE.Uniform(new THREE.Vector3(light)),
-    "u_light2"           : new THREE.Uniform(new THREE.Vector3(light2)),
-    "u_light3"           : new THREE.Uniform(new THREE.Vector3(light3)),
     //"u_sphere_position"  : new THREE.Uniform(new THREE.Vector3(0.0)),
     "u_mouse_ray_far"    : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     "u_mouse_ray_near"   : new THREE.Uniform(new THREE.Vector3(0.0)),
@@ -250,8 +248,6 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_mouse_pressed"].value   = mouse_pressed;
         uniforms["u_camera_target"].value   = camera_target;
         uniforms["u_light"].value           = light;
-        uniforms["u_light"].value          = light;
-        uniforms["u_light2"].value          = light2;
         uniforms["u_mouse_ray_far"].value   = mouse_ray_far;
         uniforms["u_mouse_ray_near"].value  = mouse_ray_near;
         uniforms["u_hash"].value            = render_scene.hash;
