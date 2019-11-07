@@ -62,6 +62,8 @@ const float NORMAL_EPSILON = 0.001;
 const int MARCH_STEPS = 164;
 const float TRACE_DIST = 1000.0;
 
+//int demo = 0;
+
 //#define MAP_TYPE demo
  
 //float hash(float h) { return fract( h * u_hash ); }
@@ -462,25 +464,25 @@ float torus(vec3 p,vec2 t) {
    return length(q) - t.y; 
 }
 
-/*
-float torusAngle(vec3 p,vec2 t) {
 
+float torusAngle(vec3 p,vec2 sc, float ra,float rb) {
 p.x = abs(p.x);
 float k = (sc.y*p.x > sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);
 return sqrt(dot(p,p) + ra*ra - 2.0*ra*k) -rb;
-} */
+} 
 
 float cylinder(vec3 p,float h,float r) {
-
-float d = length(vec2(p.x,p.z)) - r;
-d = max(d, -p.y - h);
-d = max(d, p.y - h);
-return d; 
+    
+   float d = length(vec2(p.x,p.z)) - r;
+    d = max(d, -p.y - h);
+    d = max(d, p.y - h);
+    return d; 
 }
 
-//float cylinderAxis(vec3 p,vec3 c) {
-//return length(vec2(p.x,p.z)- length( vec2(c.x,c.y)) ) - c.z;
-//}
+float cylinderAxis(vec3 p,vec3 c) {
+
+    return length(vec2(p.x,p.z)- vec2(c.x,c.y)) - c.z;
+}
 
 float hexPrism(vec3 p,vec2 h) {
 
@@ -513,6 +515,14 @@ float positive_y = sphere(p-vec3(0.0,d,0.0),r2);
 return smoU(negative_y,positive_y,k);
 }
 
+float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
+   
+    float c1 = cone(p,vec2(c.x,c.y));
+    float c2 = cone(p,vec2(c.x,-c.y)); 
+    float s  = sphere(p,r);
+
+    return smoU(c2,smoU(c1,s,sf),sf);
+} 
 
 float sphereFractal(vec3 p,float r,float h) {
 return length(p) + fractal312(p,5)*h - r;
@@ -522,8 +532,60 @@ return length(p) + fractal312(p,5)*h - r;
 vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
+int demo = 0;
 
-mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
+
+float t  = u_time;
+if( mod(t,5000.0) == 0.0) {
+   
+    demo += 1;
+}
+
+//if(t >= 0.0 && t <= 5000.0) {
+//mat4 ry = rotationAxis(vec3(1.0,0.0,0.0),t * 0.01); 
+
+if(t >= 0.0 && t <= 5000.0 ) {
+//if(demo == 0) {
+//p = (vec4(p,1.0) * ry).xyz;
+float s = sphere(p,1.0);
+res = vec2(s,0.0) ;
+//return res;
+}
+
+if(t >= 5000.0 && t <= 10000.0) { 
+//if(demo == 1) {
+p = repeatLimit(p,8.0, vec3(5.0));
+float boxes = box(p,vec3(1.0));
+res = vec2(boxes,0.0);  
+//return res;
+}
+
+if(t >= 10000.0 && t <= 15000.0) {
+//if(demo == 2) {
+float d = boxSphereDiff(p,vec3(PHI_SPHERE),1.0);
+res = vec2(d,0.0);
+//return res;
+//} 
+} 
+
+if(t >= 15000.0 && t <= 20000.0) {
+float s = sphereFractal(p,1.0,0.5);
+res = vec2(s,0.0);
+
+} 
+
+return res;
+
+
+
+} 
+
+/*
+vec2 scene(vec3 p) {
+
+vec2 res = vec2(1.0,0.0);
+
+mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
 p = (vec4(p,1.0) * roty).xyz;
 
 float sphere = sphere(p,1.0);
@@ -536,7 +598,7 @@ res = vec2(  smoU(cone2,  smoU(cone1,sphere,.92),.92 ) ,0.0);
 //res = vec2(   sphere(p,1.0),0.0 );
 
 return res;
-}
+} */
 
 vec2 rayScene(vec3 ro,vec3 rd) {
     
