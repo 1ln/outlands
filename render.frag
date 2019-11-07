@@ -523,7 +523,7 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
-mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
+mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 p = (vec4(p,1.0) * roty).xyz;
 
 float sphere = sphere(p,1.0);
