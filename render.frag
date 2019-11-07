@@ -317,11 +317,16 @@ return mat4(
     vec4(0,0,0,1)  
 );
 }
-/*
-vec3 repeatLimit(vec3 p,float c,vec3 l) {
 
-    return p - c * clamp(round(p/c),-l,l);
-}*/
+vec3 repeatLimit(vec3 p,float c,vec3 l) {
+  vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
+  return q; 
+}
+
+vec3 repeat(vec3 p,vec3 s) {
+    vec3 q = mod(p,s) - 0.5 * s;
+    return q;
+}
 
 float opIf(float d1,float d2) {
 return max(d1,d2);
@@ -353,11 +358,6 @@ return d - h;
 
 float concentric(float d,float h) {
 return abs(d) - h;
-}
-
-vec3 repeat(vec3 p,vec3 s) {
-vec3 q = mod(p,s) - .5*s;
-return q;
 }
 
 //3d Distance Field Geometry
@@ -409,13 +409,13 @@ if( k > a*h) return length(q - vec2(0.0,h)) - r2;
 
 return dot(q,vec2(a,b)) - r1;
 }
-/*
+
 float solidAngle(vec3 p,vec2 c,float ra) {
-    vec2 q = vec2(length(vec2(p.x,p.z),p.y));
+    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
     float l = length(q) - ra;
     float m = length(q - c * clamp(dot(q,c),0.0,ra));
     return max(l,m * sign(c.y * q.x - c.x * q.y));
-}*/
+}
 
 float link(vec3 p,float le,float r1,float r2) {
 
@@ -449,12 +449,12 @@ float box(vec3 p,vec3 b) {
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
-/*
+
 float roundBox(vec3 p,vec3 b,float r) {
 
    vec3 q = abs(p) - b;
-   return length(max(q,0.0)) + min(max(q.y,q.z)),0.0) - r;
-}*/
+   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
+}
 
 float torus(vec3 p,vec2 t) {
 
