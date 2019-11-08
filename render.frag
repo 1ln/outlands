@@ -533,7 +533,10 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
-p = repeatLimit(p,5.0, vec3(1.0));
+mat4 r = rotationAxis(vec3(0.0,1.0,0.0),0.001*u_time);
+p = (vec4(p,1.0) * r).xyz;
+
+p = repeatLimit(p,3.0, vec3(1.0));
 float boxes = box(p,vec3(1.0));
 res = vec2(boxes,0.0);  
  
