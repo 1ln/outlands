@@ -532,73 +532,14 @@ return length(p) + fractal312(p,5)*h - r;
 vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
-int demo = 0;
 
-
-float t  = u_time;
-if( mod(t,5000.0) == 0.0) {
-   
-    demo += 1;
-}
-
-//if(t >= 0.0 && t <= 5000.0) {
-//mat4 ry = rotationAxis(vec3(1.0,0.0,0.0),t * 0.01); 
-
-if(t >= 0.0 && t <= 5000.0 ) {
-//if(demo == 0) {
-//p = (vec4(p,1.0) * ry).xyz;
-float s = sphere(p,1.0);
-res = vec2(s,0.0) ;
-//return res;
-}
-
-if(t >= 5000.0 && t <= 10000.0) { 
-//if(demo == 1) {
-p = repeatLimit(p,8.0, vec3(5.0));
+p = repeatLimit(p,5.0, vec3(1.0));
 float boxes = box(p,vec3(1.0));
 res = vec2(boxes,0.0);  
-//return res;
-}
-
-if(t >= 10000.0 && t <= 15000.0) {
-//if(demo == 2) {
-float d = boxSphereDiff(p,vec3(PHI_SPHERE),1.0);
-res = vec2(d,0.0);
-//return res;
-//} 
-} 
-
-if(t >= 15000.0 && t <= 20000.0) {
-float s = sphereFractal(p,1.0,0.5);
-res = vec2(s,0.0);
-
-} 
+ 
 
 return res;
-
-
-
 } 
-
-/*
-vec2 scene(vec3 p) {
-
-vec2 res = vec2(1.0,0.0);
-
-mat4 roty = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.001);
-p = (vec4(p,1.0) * roty).xyz;
-
-float sphere = sphere(p,1.0);
-
-float cone1  = cone(p ,vec2(1.45,.9));
-float cone2  = cone(p,vec2(1.45,-.9));
-
-res = vec2(  smoU(cone2,  smoU(cone1,sphere,.92),.92 ) ,0.0);
-
-//res = vec2(   sphere(p,1.0),0.0 );
-
-return res;
-} */
 
 vec2 rayScene(vec3 ro,vec3 rd) {
     
