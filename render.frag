@@ -545,12 +545,12 @@ vec2 res = vec2(1.0,0.0);
 //p = (vec4(p,1.0) * r).xyz;
 
 float mouse_scale = PI * 2.0;
-vec2 m = u_mouse.xy/u_resolution.xy; 
+vec2 m = u_mouse.xy; 
 mat4 rx = rotationAxis(vec3(1.0,0.0,0.0), m.y * mouse_scale);
 mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
 p = (vec4(p,1.0) * rx * ry).xyz;
 
-p = repeatLimit(p,3.0, vec3(1.0));
+//p = repeatLimit(p,3.0, vec3(1.0));
 float boxes = box(p,vec3(1.0));
 res = vec2(boxes,0.0);  
  
@@ -578,7 +578,7 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         return vec2(depth,d);
 
 }
-
+/*
 float rayReflect(vec3 ro,vec3 rd,float start,float end) {
 
 float depth = start;
@@ -599,7 +599,7 @@ depth += distance;
  
 return end;
 }
-} 
+} */
 
 vec3 calcNormal(vec3 p) {
 

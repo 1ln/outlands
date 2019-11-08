@@ -122,7 +122,7 @@ controls.target = camera_target;
 controls.enableDamping = true;
 controls.enablePan = false;
 //controls.maxPolarAngle = .95;
-//controls.enabled = false; 
+controls.enabled = false; 
 
 light  = new THREE.Vector3(0.0,1.0,0.0);
 
