@@ -1,5 +1,5 @@
 self.addEventListener('install',function(event){
-
+/*
 event.waitUntil(
     caches.open(cacheName).then(function(cache) {
         return cache.addAll(
@@ -16,7 +16,9 @@ event.waitUntil(
     })
 );
 
+*/
 }); 
+
 
 self.addEventListener('activate',function(event){
 
