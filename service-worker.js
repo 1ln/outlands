@@ -6,7 +6,11 @@ event.waitUntil(
             [
                 'index.html',
                 'stylesheet.css',
+                'touchEvents.js',
+                'render.vert',
+                'render.frag',
                 'ShaderLoader.js',
+                'render.js'
             ]
          );
     })
