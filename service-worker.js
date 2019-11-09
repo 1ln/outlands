@@ -1,8 +1,6 @@
-// var cacheName = 'df2';
+let cacheName = 'df';
 
 self.addEventListener('install',function(event){
-
-var cacheName = 'df2';
 
 event.waitUntil(
     caches.open(cacheName).then(function(cache) {
@@ -25,6 +23,20 @@ event.waitUntil(
 
 }); 
 
+
+self.addEvevtListener('fetch',function(event) {
+    event.respondWith(
+        caches.match(event.request)  
+            .then(function(response) {
+                if(response) { 
+                    return response;
+                } 
+                return fetch(event.request);  
+            } 
+            ) 
+    );
+});
+ 
 
 self.addEventListener('activate',function(event){
 
