@@ -1,4 +1,8 @@
+// var cacheName = 'df2';
+
 self.addEventListener('install',function(event){
+
+var cacheName = 'df2';
 
 event.waitUntil(
     caches.open(cacheName).then(function(cache) {
