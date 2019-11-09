@@ -17,25 +17,6 @@ var camera_target  = new THREE.Vector3(0.0);
 
 var light  = new THREE.Vector3(0.0,0.0,0.0);
 
-//Create simplex noise texture for gpu
-var size = 256;
-var data = new Uint8Array(3 * size);
-
-var r = 1.0;
-var g = 0.0;
-var b = 0.0;
-
-for(var i = 0; i < size; ++i) {
-    var stride = i * 3;
-    
-    data[stride    ] = r;
-    data[stride + 1] = g;
-    data[stride + 2] = b;
-}
-
-var texture = new THREE.DataTexture(data,16,16,THREE.RGBFormat); 
-//texture.needsUpdate = true; 
-
 var mouse_ray_near = new THREE.Vector3(0.0);
 var mouse_ray_far  = new THREE.Vector3(0.0);
 
