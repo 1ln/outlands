@@ -551,9 +551,9 @@ mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
 p = (vec4(p,1.0) * rx * ry).xyz;
 
 //p = repeatLimit(p,3.0, vec3(1.0));
-float boxes = box(p,vec3(1.0));
-res = vec2(boxes,0.0);  
- 
+//float boxes = box(p,vec3(1.0));
+//res = vec2(boxes,0.0);  
+res = vec2( sphereFractal(p,1.0,0.25),0.0);
 
 return res;
 } 
@@ -578,12 +578,15 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         return vec2(depth,d);
 
 }
+
 /*
-float rayReflect(vec3 ro,vec3 rd,float start,float end) {
+float rayReflect(vec3 ro,vec3 rd) {
 
-float depth = start;
+float depth = 0.0;
+//float d = -1.0;
 
-    for(int i = 0; i < 10; ++i) {
+    for(int i = 0; i < 3; ++i) {
+
     float distance =  scene(ro + start * rd);
 
             if(distance < EPSILON) { 
