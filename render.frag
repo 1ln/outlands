@@ -339,6 +339,11 @@ vec3 repeat(vec3 p,vec3 s) {
     return q;
 }
 
+vec2 opU(vec2 d1,vec2 d2) {
+
+    return (d1.x < d2.x) ? d1 : d2;
+} 
+
 float opIf(float d1,float d2) {
 
     return max(d1,d2);
@@ -537,24 +542,33 @@ float sphereFractal(vec3 p,float r,float h) {
 vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
+float h = 2.5;
+vec3 q = p;
 
 //float mouse_scale = PI * 2.0;
 //vec2 m = u_mouse.xy/u_resolution.xy;
 
-//mat4 r = rotationAxis(vec3(0.0,1.0,0.0),0.001*u_time);
-//p = (vec4(p,1.0) * r).xyz;
-
-float mouse_scale = PI * 2.0;
-vec2 m = u_mouse.xy; 
-mat4 rx = rotationAxis(vec3(1.0,0.0,0.0), m.y * mouse_scale);
-mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
-p = (vec4(p,1.0) * rx * ry).xyz;
+mat4 r = rotY(0.001*u_time)   ;
+ q = (vec4(q ,1.0) * r).xyz;
+ 
+//float mouse_scale = PI * 2.0;
+//vec2 m = u_mouse.xy; 
+//mat4 rx = rotationAxis(vec3(1.0,0.0,0.0), m.y * mouse_scale);
+//mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
+//p = (vec4(p,1.0) * rx * ry).xyz;
 
 //p = repeatLimit(p,3.0, vec3(1.0));
 //float boxes = box(p,vec3(1.0));
-//res = vec2(boxes,0.0);  
-res = vec2( sphereFractal(p,1.0,0.25),0.0);
 
+//res = opU(res,vec2(box(q - vec3(0.0,5.5,0.0),vec3(0.5)),0.0));  
+//res = opU(res,vec2(  sphereFractal(p ,1.0,0.25),1.0) );
+
+float box = box(q - vec3(1.5 ,0.0  ,0.0),vec3(.5)); 
+float sphere = sphere(p,1.0) ;
+//h -= .02;
+
+res = vec2(  min(box,sphere),0.0)  ;
+ 
 return res;
 } 
 
@@ -672,9 +686,9 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 //vec3 light3 = vec3( u_light3 ) ;
 
      vec3 light = vec3(0.0,10.0,0.0);
-     mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01); 
+     //mat4 rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.01); 
      //vec3 light = vec3(10.0,0.0,0.0);
-     light = (vec4(light,1.0) * rot).xyz;
+     //light = (vec4(light,1.0) * rot).xyz;
 
      vec3 intensity = vec3(.5);
  
@@ -735,9 +749,17 @@ float shininess = u_shininess;
         n = distort(p,4);
         //n += sincPhase(p.x,n*p.y);
         //n += cell(p,16.); 
+ 
+      vec3 kd = vec3(0.0);   
+      //if(d.y == 0.0) { 
+      //kd = vec3(.4,.3,.2);
+      //} 
+      //if(d.y == 1.0) {
+      //kd = vec3(.4);
+      //} 
 
-      vec3 kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
-      
+      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+       
       //kd = vec3(u_diffuse_color/255.0);
       vec3 ka = vec3(u_ambient_color);
       vec3 ks = vec3(u_specular_color);
@@ -755,10 +777,10 @@ float shininess = u_shininess;
 
 void main() {
  
-vec3 camera_position = cameraPosition;
+//vec3 camera_position = cameraPosition;
 vec3 cam_target = u_camera_target;
 
-//vec3 camera_position = vec3(5.0,0.0,0.0);
+vec3 camera_position = vec3(0.0,0.0,-3.0);
 //vec3 cam_target = u_mouse_ray;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
