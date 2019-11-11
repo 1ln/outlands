@@ -119,7 +119,6 @@ uniforms = {
     "u_mouse_pressed"    : { value : mouse_pressed },
     "u_camera_target"    : new THREE.Uniform(new THREE.Vector3(camera_target)),
     "u_light"            : new THREE.Uniform(new THREE.Vector3(light)),
-    //"u_sphere_position"  : new THREE.Uniform(new THREE.Vector3(0.0)),
     "u_mouse_ray_far"    : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
     "u_mouse_ray_near"   : new THREE.Uniform(new THREE.Vector3(0.0)),
     "u_hash"             : { value: hash },
@@ -127,7 +126,6 @@ uniforms = {
     "u_epsilon"          : { value: render_scene.epsilon },
     "u_trace_distance"   : { value: render_scene.trace_distance },
     "u_march_steps"      : { value: render_scene.march_steps },
-    //"u_df"               : { value: distance_fields.df  },
     "u_specular_color"   : new THREE.Uniform(new THREE.Vector3(lighting.specular_color)),
     "u_diffuse_color"    : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_color)),
     "u_ambient_color"    : new THREE.Uniform(new THREE.Vector3(lighting.ambient_color)),
@@ -138,13 +136,11 @@ uniforms = {
     "u_diffuse_distort"  : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_distort)),
     "u_diffuse_fractal"  : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_fractal)),
     "u_diffuse_cell"     : new THREE.Uniform(new THREE.Vector3(lighting.diffuse_cell)),
-    "u_repeat"           : { value: 0 },
     "u_texture"          : { type : "t", value: texture },
-    "u_sin3_displace"    : { value: displace.sin3  },
-    "u_fractal_displace" : { value: displace.fractal },
-    "u_cell_displace"    : { value: 0.0 },
-    "u_cell_iterations"  : { value: 0.0 },
-    "u_noise_rounding"   : { value: 0.25 }
+    "u_swipe_left"       : { value: 0.0 },
+    "u_swipe_right"      : { value: 0.0 },
+    "u_swipe_up"         : { value: 0.0 },
+    "u_swipe_down"       : { value: 0.0 }
 
 
 };   
@@ -171,8 +167,8 @@ ShaderLoader("render.vert","render.frag",
     var render = function(timestamp) {
         requestAnimationFrame(render);
         
-        mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
-        mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
+        //mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
+        //mouse_ray_near = new THREE.Vector3(mouse.x,mouse.y,0.0).unproject(camera);
 
         //$('#canvas').mousedown(function() {
         //});
@@ -182,7 +178,7 @@ ShaderLoader("render.vert","render.frag",
         //controls.target = camera_target;
 
         //Rotation around orbital target
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
+        //orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
         //light.applyQuaternion(orbit_target);
 
          
@@ -223,7 +219,8 @@ ShaderLoader("render.vert","render.frag",
 
         //Move camera up
         //camera.translateY(distance);
-        
+
+
         uniforms["u_time"].value            = performance.now();
         uniforms["u_mouse"].value           = mouse;
         uniforms["u_mouse_pressed"].value   = mouse_pressed;
@@ -246,20 +243,18 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_distort"].value = lighting.diffuse_distort;
         uniforms["u_diffuse_fractal"].value = lighting.diffuse_fractal;
         uniforms["u_diffuse_cell"].value = lighting.diffuse_cell;
-        uniforms["u_repeat"].value = 0;
         uniforms["u_texture"].value = texture;
-        uniforms["u_sin3_displace"].value = displace.sin3;
-        uniforms["u_fractal_displace"].value = displace.fractal;
-        uniforms["u_cell_displace"].value = displace.cell;
-        uniforms["u_cell_iterations"].value = displace.cell_iterations;
-        uniforms["u_noise_rounding"].value = displace.noise_rounding;
+        uniforms["u_swipe_left"].value = swipeLeft();
+        uniforms["u_swipe_right"].value = swipeRight();
+        uniforms["u_swipe_up"].value = swipeUp();
+        uniforms["u_swipe_down"].value = swipeDown();
 
         //if(camera.position.distanceTo(new THREE.Vector3(0.0,0.0,0.0)) > 1.5) {
         //console.log("test"); 
         //} else { 
         //}
 
-        controls.update();
+        //controls.update();
 
         renderer.render(scene,camera);
 
