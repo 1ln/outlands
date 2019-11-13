@@ -1,50 +1,48 @@
-var canvas = $('#canvas')[0];
+let canvas = $('#canvas')[0];
 
-var camera,scene,renderer;
-var uniforms,geometry,material,mesh;
-var controls;
+let camera,scene,renderer;
+let uniforms,geometry,material,mesh;
+let controls;
 
-var mouse_pressed = false;
+let mouse_pressed = false;
 
-var mouse = new THREE.Vector2();
-var raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+let raycaster = new THREE.Raycaster();
 
-//var gui = new dat.GUI();
+let clock          = new THREE.Clock();
 
-var clock          = new THREE.Clock();
+let camera_target  = new THREE.Vector3(0.0);
 
-var camera_target  = new THREE.Vector3(0.0);
+let light  = new THREE.Vector3(0.0,0.0,0.0);
 
-var light  = new THREE.Vector3(0.0,0.0,0.0);
+let mouse_ray_near = new THREE.Vector3(0.0);
+let mouse_ray_far  = new THREE.Vector3(0.0);
 
-var mouse_ray_near = new THREE.Vector3(0.0);
-var mouse_ray_far  = new THREE.Vector3(0.0);
+let orbit_target   = new THREE.Quaternion();
 
-var orbit_target   = new THREE.Quaternion();
+let sphere         = new THREE.Vector3(0.0);
+let spherical      = new THREE.Spherical();
 
-var sphere         = new THREE.Vector3(0.0);
-var spherical      = new THREE.Spherical();
+let distance = 0.1;
+let new_scene = false;
 
-var distance = 0.1;
-var new_scene = false;
-
-var w = window.innerWidth;
-var h = window.innerHeight;
+let w = window.innerWidth;
+let h = window.innerHeight;
 canvas.width  = w;
 canvas.height = h; 
 
-var aspect = w/h;
+let aspect = w/h;
 
-var prng = new Math.seedrandom();
+let prng = new Math.seedrandom();
 
-var hash = prng();
+let hash = prng();
 console.log(hash);
 
 spherical.theta  = prng() * Math.PI * 2.0;
 spherical.phi    = Math.acos( (2.0 * prng() ) - 1.0);
 spherical.radius = 1.0;
 
-var render_scene = {
+let render_scene = {
 
     hash           : hash,
     octaves        : Math.floor(prng()*4.0) + 1,
@@ -54,7 +52,7 @@ var render_scene = {
 
 };
 
-var lighting = {
+let lighting = {
     ambient_color   : [0.0,0.0,0.0],
     specular_color  : [prng(),prng(),prng()],
     shininess       : prng() * 100.0,
@@ -68,7 +66,7 @@ var lighting = {
 
 };
 
-var displace = {
+let displace = {
     sin3            : Math.round(prng()) ? 1.0 : 0.0,
     fractal         : Math.round(prng()) ? 1.0 : 0.0,
     cell            : false,
@@ -164,7 +162,7 @@ ShaderLoader("render.vert","render.frag",
     renderer.setSize(w,h);
     //gui_container.append(gui.domElement);
 
-    var render = function(timestamp) {
+    let render = function(timestamp) {
         requestAnimationFrame(render);
         
         //mouse_ray_far = new THREE.Vector3(mouse.x,mouse.y,1.0).unproject(camera);
