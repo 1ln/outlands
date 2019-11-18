@@ -10,37 +10,47 @@ varying vec2 vtc;
 //uniform mat4 cameraWorldMatrix;
 //uniform mat4 cameraProjectionMatrixInverse;
 //uniform vec3 cameraPosition;
+
 uniform float u_hash;
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
 uniform vec2 u_resolution;
 uniform vec3 u_camera_target;
 uniform float u_time;
+
 uniform vec3 u_light;
-//uniform vec3 u_light2;
-//uniform vec3 u_light3;
-uniform vec3 u_mouse_ray_far;
-uniform vec3 u_mouse_ray_near;
-uniform int u_repeat;
+uniform vec3 u_light2;
+uniform vec3 u_light3;
+
+uniform int u_df0;
+uniform int u_df1;   
+uniform int u_op;
+
 uniform sampler2D u_texture;
-//uniform int u_repeat_distance;
+
+uniform int u_repeat_dist;
+uniform int u_repeat;
+
 uniform int u_octaves;
-uniform float u_noise_rounding;
 uniform float u_epsilon;
 uniform float u_trace_distance;
-uniform int u_march_steps;
+
 uniform vec3 u_diffuse_color;
 uniform vec3 u_ambient_color;
 uniform vec3 u_specular_color;
 uniform float u_shininess;
-//uniform int u_df;
 uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
 uniform int u_diffuse_distort;
 uniform int u_diffuse_fractal;
 uniform int u_diffuse_cell;
+
 uniform int u_fractal_displace;
+uniform int u_fractal_iterations;
+uniform int u_cell_displace;
+uniform int u_cell iterations;
+
 uniform int u_swipe_right;
 uniform int u_swipe_left;
 uniform int u_swipe_up;
@@ -55,9 +65,8 @@ const float PHI_INV = 1.0/PHI;
 const float PHI_SPHERE = 1.0 - PHI/6.0;
 
 const float EPSILON = 0.0001;
-const float NORMAL_EPSILON = 0.001;
 
-const int MARCH_STEPS = 164;
+const int MARCH_STEPS = 64;
 const float TRACE_DIST = 1000.0; 
 
 //float hash(float h) { return fract( h * u_hash ); }
@@ -551,20 +560,50 @@ float sphereFractal(vec3 p,float r,float h) {
     return length(p) + fractal312(p,5)*h - r;
 }
 
-float h = 1.5;
-float s = .0001;
+float field0(vec3 p) {  
+
+float res = 0.0;
+
+if(u_df0 == 0) { res = sphere(p,1.0); }
+if(u_df0 == 1) { res = box(p,vec3(1.0)); }
+if(u_df0 == 2) { res = cone(p,vec2(0.25,0.45)); 
+if(u_df0 == 3) { res = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0);
+if(u_df0 == 4) { res = torus(p,vec2(1.0,0.5));
+if(u_df0 == 5) { res = link(p,1.0,1.0,0.5);
+if(u_df0 == 6) { res = cylinder(p,1.0,0.5);
+
+return res; 
+}
+
+float field1(vec3 p) { 
+
+float res = 0.0;
+
+if(u_df1 == 0) { res = sphere(p,1.0); }
+if(u_df1 == 1) { res = box(p,vec3(1.0)); }
+if(u_df1 == 2) { res = cone(p,vec2(0.25,0.45));
+if(u_df1 == 3) { res = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0);
+if(u_df1 == 4) { res = torus(p,vec2(0.25,0.45));
+if(u_df1 == 5) { res = link(p,1.0,1.0,0.5);
+if(u_df1 == 6) { res = cylinder(p,1.0,0.5);
+
+return res;
+}
 
 vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
-//float h = 1.5;
-vec3 q = p;
+
+float df0 = 0.0;
+float df1 = 0.0;
+
+float n = 0.0;
 
 //float mouse_scale = PI * 2.0;
 //vec2 m = u_mouse.xy/u_resolution.xy;
 
-mat4 r = rotationAxis(vec3(1.0,0.0,0.0),0.0001 *u_time)   ;
-//  p = (vec4(p,1.0) * r).xyz;
+//mat4 r = rotationAxis(vec3(1.0,0.0,0.0),0.0001 *u_time)   ;
+//p = (vec4(p,1.0) * r).xyz;
  
 //float mouse_scale = PI * 2.0;
 //vec2 m = u_mouse.xy; 
@@ -572,24 +611,37 @@ mat4 r = rotationAxis(vec3(1.0,0.0,0.0),0.0001 *u_time)   ;
 //mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
 //p = (vec4(p,1.0) * rx * ry).xyz;
 
+if(u_repeat == 1) {
+p = repeat(p,u_repeat_dist);
+}
+
 //p = repeatLimit(p,3.0, vec3(1.0));
 //float boxes = box(p,vec3(1.0));
-
 //res = opU(res,vec2(box(q - vec3(0.0,5.5,0.0),vec3(0.5)),0.0));  
 //res = opU(res,vec2(  sphereFractal(p ,1.0,0.25),1.0) );
-
-float box = box(p ,vec3(.25)); 
+//float box = box(p ,vec3(.25)); 
 //float sphere = sphereFractal(p,1.0,.25) ;
+//float n = fractal312(p,4);
 
+df0 = field0(p+n);
+df1 = field1(p+n);
 
-float n = fractal312(p,4);
+if(u_op == 0) { 
+res = vec2(min(field0,field1)); 
+}
 
-float sphere = sphere(p  ,1.0);
-//h -= .02;
+if(u_op == 1) {
+res = vec2(max(field0,field1));
+}
 
-res = vec2(sphere,0.0);
-//res = vec2(  min(box,sphere),0.0)  ;
- 
+if(u_op == 2) { 
+res = vec2(max(-field0,field1));
+}
+
+if(u_op == 3) {
+res = smoU(field0,field1,.5);
+} 
+
 return res;
 } 
 
@@ -653,19 +705,6 @@ vec3 calcNormal(vec3 p) {
 
 }
 
-/*
-vec3 calcNormal(vec3 p) {
-
-    return normalize( vec3(
-
-    scene(  vec3( p.x + EPSILON,p.y,p.z)) - scene( vec3(p.x - EPSILON,p.y,p.z)), 
-    scene(  vec3( p.x,p.y + EPSILON,p.z)) - scene( vec3(p.x,p.y - EPSILON, p.z)),
-    scene(  vec3( p.x,p.y,p.z + EPSILON)) - scene( vec3(p.x,p.y,p.z - EPSILON)) 
-
-    )  );
-
-} */    
-
 vec3 rgb2hsv(in vec3 c) {
 
     vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0,4.0,2.0),6.0) - 3.0) - 1.0,0.0,1.0); 
@@ -702,21 +741,15 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
 
-//vec3 light  = vec3( u_light  ) ;
-//vec3 light2 = vec3( u_light2 ) ;
-//vec3 light3 = vec3( u_light3 ) ;
-
-     vec3 light = vec3(0.0,0.0,-10.0);
-     mat4 rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.0001); 
-     //vec3 light = vec3(10.0,0.0,0.0);
-   //  light = (vec4(light,1.0) * rot).xyz;
+vec3 light  = vec3( u_light  ) ;
+vec3 light2 = vec3( u_light2 ) ;
+vec3 light3 = vec3( u_light3 ) ;
 
      vec3 intensity = vec3(.5);
  
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
-
-//color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
-//color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
+     color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
+     color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
      return color;
 }
@@ -738,23 +771,11 @@ vec3 render(vec3 ro,vec3 rd) {
 
 vec3 color = vec3(0.0);
 
-//vec3 ray2 = normalize(  u_mouse_ray_near - ro);
-//vec3 ray2 = u_mouse_ray_near - ro;
-
 vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
 
-mat4 r = rotationAxis(vec3(1.0,0.0,0.0),u_time * 0.0001);
-//p = (vec4(p ,1.0) * r).xyz;
-
-//vec3 ka = vec3(0.0);
-//vec3 kd = vec3(0.0);
-//vec3 ks = vec3(0.5); 
-
-float shininess = 100.0;
-
-//float shininess = u_shininess;
+float shininess = u_shininess;
 
 //fade effect
 //if(u_time < 10.0) {
@@ -767,34 +788,15 @@ float shininess = 100.0;
 
     } else {
 
-        float n = 0.0;
-    
-        //n = u_time *.01;
-        //n = distort(p,6);
-         n += cellTexture255(p);
-        //n += sincPhase(p.x,n*p.y);
-       // n += cell(p,16.); 
- 
-      vec3 kd = vec3(0.0);   
-      //if(d.y == 0.0) { 
-      //kd = vec3(.4,.3,.2);
-      //} 
-      //if(d.y == 1.0) {
-      //kd = vec3(.4);
-      //} 
+      float n = 0.0;  
+      n = distort(p,6);
 
-      
-
-      //kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+      kd = fmCol(p.y,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
        
-      //kd = vec3(u_diffuse_color/255.0);
       vec3 ka = vec3(u_ambient_color);
       vec3 ks = vec3(u_specular_color);
     
       //kd = vec3(calcNormal(p);
-      kd = vec3(n,0.0,0.0);
-      //  kd = vec3(.5);
-      //color = kd;
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
 }
