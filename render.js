@@ -1,5 +1,5 @@
 let display_fullscreen = false;
-let orbit_controls = false;
+let orbit_controls = true;
 
 let canvas = $('#canvas')[0];
 
@@ -20,6 +20,7 @@ let aspect = w/h;
 let renderer = new THREE.WebGLRenderer({canvas:canvas});
 
 let nhash = new Math.seedrandom();
+let hash = nhash();
 
 let mouse_pressed = false;
 let mouse = new THREE.Vector2();
@@ -27,9 +28,11 @@ let mouse = new THREE.Vector2();
 let raycaster = new THREE.Raycaster();
 let clock = new THREE.Clock();
 let cam_target  = new THREE.Vector3(0.0);
-let light = new THREE.Vector3(0.0,10.0,0.0);
-let mouse_ray_near = new THREE.Vector3(0.0);
-let mouse_ray_far  = new THREE.Vector3(0.0);
+
+let scene_light = new THREE.Vector3(0.0,10.0,0.0);
+let cam_light = new THREE.Vector3(0.0,0.0,0.0);
+
+let mouse_ray = new THREE.Vector3(0.0);
 let orbit_target   = new THREE.Quaternion();
 
 let spherical        = new THREE.Spherical();
@@ -38,14 +41,12 @@ let spherical        = new THREE.Spherical();
     spherical.radius = 1.0;
 
 let epsilon = 0.001;
-let trace_distance = 1000.0;
-
-let shininess = 100.0;
+let trace_distance = 1000.0;    
  
-let ambient_color   = new THREE.Vector3(0.0);
+let ambient_color   = new THREE.Vector3(nhash(),nhash(),nhash()); 
 
 let specular_color  = new THREE.Vector3(nhash(),nhash(),nhash());
-//let shininess      = rh() * 100.0;
+let shininess      = nhash() * 100.0;
 
 let diffuse_color   = new THREE.Vector3( nhash(),nhash(),nhash());
 let diffuse_b       = new THREE.Vector3( nhash(),nhash(),nhash());
@@ -60,8 +61,10 @@ let displace_sin3   = Math.round(nhash()) ? 1.0 : 0.0;
 let fractal         = Math.round(nhash()) ? 1.0 : 0.0;
 let cell            = false;
 
+let df = Math.round(nhash() * 10.0);
+
 let camera = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
-    camera.position.set(3.0,2.5,-1.0);
+    camera.position.set(0.0,0.0,-10.0);
     camera.lookAt(0.0);
 
 let controls = new THREE.OrbitControls(camera,canvas);
@@ -71,7 +74,7 @@ let controls = new THREE.OrbitControls(camera,canvas);
     controls.enableDamping = true;
     controls.enablePan = false;
     //controls.maxPolarAngle = .95;
-    controls.enabled = false; 
+    controls.enabled = true; 
 
 let scene = new THREE.Scene();
 let geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -83,11 +86,12 @@ let uniforms = {
     "u_resolution"       : new THREE.Uniform(new THREE.Vector2(w,h)),
     "u_mouse"            : new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed"    : { value : mouse_pressed },
-    "u_camera_target"    : new THREE.Uniform(new THREE.Vector3(cam_target)),
-    "u_light"            : new THREE.Uniform(new THREE.Vector3(light)),
-    "u_mouse_ray_far"    : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
-    "u_mouse_ray_near"   : new THREE.Uniform(new THREE.Vector3(0.0)),
-    "u_hash"             : { value: nhash },
+    "u_cam_target"       : new THREE.Uniform(new THREE.Vector3(cam_target)),
+    "u_scene_light"      : new THREE.Uniform(new THREE.Vector3(scene_light)),
+    "u_cam_light"        : new THREE.Uniform(new THREE.Vector3(cam_light)),
+    "u_mouse_ray"        : new THREE.Uniform(new THREE.Vector3(0.0,0.0,0.0)),
+    "u_hash"             : { value: hash },
+    "u_df"               : { value: df }, 
     "u_octaves"          : { value: 0.0 },
     "u_epsilon"          : { value: epsilon },
     "u_trace_distance"   : { value: trace_distance },
@@ -189,11 +193,12 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_time"            ].value = performance.now();
         uniforms["u_mouse"           ].value = mouse;
         uniforms["u_mouse_pressed"   ].value = mouse_pressed;
-        uniforms["u_camera_target"   ].value = cam_target;
-        uniforms["u_light"           ].value = light;
-        uniforms["u_mouse_ray_far"   ].value = mouse_ray_far;
-        uniforms["u_mouse_ray_near"  ].value = mouse_ray_near;
-        uniforms["u_hash"            ].value = nhash;
+        uniforms["u_cam_target"      ].value = cam_target;
+        uniforms["u_scene_light"     ].value = scene_light;
+        uniforms["u_cam_light"       ].value = cam_light;
+        uniforms["u_mouse_ray"       ].value = mouse_ray;
+        uniforms["u_hash"            ].value = hash;
+        uniforms["u_df"              ].value = df;
         uniforms["u_octaves"         ].value = 0.0;
         uniforms["u_epsilon"         ].value = epsilon;
         uniforms["u_trace_distance"  ].value = trace_distance;
@@ -218,8 +223,10 @@ ShaderLoader("render.vert","render.frag",
         //console.log("test"); 
         //} else { 
         //}
-
-        //controls.update();
+        //if(orbit_controls === true) {
+        controls.update();
+        //controls.target = cam_target;
+        //}
 
         renderer.render(scene,camera);
 

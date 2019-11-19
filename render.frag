@@ -15,16 +15,13 @@ uniform float u_hash;
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
 uniform vec2 u_resolution;
-uniform vec3 u_camera_target;
+uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform vec3 u_light;
-uniform vec3 u_light2;
-uniform vec3 u_light3;
+uniform vec3 u_scene_light;
+uniform vec3 u_cam_light;
 
-uniform int u_df0;
-uniform int u_df1;   
-uniform int u_op;
+uniform int u_df;
 
 uniform sampler2D u_texture;
 
@@ -46,11 +43,6 @@ uniform int u_diffuse_distort;
 uniform int u_diffuse_fractal;
 uniform int u_diffuse_cell;
 
-uniform int u_fractal_displace;
-uniform int u_fractal_iterations;
-uniform int u_cell_displace;
-uniform int u_cell iterations;
-
 uniform int u_swipe_right;
 uniform int u_swipe_left;
 uniform int u_swipe_up;
@@ -71,6 +63,7 @@ const float TRACE_DIST = 1000.0;
 
 //float hash(float h) { return fract( h * u_hash ); }
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
+
 
 //float hash(float h) { 
 //return fract(PHI/log(23324.0 ) * h  * 981123324.0  );
@@ -560,90 +553,23 @@ float sphereFractal(vec3 p,float r,float h) {
     return length(p) + fractal312(p,5)*h - r;
 }
 
-float field0(vec3 p) {  
-
-float res = 0.0;
-
-if(u_df0 == 0) { res = sphere(p,1.0); }
-if(u_df0 == 1) { res = box(p,vec3(1.0)); }
-if(u_df0 == 2) { res = cone(p,vec2(0.25,0.45)); 
-if(u_df0 == 3) { res = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0);
-if(u_df0 == 4) { res = torus(p,vec2(1.0,0.5));
-if(u_df0 == 5) { res = link(p,1.0,1.0,0.5);
-if(u_df0 == 6) { res = cylinder(p,1.0,0.5);
-
-return res; 
-}
-
-float field1(vec3 p) { 
-
-float res = 0.0;
-
-if(u_df1 == 0) { res = sphere(p,1.0); }
-if(u_df1 == 1) { res = box(p,vec3(1.0)); }
-if(u_df1 == 2) { res = cone(p,vec2(0.25,0.45));
-if(u_df1 == 3) { res = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,1.0,0.0),1.0);
-if(u_df1 == 4) { res = torus(p,vec2(0.25,0.45));
-if(u_df1 == 5) { res = link(p,1.0,1.0,0.5);
-if(u_df1 == 6) { res = cylinder(p,1.0,0.5);
-
-return res;
-}
-
-vec2 scene(vec3 p) {
+vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
 
-float df0 = 0.0;
-float df1 = 0.0;
-
-float n = 0.0;
-
-//float mouse_scale = PI * 2.0;
-//vec2 m = u_mouse.xy/u_resolution.xy;
-
-//mat4 r = rotationAxis(vec3(1.0,0.0,0.0),0.0001 *u_time)   ;
-//p = (vec4(p,1.0) * r).xyz;
- 
-//float mouse_scale = PI * 2.0;
-//vec2 m = u_mouse.xy; 
-//mat4 rx = rotationAxis(vec3(1.0,0.0,0.0), m.y * mouse_scale);
-//mat4 ry = rotationAxis(vec3(0.0,1.0,0.0), m.x * mouse_scale);
-//p = (vec4(p,1.0) * rx * ry).xyz;
-
-if(u_repeat == 1) {
-p = repeat(p,u_repeat_dist);
-}
-
-//p = repeatLimit(p,3.0, vec3(1.0));
-//float boxes = box(p,vec3(1.0));
-//res = opU(res,vec2(box(q - vec3(0.0,5.5,0.0),vec3(0.5)),0.0));  
-//res = opU(res,vec2(  sphereFractal(p ,1.0,0.25),1.0) );
-//float box = box(p ,vec3(.25)); 
-//float sphere = sphereFractal(p,1.0,.25) ;
-//float n = fractal312(p,4);
-
-df0 = field0(p+n);
-df1 = field1(p+n);
-
-if(u_op == 0) { 
-res = vec2(min(field0,field1)); 
-}
-
-if(u_op == 1) {
-res = vec2(max(field0,field1));
-}
-
-if(u_op == 2) { 
-res = vec2(max(-field0,field1));
-}
-
-if(u_op == 3) {
-res = smoU(field0,field1,.5);
-} 
+if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
+if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
+if(u_df == 2) { res = vec2(roundedCone( p,.5,.25,1.0 ),2.0); } 
+if(u_df == 3) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
+if(u_df == 4) { res = vec2(torus(p,vec2(0.9,0.45)),4.0); }
+if(u_df == 5) { res = vec2(link(p,0.5,.5,.25),5.0); } 
+if(u_df == 6) { res = vec2(cylinder(p,1.0,0.5),6.0); }
+if(u_df == 7) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
+if(u_df == 8) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); }
+if(u_df == 9) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); } 
 
 return res;
-} 
+}
 
 vec2 rayScene(vec3 ro,vec3 rd) {
     
@@ -741,15 +667,15 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
 
-vec3 light  = vec3( u_light  ) ;
-vec3 light2 = vec3( u_light2 ) ;
-vec3 light3 = vec3( u_light3 ) ;
+vec3 scene_light  = vec3( u_scene_light  ) ;
+//vec3 scene_light = vec3( 0.0,0.0,-100.0 ) ;
+//vec3 light3 = vec3( u_light3 ) ;
 
      vec3 intensity = vec3(.5);
  
-     color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
-     color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
-     color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
+     color += phongModel(kd,ks,alpha,p,cam_ray,scene_light,intensity); 
+     //color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
+     //color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
      return color;
 }
@@ -775,7 +701,12 @@ vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
 
-float shininess = u_shininess;
+vec3 kd = vec3(0.0);
+vec3 ka = vec3(0.0);
+vec3 ks = vec3(0.0);
+
+float shininess = 10.0;
+float n = 0.0;
 
 //fade effect
 //if(u_time < 10.0) {
@@ -787,18 +718,18 @@ float shininess = u_shininess;
         color = vec3(0.0);
 
     } else {
+       
+      float n = distort(p,4);
 
-      float n = 0.0;  
-      n = distort(p,6);
-
-      kd = fmCol(p.y,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
        
       vec3 ka = vec3(u_ambient_color);
       vec3 ks = vec3(u_specular_color);
     
-      //kd = vec3(calcNormal(p);
+   //   kd = vec3(calcNormal(p));
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
+
 }
 
       return color;
@@ -806,14 +737,14 @@ float shininess = u_shininess;
 
 void main() {
  
-//vec3 camera_position = cameraPosition;
-vec3 cam_target = u_camera_target;
+vec3 cam_pos = cameraPosition;
+vec3 cam_target = u_cam_target;
 
-vec3 cam_pos = vec3(0.0,0.0,-2.5);
+//vec3 cam_pos = vec3(0.0,0.0,-2.5);
 //vec3 cam_target = u_mouse_ray;
 
-mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
-cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+//mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
+//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
 
