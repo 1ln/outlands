@@ -20,12 +20,13 @@ uniform float u_time;
 
 uniform vec3 u_scene_light;
 uniform vec3 u_cam_light;
+uniform int u_cam_light_enabled;
+uniform int u_scene_light_enabled; 
 
 uniform int u_df;
 
 uniform sampler2D u_texture;
 
-uniform int u_repeat_dist;
 uniform int u_repeat;
 
 uniform int u_octaves;
@@ -39,14 +40,6 @@ uniform float u_shininess;
 uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
-uniform int u_diffuse_distort;
-uniform int u_diffuse_fractal;
-uniform int u_diffuse_cell;
-
-uniform int u_swipe_right;
-uniform int u_swipe_left;
-uniform int u_swipe_up;
-uniform int u_swipe_down;
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -557,6 +550,10 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
+if(u_repeat == 1) {
+p = repeat(p,vec3(1.5));
+} 
+
 if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
 if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
 if(u_df == 2) { res = vec2(roundedCone( p,.5,.25,1.0 ),2.0); } 
@@ -668,13 +665,19 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      vec3 color = ka * ambient_light;  
 
 vec3 scene_light  = vec3( u_scene_light  ) ;
-//vec3 scene_light = vec3( 0.0,0.0,-100.0 ) ;
+vec3 cam_light = vec3( u_cam_light ) ;
 //vec3 light3 = vec3( u_light3 ) ;
 
      vec3 intensity = vec3(.5);
- 
+   
+     if(u_scene_light_enabled == 1) { 
      color += phongModel(kd,ks,alpha,p,cam_ray,scene_light,intensity); 
-     //color += phongModel(kd,ks,alpha,p,cam_ray,light2,intensity);
+     } 
+ 
+     if(u_cam_light_enabled == 1) { 
+     color += phongModel(kd,ks,alpha,p,cam_ray,cam_light,intensity);
+     } 
+
      //color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
      return color;

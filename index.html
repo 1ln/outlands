@@ -19,56 +19,28 @@
 <div id="gui_scroll">
 
 
-<h2> Raymarcher configuration </h2>
-<label>Hash 
-<input type="text" id="hash">
+<h3> Raymarcher configuration </h2>
+<label>Hash</label><br>
+<input type="text" id="hash"><br>
+
+<label>Trace Distance</label><br>
+<input type="range" id="trace_distance" min="0.0" max="2000.0" ><br>
+
+<label>Epsilon</label><br>
+<input type="range" id="epsilon" min="0.0" max="1.0" >
+
+<h3>Camera settings</h3>
+
+<input type="checkbox" id="orbit_control">use orbit controls<br>
+
+<input type="text" id="cam_pos_x">x <br>
+<input type="text" id="cam_pos_y">y<br>
+<input type="text" id="cam_pos_z">z<br>
+
+<h3>Scene spacing</h3>
+<label>Repeat
+<input type="checkbox" id="repeat">
 </label>
-
-<label>Trace Distance
-<input type="slider" id="trace_distance">
-</label>
-
-<label>Epsilon
-<input type="slider" id="epsilon">
-</label>
-
-<h2>Distance Field Geometry</h2>
-<label>Select function
-<input type="text" id="df">
-</label> 
-
-<h2>Noise</h2> 
-
-<label>On/off
-<input type="checkbox" id="fractal_noise">
-</label>
-
-<label>Octaves
-<input type="checkbox" id="">
-</label>
-
-<h2>Repetition Modulo</h2>
-<label>On/off
-<input type="checkbox" id="repetition">
-</label>
-
-<label>Distance</label>
-<input type="text" id="repetition_distance">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
