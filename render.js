@@ -1,6 +1,6 @@
 let display_fullscreen;
 let orbit_control;
-   
+  
 let w,h;
 let canvas;
 
@@ -259,7 +259,7 @@ $('#set_cam_pos').click(function() {
          ); 
 }); 
 
-$('#set_cam_light_pos').click(function) {
+$('#set_cam_light_pos').click(function() {
      cam_light.position.set(
           parseFloat($('#cam_light_x').val()),
           parseFloat($('#cam_light_y').val()),
@@ -274,10 +274,11 @@ $('#set_scene_light_pos').click(function() {
                  parseFloat($('#scene_light_z').val())
              );      
 });
-
+/* 
 window.addEventListener('mousemove',onMouseMove,false);
 
 function onMouseMove(event) {
     mouse.x = (event.clientX / w) * 2.0 - 1.0; 
     mouse.y = -(event.clientY / h) * 2.0 + 1.0;
 }
+*/

@@ -27,20 +27,67 @@
 <input type="range" id="trace_distance" min="0.0" max="2000.0" ><br>
 
 <label>Epsilon</label><br>
-<input type="range" id="epsilon" min="0.0" max="1.0" >
+<input type="text" id="epsilon" min="0.0" max="1.0" >
 
 <h3>Camera settings</h3>
 
 <input type="checkbox" id="orbit_control">use orbit controls<br>
 
-<input type="text" id="cam_pos_x">x <br>
-<input type="text" id="cam_pos_y">y<br>
-<input type="text" id="cam_pos_z">z<br>
+<input type="text" id="set_cam_x"> <label>camera x</label>   <br>
+<input type="text" id="set_cam_y"> <label>camera y</label>   <br>
+<input type="text" id="set_cam_z"> <label>camera z</label>   <br>
 
-<h3>Scene spacing</h3>
-<label>Repeat
-<input type="checkbox" id="repeat">
-</label>
+<input type="text" id="set_cam_light_x"> <label>camera light x</label><br>
+<input type="text" id="set_cam_light_y"> <label>camera light y</label><br>
+<input type="text" id="set_cam_light_z"> <label>camera light z</label><br> 
+
+<label>intensity</label><br>
+<input type="range" id="cam_light_intensity"> <br> 
+
+
+
+<h3> Scene Lighting</h3> 
+
+<input type="text" id="set_scene_light_x"><label>scene light x </label> <br>
+<input type="text" id="set_scene_light_y"><label>scene light y </label> <br>
+<input type="text" id="set_scene_light_z"><label>scene light z </label> <br> 
+
+
+<input type="range" id="scene_light_intensity"><label>scene light intensity</label><br>  
+
+<input type="range" id="diffuse_color_r"> <label>diffuse color r</label>   <br>
+<input type="range" id="diffuse_color_g"> <label>diffuse color g</label>   <br>
+<input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
+
+<input type="range" id="ambient_color_r"> <label>ambient color r</label><br>
+<input type="range" id="ambient_color_g"> <label>ambient color g</label><br>
+<input type="range" id="ambient_color_b"> <label>ambient color b</label><br> 
+
+<input type="range" id="specular_color_r"> <label>specular color r</label>   <br>
+<input type="range" id="specular_color_g"> <label>specular color g</label>   <br>
+<input type="range" id="specular_color_b"> <label>specular color b</label>   <br>
+
+<input type="range" id="diffuse_color_rb"> <label>diffuse color r</label><br>
+<input type="range" id="diffuse_color_gb"> <label>diffuse color g</label><br>
+<input type="range" id="diffuse_color_bb"> <label>diffuse color b</label><br> 
+
+<input type="range" id="diffuse_color_rc"> <label>diffuse color r</label>   <br>
+<input type="range" id="diffuse_color_gc"> <label>diffuse color g</label>   <br>
+<input type="range" id="diffuse_color_bc"> <label>diffuse color b</label>   <br>
+
+<input type="range" id="diffuse_color_rd"> <label>diffuse color r</label><br>
+<input type="range" id="diffuse_color_gd"> <label>diffuse color g</label><br>
+<input type="range" id="diffuse_color_bd"> <label>diffuse color b</label><br> 
+
+<input type="checkbox" id="light_rotate_around_target"> <label>rotate light around target</label>   <br>
+<input type="range" id="light_rotate_speed"> <label>rotate speed</label>   <br>
+<input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
+<input type="range" id="diffuse_color_r"> <label>diffuse color r</label><br>
+<input type="range" id="diffuse_color_g"> <label>diffuse color g</label><br>
+<input type="range" id="diffuse_color_b"> <label>diffuse color b</label><br> 
+
+<h3>Scene modulo</h3>
+<input type="checkbox" id="repeat"> <label>Repeat</label>
 
 
 
