@@ -16,84 +16,152 @@
 <canvas id="canvas"></canvas>
 
 <div id="gui_container"> 
-<div id="gui_scroll">
+    
+    <div id="gui_scroll">
+
+        <div class="config_container">
+
+             <h3> Raymarcher configuration </h3>
+
+             <label>Hash</label><br> 
+             <input type="text" id="hash"><br>
+             <button id="update_hash">update hash</button><br>
+
+             <label>Trace Distance</label><br>
+             <input type="range" id="trace_distance" min="0.0" max="2000.0" ><br>
+
+             <label>Epsilon</label><br>
+             <input type="text" id="epsilon">
+
+        </div>
+
+        <div class="config_container">
+
+            <h3>Camera settings</h3>
+ 
+            <input type="checkbox" id="orbit_control">use orbit controls<br>
+
+                <div class="config_group">
+      
+                    <h5>Camera position</h5>
+                    <input type="text" id="set_cam_x"> <label>camera x</label>   <br>
+                    <input type="text" id="set_cam_y"> <label>camera y</label>   <br>
+                    <input type="text" id="set_cam_z"> <label>camera z</label>   <br>
+                    <button id="update_cam_pos">update</button><br> 
+          
+                </div>
+
+                <div class="config_group">
+
+                    <h5>Camera light position</h5>
+                    <input type="text" id="set_cam_light_x"> <label>camera light x</label><br>
+                    <input type="text" id="set_cam_light_y"> <label>camera light y</label><br>
+                    <input type="text" id="set_cam_light_z"> <label>camera light z</label><br> 
+                    <button id="update_cam_light_pos">update</button><br>
+      
+                </div>
+
+                <div class="config_group">
+
+                    <h5>Camera light intensity</h5>
+                    <input type="range" id="cam_light_intensity">
+
+                </div>
+
+        </div>
 
 
-<h3> Raymarcher configuration </h2>
-<label>Hash</label><br>
-<input type="text" id="hash"><br>
+        <div class="config_container">
+     
+            <h3>Noise configuration</h3> 
+            <label>Octaves</label><br>
+            <input type="range" id="octaves">
+     
+        </div>
 
-<label>Trace Distance</label><br>
-<input type="range" id="trace_distance" min="0.0" max="2000.0" ><br>
+        <div class="config_container">
 
-<label>Epsilon</label><br>
-<input type="text" id="epsilon" min="0.0" max="1.0" >
+            <h3>Scene Lighting</h3> 
 
-<h3>Camera settings</h3>
+                <div class="config_group">
 
-<input type="checkbox" id="orbit_control">use orbit controls<br>
+                    <h5>Scene light position<h5>
+                    <input type="text" id="set_scene_light_x"><label>scene light x </label> <br>
+                    <input type="text" id="set_scene_light_y"><label>scene light y </label> <br>
+                    <input type="text" id="set_scene_light_z"><label>scene light z </label> <br>
+                    <button id="update_scene_light_pos">update</button><br>
 
-<input type="text" id="set_cam_x"> <label>camera x</label>   <br>
-<input type="text" id="set_cam_y"> <label>camera y</label>   <br>
-<input type="text" id="set_cam_z"> <label>camera z</label>   <br>
+               </div>
 
-<input type="text" id="set_cam_light_x"> <label>camera light x</label><br>
-<input type="text" id="set_cam_light_y"> <label>camera light y</label><br>
-<input type="text" id="set_cam_light_z"> <label>camera light z</label><br> 
+               <div class="config_group">
 
-<label>intensity</label><br>
-<input type="range" id="cam_light_intensity"> <br> 
+                   <h5>Scene light intensity</h5>
+                   <input type="range" id="scene_light_intensity"></br> 
 
+               </div>
 
+               <div class="config_group">
 
-<h3> Scene Lighting</h3> 
+                   <h5>Phong</h5>
+                   <input type="range" id="diffuse_color_r"> <label>diffuse color r</label>   <br>
+                   <input type="range" id="diffuse_color_g"> <label>diffuse color g</label>   <br>
+                   <input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
 
-<input type="text" id="set_scene_light_x"><label>scene light x </label> <br>
-<input type="text" id="set_scene_light_y"><label>scene light y </label> <br>
-<input type="text" id="set_scene_light_z"><label>scene light z </label> <br> 
+                   <input type="range" id="ambient_color_r"> <label>ambient color r</label><br>
+                   <input type="range" id="ambient_color_g"> <label>ambient color g</label><br> 
+                   <input type="range" id="ambient_color_b"> <label>ambient color b</label><br> 
 
+                   <input type="range" id="specular_color_r"> <label>specular color r</label>   <br>
+                   <input type="range" id="specular_color_g"> <label>specular color g</label>   <br>
+                   <input type="range" id="specular_color_b"> <label>specular color b</label>   <br>
 
-<input type="range" id="scene_light_intensity"><label>scene light intensity</label><br>  
+               </div>
 
-<input type="range" id="diffuse_color_r"> <label>diffuse color r</label>   <br>
-<input type="range" id="diffuse_color_g"> <label>diffuse color g</label>   <br>
-<input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
+               <div class="config_group">
 
-<input type="range" id="ambient_color_r"> <label>ambient color r</label><br>
-<input type="range" id="ambient_color_g"> <label>ambient color g</label><br>
-<input type="range" id="ambient_color_b"> <label>ambient color b</label><br> 
+                   <h5>Diffuse Frequency Modulation</h5> 
+                   <input type="checkbox" id="diffuse_frequency_mod"><label>Enable frequency mod</label><br> 
+                   <input type="range" id="diffuse_color_rb"> <label>diffuse color r</label><br>
+                   <input type="range" id="diffuse_color_gb"> <label>diffuse color g</label><br>
+                   <input type="range" id="diffuse_color_bb"> <label>diffuse color b</label><br> 
 
-<input type="range" id="specular_color_r"> <label>specular color r</label>   <br>
-<input type="range" id="specular_color_g"> <label>specular color g</label>   <br>
-<input type="range" id="specular_color_b"> <label>specular color b</label>   <br>
+                   <input type="range" id="diffuse_color_rc"> <label>diffuse color r</label>   <br>
+                   <input type="range" id="diffuse_color_gc"> <label>diffuse color g</label>   <br>
+                   <input type="range" id="diffuse_color_bc"> <label>diffuse color b</label>   <br>
 
-<input type="range" id="diffuse_color_rb"> <label>diffuse color r</label><br>
-<input type="range" id="diffuse_color_gb"> <label>diffuse color g</label><br>
-<input type="range" id="diffuse_color_bb"> <label>diffuse color b</label><br> 
+                   <input type="range" id="diffuse_color_rd"> <label>diffuse color r</label><br>
+                   <input type="range" id="diffuse_color_gd"> <label>diffuse color g</label><br>
+                   <input type="range" id="diffuse_color_bd"> <label>diffuse color b</label><br> 
 
-<input type="range" id="diffuse_color_rc"> <label>diffuse color r</label>   <br>
-<input type="range" id="diffuse_color_gc"> <label>diffuse color g</label>   <br>
-<input type="range" id="diffuse_color_bc"> <label>diffuse color b</label>   <br>
+               </div>
 
-<input type="range" id="diffuse_color_rd"> <label>diffuse color r</label><br>
-<input type="range" id="diffuse_color_gd"> <label>diffuse color g</label><br>
-<input type="range" id="diffuse_color_bd"> <label>diffuse color b</label><br> 
+               <div class="config_group">
 
-<input type="checkbox" id="light_rotate_around_target"> <label>rotate light around target</label>   <br>
-<input type="range" id="light_rotate_speed"> <label>rotate speed</label>   <br>
-<input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
-<input type="range" id="diffuse_color_r"> <label>diffuse color r</label><br>
-<input type="range" id="diffuse_color_g"> <label>diffuse color g</label><br>
-<input type="range" id="diffuse_color_b"> <label>diffuse color b</label><br> 
+                  <h5>Diffuse Noise</h5>
+                  <input type="checkbox" id="diffuse_distort"><label>Diffuse Distort</label><br>
 
-<h3>Scene modulo</h3>
-<input type="checkbox" id="repeat"> <label>Repeat</label>
+               </div>
 
+               <div class="config_group">  
 
+                  <h5> Light Rotation</h5>
+                  <input type="checkbox" id="light_rotate_around_target"> <label>Rotate light around target</label>   <br>
+                  <label>Speed</label>
+                  <input type="range" id="light_rotate_speed"><br>
 
+               </div>
 
+        </div> 
+ 
+        <div class="config_container"> 
 
-</div>
+            <h3>Scene modulo</h3>
+            <input type="checkbox" id="repeat"> <label>Repeat</label>
+
+        </div>
+
+    </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
