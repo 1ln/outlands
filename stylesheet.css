@@ -3,16 +3,14 @@ background-color:grey;
 }
 
 #canvas {
-
-border-radius:10px;
-
+margin:10px 10px;
 }
 
 #gui_container {
-
-float:right;
+margin:10px 10px;
 width:512px;
 height:512px;
+padding-left:10px;
 border:2px solid #000;
 border-radius:10px; 
 background-color:lightgrey;
@@ -21,10 +19,29 @@ overflow:hidden;
 }
 
 #gui_scroll { 
-
 width: 512px;
 height: 512px;
-
 overflow-y:scroll;
+
+} 
+
+@media (min-width: 900px) {
+
+body {
+display:flex;
+}
+
+#canvas {
+display:flex;
+}
+
+#gui_container {
+display:flex;
+width:100%;
+}
+
+#gui_scroll {
+width:100%;
+}
 
 } 

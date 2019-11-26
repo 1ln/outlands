@@ -64,18 +64,42 @@
                 <div class="config_group">
 
                     <h5>Camera light intensity</h5>
-                    <input type="range" id="cam_light_intensity">
+                    <input type="range" id="cam_light_intensity"><br>
 
                 </div>
 
         </div>
 
+        <div class="config_container">
+            <h3>Noise Configuration</h3>
+            <label>Octaves</label><br>
+            <input type="range" id="octaves">
+        </div>
+
+        <div class="config_group">
+            <h3>Distance Field Configuration</h3>
+            <label>Distance Field Equations</label><br>
+            <select id="distance_fields" size="10">
+                <option value="0">Sphere        </option>
+                <option value="1">Box           </option>
+                <option value="2">Capsule       </option>
+                <option value="3">Torus         </option>
+                <option value="4">Rounded Cone  </option>
+                <option value="5">Link          </option>
+                <option value="6">Sphere box    </option>
+                <option value="7">Cylinder      </option>
+                <option value="8">Prism         </option>
+                <option value="9">Hex Prism     </option>  
+        
+            </select><br>
+
+        </div>
+        
 
         <div class="config_container">
      
-            <h3>Noise configuration</h3> 
-            <label>Octaves</label><br>
-            <input type="range" id="octaves">
+            <h3>Scene Configuration</h3> 
+            <input type="checkbox" id="repeat"<label>Repeat Modulo</label><br>
      
         </div>
 
@@ -146,19 +170,13 @@
 
                   <h5> Light Rotation</h5>
                   <input type="checkbox" id="light_rotate_around_target"> <label>Rotate light around target</label>   <br>
-                  <label>Speed</label>
+                  <label>Speed</label><br>
                   <input type="range" id="light_rotate_speed"><br>
 
                </div>
 
         </div> 
  
-        <div class="config_container"> 
-
-            <h3>Scene modulo</h3>
-            <input type="checkbox" id="repeat"> <label>Repeat</label>
-
-        </div>
 
     </div>
 
