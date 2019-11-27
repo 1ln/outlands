@@ -151,7 +151,7 @@ uniforms = {
     "u_scene_light"         : new THREE.Uniform(new THREE.Vector3(scene_light)),
     "u_scene_light_enabled" : { value: scene_light_enabled }, 
     "u_cam_light"           : new THREE.Uniform(new THREE.Vector3(cam_light)),
-    "u_cam_light_intensity" : { value: light_intensity},
+    "u_cam_light_intensity" : { value: cam_light_intensity},
     "u_scene_light_intensity" : { value: scene_light_intensity},
     "u_hash"                : { value: hash },
     "u_df"                  : { value: df }, 

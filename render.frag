@@ -18,16 +18,14 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform vec3 u_scene_light;
-uniform vec3 u_cam_light;
-uniform int u_cam_light_enabled;
-uniform int u_scene_light_enabled; 
+uniform vec3 u_light;
 
 uniform int u_df;
 
 uniform sampler2D u_texture;
 
 uniform int u_repeat;
+uniform float u_repeat_distance;
 
 uniform int u_octaves;
 uniform float u_epsilon;
@@ -36,10 +34,16 @@ uniform float u_trace_distance;
 uniform vec3 u_diffuse_color;
 uniform vec3 u_ambient_color;
 uniform vec3 u_specular_color;
+
 uniform float u_shininess;
+uniform float u_intensity;
+
 uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
+
+uniform int u_diffuse_distort;
+uniform int u_diffuse_fractal;
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -49,10 +53,9 @@ const float PHI =  1.6180339;
 const float PHI_INV = 1.0/PHI;
 const float PHI_SPHERE = 1.0 - PHI/6.0;
 
-const float EPSILON = 0.0001;
-
 const int MARCH_STEPS = 64;
-const float TRACE_DIST = 1000.0; 
+float EPSILON = u_epsilon;
+float TRACE_DIST = u_trace_distance;
 
 //float hash(float h) { return fract( h * u_hash ); }
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
@@ -201,9 +204,9 @@ float fractal3(vec3 x) {
 
 }
 
-float fractal312(vec3 x,int octaves_n) {
+float fractal312(vec3 x) {
 
-    int octaves = octaves_n;
+    int octaves = u_octaves;
 
     float value = 0.0;
     float h  = .5;
@@ -227,19 +230,19 @@ float fractal312(vec3 x,int octaves_n) {
     return value;
 }
 
-float distort(vec3 p,int octaves) {
+float distort(vec3 p) {
     
-    vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
-                  fractal312(p + vec3(4.5,1.8,6.3),octaves),
-                  fractal312(p + vec3(1.1,7.2,2.4),octaves)
+    vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0)),      
+                  fractal312(p + vec3(4.5,1.8,6.3)),
+                  fractal312(p + vec3(1.1,7.2,2.4))
     );
 
-    vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1),octaves),
-                  fractal312(p + 4.0*q + vec3(5.6,3.7,8.9),octaves),
-                  fractal312(p + 4.0*q + vec3(4.3,0.0,3.1),octaves) 
-    );
+    vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1)),
+                  fractal312(p + 4.0*q + vec3(5.6,3.7,8.9)),
+                  fractal312(p + 4.0*q + vec3(4.3,0.0,3.1)) 
+    ); 
 
-    return fractal312(p + 4.0* r,octaves);
+    return fractal312(p + 4.0* r);
 } 
 
       
@@ -543,7 +546,7 @@ float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
 
 float sphereFractal(vec3 p,float r,float h) {
  
-    return length(p) + fractal312(p,5)*h - r;
+    return length(p) + fractal312(p)*h - r;
 }
 
 vec2 scene(vec3 p) { 
@@ -551,19 +554,19 @@ vec2 scene(vec3 p) {
 vec2 res = vec2(1.0,0.0);
 
 if(u_repeat == 1) {
-p = repeat(p,vec3(1.5));
-} 
+p = repeat(p,vec3(u_repeat_distance));
+}  
 
 if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
 if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
-if(u_df == 2) { res = vec2(roundedCone( p,.5,.25,1.0 ),2.0); } 
-if(u_df == 3) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
-if(u_df == 4) { res = vec2(torus(p,vec2(0.9,0.45)),4.0); }
+if(u_df == 2) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
+if(u_df == 3) { res = vec2(torus(p,vec2(0.9,0.45)),4.0); }
+if(u_df == 4) { res = vec2(roundedCone(p,0.5,0.25,1.0),2.0); }
 if(u_df == 5) { res = vec2(link(p,0.5,.5,.25),5.0); } 
-if(u_df == 6) { res = vec2(cylinder(p,1.0,0.5),6.0); }
-if(u_df == 7) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
-if(u_df == 8) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); }
-if(u_df == 9) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); } 
+if(u_df == 6) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
+if(u_df == 7) { res = vec2(cylinder(p,1.0,0.5),6.0);}
+if(u_df == 8) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); }
+if(u_df == 9) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); } 
 
 return res;
 }
@@ -664,21 +667,13 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
 
-vec3 scene_light  = vec3( u_scene_light  ) ;
-vec3 cam_light = vec3( u_cam_light ) ;
-//vec3 light3 = vec3( u_light3 ) ;
+     vec3 light  = vec3( u_light  ) ;
 
-     vec3 intensity = vec3(.5);
-   
-     if(u_scene_light_enabled == 1) { 
-     color += phongModel(kd,ks,alpha,p,cam_ray,scene_light,intensity); 
-     } 
+     vec3 intensity = vec3(u_intensity);
+
+     color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
  
-     if(u_cam_light_enabled == 1) { 
-     color += phongModel(kd,ks,alpha,p,cam_ray,cam_light,intensity);
      } 
-
-     //color += phongModel(kd,ks,alpha,p,cam_ray,light3,intensity);
 
      return color;
 }
@@ -708,7 +703,7 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
-float shininess = 10.0;
+float shininess = u_shininess;
 float n = 0.0;
 
 //fade effect
@@ -722,13 +717,19 @@ float n = 0.0;
 
     } else {
        
-      float n = distort(p,4);
+      if(u_diffuse_distort == 1) {
+      n = distort(p);
+      }
 
-      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
-       
-      vec3 ka = vec3(u_ambient_color);
-      vec3 ks = vec3(u_specular_color);
-    
+      if(u_diffuse_fractal == 1) {
+      n = fractal312(p);
+      } 
+      
+      kd = fmCol(p.y+n,vec3(u_diffuse_color/255.0),vec3(u_diffuse_b/255.0),vec3(u_diffuse_c/255.0),vec3(u_diffuse_d/255.0));
+
+      vec3 ka = vec3(u_ambient_color/255.0);
+      vec3 ks = vec3(u_specular_color/255.0);
+
    //   kd = vec3(calcNormal(p));
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
