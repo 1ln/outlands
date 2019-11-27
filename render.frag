@@ -648,7 +648,6 @@ vec3 phongModel(vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray,vec3 light_pos,v
      vec3 r = normalize(reflect(-l,n));
 
      float ln = clamp(dot(l,n),0.0,1.0);
-     //float ln = dot(l,n);
      float rv = dot(r,v);
 
      if(ln < 0.0) {
@@ -672,8 +671,6 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      vec3 intensity = vec3(u_intensity);
 
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
- 
-     } 
 
      return color;
 }
@@ -725,12 +722,10 @@ float n = 0.0;
       n = fractal312(p);
       } 
       
-      kd = fmCol(p.y+n,vec3(u_diffuse_color/255.0),vec3(u_diffuse_b/255.0),vec3(u_diffuse_c/255.0),vec3(u_diffuse_d/255.0));
+      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
 
-      vec3 ka = vec3(u_ambient_color/255.0);
-      vec3 ks = vec3(u_specular_color/255.0);
-
-   //   kd = vec3(calcNormal(p));
+      vec3 ka = vec3(u_ambient_color);
+      vec3 ks = vec3(u_specular_color);
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
 

@@ -10,8 +10,7 @@ let renderer;
 let nhash,hash;  
 let mouse, mouse_pressed;
 
-let scene_light,cam_light; 
-let cam_light_enabled,scene_light_enabled;
+let light;
 let shininess;
 
 let epsilon;
@@ -25,10 +24,10 @@ let ambient_color;
 let specular_color;
 let diffuse_color; 
 let diffuse_a,diffuse_b,diffuse_c;
-let scene_light_intensity, cam_light_intensity;
+let intensity;
 
-let diffuse_noise;
-let positional_noise;
+let diffuse_distort;
+let diffuse_fractal;
 
 let controls;
 
@@ -57,12 +56,10 @@ nhash = new Math.seedrandom();
 hash = nhash();
 $('#hash').val(hash.toFixed(8)); 
 
+octaves = Math.round(nhash() * 6);
 cam_target  = new THREE.Vector3(0.0);
 
-scene_light = new THREE.Vector3(0.0,10.0,0.0);
-scene_light_enabled = true;
-cam_light = new THREE.Vector3(0.0,0.0,0.0);
-cam_light_enabled = false; 
+light = new THREE.Vector3(0.0,10.0,0.0);
 
 let mouse_ray = new THREE.Vector3(0.0); 
 
@@ -73,65 +70,54 @@ $('#epsilon').val(epsilon);
 
 trace_distance = 1000.0;     
 
-repeat = false;
-repeat_distance = 5.0;     
+repeat = Math.round(nhash()) ? true : false;
+repeat_distance = Math.round(nhash() * 25.0) + 2.5;   
 
-ambient_color   = new THREE.Vector3(nhash(),nhash(),nhash()); 
+diffuse_distort = Math.round(nhash()) ? true : false;
+diffuse_fractal = Math.round(nhash()) ? true : false;
 
-specular_color  = new THREE.Vector3(nhash(),nhash(),nhash());
+ambient_color   = new THREE.Color(nhash(),nhash(),nhash()); 
+
+specular_color  = new THREE.Color(nhash(),nhash(),nhash());
 shininess      = nhash() * 100.0;
+intensity      = 5.0;
 
-diffuse_color   = new THREE.Vector3( nhash(),nhash(),nhash());
-diffuse_b       = new THREE.Vector3( nhash(),nhash(),nhash());
-diffuse_c       = new THREE.Vector3( nhash(),nhash(),nhash());
-diffuse_d       = new THREE.Vector3( nhash(),nhash(),nhash());
+diffuse_color   = new THREE.Color( nhash(),nhash(),nhash());
+diffuse_b       = new THREE.Color( nhash(),nhash(),nhash());
+diffuse_c       = new THREE.Color( nhash(),nhash(),nhash());
+diffuse_d       = new THREE.Color( nhash(),nhash(),nhash());
 
 df = Math.round(nhash() * 10.0);
 $('#df').val(df);
+
+$('#octaves').val(octaves);
+$('#intensity').val(intensity);
+$('#shininess').val(shininess);
 
     cam = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
     cam.position.set(0.0,0.0,-2.5);
     cam.lookAt(0.0);
 
-$('#set_cam_x').val(cam.position.x);
-$('#set_cam_y').val(cam.position.y);
-$('#set_cam_z').val(cam.position.z);
+$('#cam_x').val(cam.position.x);
+$('#cam_y').val(cam.position.y);
+$('#cam_z').val(cam.position.z);
 
-$('#set_cam_light_x').val(cam_light.x);
-$('#set_cam_light_y').val(cam_light.y);
-$('#set_cam_light_z').val(cam_light.z);
+$('#light_x').val(light.x);
+$('#light_y').val(light.y);
+$('#light_z').val(light.z);
 
-$('#set_scene_light_x').val(scene_light.x);
-$('#set_scene_light_y').val(scene_light.y);
-$('#set_scene_light_z').val(scene_light.z);
+$('#diffuse_color').val(diffuse_color.getHex()  );
+$('#diffuse_b').val(diffuse_b.getHex()  );
+$('#diffuse_c').val(diffuse_c.getHex());
+$('#diffuse_d').val(diffuse_d.getHex());
 
-$('#diffuse_r').val(diffuse_color.x);
-$('#diffuse_g').val(diffuse_color.y);
-$('#diffuse_b').val(diffuse_color.z);
+$('#ambient_color').val(ambient_color.getHex());
 
-$('#ambient_r').val(ambient_color.x);
-$('#ambient_g').val(ambient_color.y);
-$('#ambient_b').val(ambient_color.z);
-
-$('#specular_r').val(specular_color.x);
-$('#specular_g').val(specular_color.y);
-$('#specular_b').val(specular_color.z);
-
-$('#diffuse_rb').val(diffuse_b.x);
-$('#diffuse_gb').val(diffuse_b.y);
-$('#diffuse_bb').val(diffuse_b.z);
-
-$('#diffuse_rc').val(diffuse_c.x);
-$('#diffuse_gc').val(diffuse_c.y);
-$('#diffuse_bc').val(diffuse_c.z);
-
-$('#diffuse_rd').val(diffuse_d.x);
-$('#diffuse_gd').val(diffuse_d.y);
-$('#diffuse_bd').val(diffuse_d.z);
+$('#specular_color').val(specular_color.getHex());
 
 controls = new THREE.OrbitControls(cam,canvas);
     controls.minDistance = 1.5;
-    controls.maxDistance = 24.5;
+    controls.maxDistance = 100.0;
     controls.target = cam_target;
     controls.enableDamping = true;
     controls.enablePan = false; 
@@ -147,28 +133,24 @@ uniforms = {
     "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed"       : { value : mouse_pressed },
     "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
-    "u_cam_light_enabled"   : { value: cam_light_enabled },
-    "u_scene_light"         : new THREE.Uniform(new THREE.Vector3(scene_light)),
-    "u_scene_light_enabled" : { value: scene_light_enabled }, 
-    "u_cam_light"           : new THREE.Uniform(new THREE.Vector3(cam_light)),
-    "u_cam_light_intensity" : { value: cam_light_intensity},
-    "u_scene_light_intensity" : { value: scene_light_intensity},
+    "u_light"               : new THREE.Uniform(new THREE.Vector3(light)),
+    "u_intensity"           : { value: intensity},
     "u_hash"                : { value: hash },
     "u_df"                  : { value: df }, 
-    "u_octaves"             : { value: 0.0 },
+    "u_octaves"             : { value: octaves },
     "u_epsilon"             : { value: epsilon },
     "u_trace_distance"      : { value: trace_distance },
-    "u_repeat"              : { value: false },
+    "u_repeat"              : { value: repeat },
     "u_repeat_distance"     : { value: repeat_distance },
-    "u_specular_color"      : new THREE.Uniform(new THREE.Vector3(specular_color)),
-    "u_diffuse_color"       : new THREE.Uniform(new THREE.Vector3(diffuse_color)),
-    "u_ambient_color"       : new THREE.Uniform(new THREE.Vector3(ambient_color)),
+    "u_specular_color"      : new THREE.Uniform(new THREE.Color(specular_color)),
+    "u_diffuse_color"       : new THREE.Uniform(new THREE.Color(diffuse_color)),
+    "u_ambient_color"       : new THREE.Uniform(new THREE.Color(ambient_color)),
     "u_shininess"           : { value: shininess },
-    "u_diffuse_b"           : new THREE.Uniform(new THREE.Vector3(diffuse_b)),
-    "u_diffuse_c"           : new THREE.Uniform(new THREE.Vector3(diffuse_c)),
-    "u_diffuse_d"           : new THREE.Uniform(new THREE.Vector3(diffuse_d)),
-    "u_diffuse_distort"     : new THREE.Uniform(new THREE.Vector3(diffuse_distort)),
-    //"u_diffuse_fractal"  : new THREE.Uniform(new THREE.Vector3(diffuse_fractal)),
+    "u_diffuse_b"           : new THREE.Uniform(new THREE.Color(diffuse_b)),
+    "u_diffuse_c"           : new THREE.Uniform(new THREE.Color(diffuse_c)),
+    "u_diffuse_d"           : new THREE.Uniform(new THREE.Color(diffuse_d)),
+    "u_diffuse_distort"     : { value: diffuse_distort },
+    "u_diffuse_fractal"     : { value: diffuse_fractal },
     //"u_diffuse_cell"     : new THREE.Uniform(new THREE.Vector3(diffuse_cell)),
     "u_texture"             : { type : "t", value: texture }
 
@@ -214,12 +196,8 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
         uniforms["u_cam_target"          ].value = cam_target;
-        uniforms["u_scene_light_enabled"   ].value = scene_light_enabled;
-        uniforms["u_cam_light_enabled"     ].value = cam_light_enabled; 
-        uniforms["u_scene_light"           ].value = scene_light;
-        uniforms["u_scene_light_intensity" ].value = scene_light_intensity;
-        uniforms["u_cam_light"           ].value = cam_light;
-        uniforms["u_cam_light_intensity" ].value = cam_light_intensity; 
+        uniforms["u_light"                ].value = light;
+        uniforms["u_intensity"           ].value = intensity;
         uniforms["u_hash"                ].value = hash;
         uniforms["u_df"                  ].value = df;
         uniforms["u_octaves"             ].value = octaves;
@@ -235,7 +213,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_c"           ].value = diffuse_c;
         uniforms["u_diffuse_d"           ].value = diffuse_d;
         uniforms["u_diffuse_distort"     ].value = diffuse_distort;
-     //   uniforms["u_diffuse_fractal" ].value = diffuse_fractal;
+        uniforms["u_diffuse_fractal"     ].value = diffuse_fractal;
         uniforms["u_texture"             ].value = texture;         
 
         renderer.render(scene,cam);
@@ -251,7 +229,7 @@ $('#update_hash').click(function() {
     hash = parseFloat($('#hash').val());
 }); 
    
-$('#epsilon').change(function() {
+$('#update_epsilon').change(function() {
     epsilon = parseFloat($('#epsilon').val());
 });
 
@@ -263,13 +241,37 @@ $('#octaves').change(function() {
     octaves = parseFloat($('#octaves').val());
 });  
 
-$('#scene_light_intensity').change(function() {
-    scene_light_intensity = parseFloat($('#scene_light_intensity').val());
+$('#intensity').change(function() {
+    intensity = parseFloat($('#intensity').val());
 });
 
-$('#cam_light_intensity').change(function() {
-    cam_light_intensity = parseFloat($('#cam_light_intensity').val());
+$('#shininess').change(function() {
+    shininess = parseFloat($('#shininess').val());
+});
+
+$('#diffuse_color').change(function() {
+    diffuse_color.setHex($('#diffuse_color').val());
 }); 
+   
+$('#ambient_color').change(function() {
+    diffuse_color.setHex($('#diffuse_g').val());
+});
+
+$('#diffuse_b').change(function() {
+    diffuse_b.setHex($('#diffuse_b').val());
+});
+
+$('#diffuse_c').change(function() {
+    diffuse_c.setHex($('#diffuse_c').val());
+});  
+
+$('#diffuse_d').change(function() {
+    diffuse_d.setHex($('#diffuse_d').val());
+});
+
+$('#specular').change(function() {
+    specular_color.setHex($('#specular_color').val());
+});
 
 $('#distance_fields').change(function() {
     df = parseInt($('#distance_fields').val());
@@ -289,30 +291,12 @@ $('#repeat_distance').change(function() {
     repeat_distance = parseFloat($('#repeat_distance').val());
 });
 
-$('#cam_light_enabled').change(function() {
+$('#diffuse_fractal').change(function() {
 
-    if($('#cam_light_enabled')[0].checked !== false) {
-        cam_light_enabled = true;
+    if($('#diffuse_fractal')[0].checked !== false) {
+        diffuse_fractal = true;
     } else { 
-        cam_light_enabled = false;
-    }
-});
-
-$('#scene_light_enabled').change(function() {
-    if($('#scene_light_enabled')[0].checked !== false) {
-        scene_light_enabled = true;
-    } else {
-        scene_light_enabled = false;
-    }
-});
-
-
-$('#diffuse_frequency_mod').change(function() {
-
-    if($('#diffuse_frequency_mod')[0].checked !== false) {
-        diffuse_frequency_mod = true;
-    } else { 
-        diffuse_frequency_mod = false;
+        diffuse_fractal = false;
     }
 });
 
@@ -327,27 +311,19 @@ $('#diffuse_distort').change(function() {
 $('#update_cam_pos').click(function() {
         
          cam.position.set( 
-         parseFloat($('#set_cam_x').val()),
-         parseFloat($('#set_cam_y').val()),
-         parseFloat($('#set_cam_z').val())
+         parseFloat($('#cam_x').val()),
+         parseFloat($('#cam_y').val()),
+         parseFloat($('#cam_z').val())
          ); 
 }); 
 
-$('#update_cam_light_pos').click(function() {
-     cam_light.position.set(
-          parseFloat($('#set_cam_light_x').val()),
-          parseFloat($('#set_cam_light_y').val()),
-          parseFloat($('#set_cam_light_z').val())
+$('#update_light_pos').click(function() {
+      light.position.set(
+          parseFloat($('#light_x').val()),
+          parseFloat($('#light_y').val()),
+          parseFloat($('#light_z').val())
           );
 }); 
-
-$('#update_scene_light_pos').click(function() { 
-             scene_light.position.set(
-                 parseFloat($('#set_scene_light_x').val()),
-                 parseFloat($('#set_scene_light_y').val()),
-                 parseFloat($('#set_scene_light_z').val())
-             );      
-});
 
 
 

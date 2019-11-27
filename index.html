@@ -27,12 +27,12 @@
              <input type="text" id="hash"><br>
              <button id="update_hash">update hash</button><br>
 
-             <label>Trace Distance</label><br>
-             <input type="range" id="trace_distance" min="0.0" max="2000.0" ><br>
-
              <label>Epsilon</label><br>
-             <input type="text" id="epsilon">
-             <button id="update_epsilon">update epsilon</button>
+             <input type="text" id="epsilon"><br>
+             <button id="update_epsilon">update epsilon</button><br>
+
+             <label>Trace Distance</label><br>
+             <input type="range" id="trace_distance" min="0.0" max="2000.0"><br> 
 
         </div>
 
@@ -45,9 +45,9 @@
                 <div class="config_group">
       
                     <h5>Camera position</h5>
-                    <input type="text" id="set_cam_x"> <label>camera x</label>   <br>
-                    <input type="text" id="set_cam_y"> <label>camera y</label>   <br>
-                    <input type="text" id="set_cam_z"> <label>camera z</label>   <br>
+                    <input type="text" id="cam_x"> <label>camera x</label>   <br>
+                    <input type="text" id="cam_y"> <label>camera y</label>   <br>
+                    <input type="text" id="cam_z"> <label>camera z</label>   <br>
                     <button id="update_cam_pos">update</button><br> 
           
                 </div>
@@ -95,10 +95,10 @@
                 <div class="config_group">
 
                     <h5>Scene light position<h5>
-                    <input type="text" id="set_scene_light_x"><label>scene light x </label> <br>
-                    <input type="text" id="set_scene_light_y"><label>scene light y </label> <br>
-                    <input type="text" id="set_scene_light_z"><label>scene light z </label> <br>
-                    <button id="update_scene_light_pos">update</button><br>
+                    <input type="text" id="light_x"><label>scene light x </label> <br>
+                    <input type="text" id="light_y"><label>scene light y </label> <br>
+                    <input type="text" id="light_z"><label>scene light z </label> <br>
+                    <button id="update_light_pos">update</button><br>
 
                </div>
 
@@ -118,35 +118,22 @@
                <div class="config_group">
 
                    <h5>Phong</h5>
-                   <input type="range" id="diffuse_color_r"> <label>diffuse color r</label>   <br>
-                   <input type="range" id="diffuse_color_g"> <label>diffuse color g</label>   <br>
-                   <input type="range" id="diffuse_color_b"> <label>diffuse color b</label>   <br>
+                   <input type="color" id="diffuse_color"> <label>diffuse color</label>   <br>
 
-                   <input type="range" id="ambient_color_r"> <label>ambient color r</label><br>
-                   <input type="range" id="ambient_color_g"> <label>ambient color g</label><br> 
-                   <input type="range" id="ambient_color_b"> <label>ambient color b</label><br> 
-
-                   <input type="range" id="specular_color_r"> <label>specular color r</label>   <br>
-                   <input type="range" id="specular_color_g"> <label>specular color g</label>   <br>
-                   <input type="range" id="specular_color_b"> <label>specular color b</label>   <br>
+                   <input type="color" id="ambient_color"> <label>ambient color</label><br> 
+         
+                   <input type="color" id="specular_color"> <label>specular color</label>   <br>  
 
                </div>
 
                <div class="config_group">
 
                    <h5>Diffuse Frequency Modulation</h5> 
-                   <input type="checkbox" id="diffuse_frequency_mod"><label>Enable frequency mod</label><br> 
-                   <input type="range" id="diffuse_color_rb"> <label>diffuse color r</label><br>
-                   <input type="range" id="diffuse_color_gb"> <label>diffuse color g</label><br>
-                   <input type="range" id="diffuse_color_bb"> <label>diffuse color b</label><br> 
+                   <button id="diffuse_frequency_zero">Set to zero</button><br> 
 
-                   <input type="range" id="diffuse_color_rc"> <label>diffuse color r</label>   <br>
-                   <input type="range" id="diffuse_color_gc"> <label>diffuse color g</label>   <br>
-                   <input type="range" id="diffuse_color_bc"> <label>diffuse color b</label>   <br>
-
-                   <input type="range" id="diffuse_color_rd"> <label>diffuse color r</label><br>
-                   <input type="range" id="diffuse_color_gd"> <label>diffuse color g</label><br>
-                   <input type="range" id="diffuse_color_bd"> <label>diffuse color b</label><br> 
+                   <input type="color" id="diffuse_color_b"> <label>diffuse color b</label><br>
+                   <input type="color" id="diffuse_color_c"> <label>diffuse color c</label><br>
+                   <input type="color" id="diffuse_color_d"> <label>diffuse color d</label><br> 
 
                </div>
 
