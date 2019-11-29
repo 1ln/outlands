@@ -11,6 +11,9 @@ let nhash,hash;
 let mouse, mouse_pressed;
 
 let light;
+let light_rotate;
+let light_rotate_speed;
+
 let shininess;
 
 let epsilon;
@@ -31,8 +34,12 @@ let diffuse_fractal;
 
 let controls;
 
+let orbit_target;
+
 let cam,scene,geometry,mesh,material;
 let cam_target;
+let cam_speed;
+let cam_move_linear;
 
 let uniforms;
 let render;
@@ -57,13 +64,18 @@ hash = nhash();
 $('#hash').val(hash.toFixed(8)); 
 
 octaves = Math.round(nhash() * 6);
+
 cam_target  = new THREE.Vector3(0.0);
+cam_speed = 0.01;
+cam_move_linear = Math.round(nhash()) ? true : false;
 
 light = new THREE.Vector3(0.0,10.0,0.0);
+light_rotate = false;
+light_rotate_speed = 0.001;
 
 let mouse_ray = new THREE.Vector3(0.0); 
 
-let orbit_target   = new THREE.Quaternion();
+orbit_target   = new THREE.Quaternion();
 
 epsilon = 0.0001;
 $('#epsilon').val(epsilon);
@@ -80,7 +92,7 @@ ambient_color   = new THREE.Color(nhash(),nhash(),nhash());
 
 specular_color  = new THREE.Color(nhash(),nhash(),nhash());
 shininess      = nhash() * 100.0;
-intensity      = 5.0;
+intensity      = ( nhash() * 10.0) +  1.0;
 
 diffuse_color   = new THREE.Color( nhash(),nhash(),nhash());
 diffuse_b       = new THREE.Color( nhash(),nhash(),nhash());
@@ -95,31 +107,31 @@ $('#intensity').val(intensity);
 $('#shininess').val(shininess);
 
     cam = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
-    cam.position.set(0.0,0.0,-2.5);
-    cam.lookAt(0.0);
+    cam.position.set(nhash()*5.0,nhash()*5.0,nhash()*5.0);
+    //cam.lookAt(0.0);
 
-$('#cam_x').val(cam.position.x);
-$('#cam_y').val(cam.position.y);
-$('#cam_z').val(cam.position.z);
+$('#cam_x').val(cam.position.x.toFixed(5));
+$('#cam_y').val(cam.position.y.toFixed(5));
+$('#cam_z').val(cam.position.z.toFixed(5));
 
 $('#light_x').val(light.x);
 $('#light_y').val(light.y);
 $('#light_z').val(light.z);
 
-$('#diffuse_color').val(diffuse_color.getHex()  );
-$('#diffuse_b').val(diffuse_b.getHex()  );
-$('#diffuse_c').val(diffuse_c.getHex());
-$('#diffuse_d').val(diffuse_d.getHex());
+$('#diffuse_color').val( '#' +  diffuse_color.getHexString());
+$('#diffuse_color_b').val( '#' +  diffuse_b.getHexString());
+$('#diffuse_color_c').val( '#' + diffuse_c.getHexString());
+$('#diffuse_color_d').val( '#' + diffuse_d.getHexString());
 
-$('#ambient_color').val(ambient_color.getHex());
+$('#ambient_color').val('#' + ambient_color.getHexString());
 
-$('#specular_color').val(specular_color.getHex());
+$('#specular_color').val('#' + specular_color.getHexString());
 
 controls = new THREE.OrbitControls(cam,canvas);
-    controls.minDistance = 1.5;
-    controls.maxDistance = 100.0;
+    //controls.minDistance = 1.5;
+    //controls.maxDistance = 100.0;
     controls.target = cam_target;
-    controls.enableDamping = true;
+    //controls.enableDamping = true;
     controls.enablePan = false; 
     controls.enabled = true  ; 
 
@@ -180,17 +192,19 @@ ShaderLoader("render.vert","render.frag",
     render = function(timestamp) {
         requestAnimationFrame(render);
         
-        //Rotation around orbital target
-        //orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 *0.01) );
-        //light.applyQuaternion(orbit_target);
+        if(light_rotate === true) {
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 * light_rotate_speed ) );
+        light.applyQuaternion(orbit_target);
+        }
 
         //camera.position.applyQuaternion(orbit_target );
 
         //if(swipeRight() === true) {
         //}
-        //if(cam_move_linear === true) {
-        //cam.translateZ(-1.0 );
-        //} 
+      
+        if(cam_move_linear === true) {
+        cam.translateZ(cam_speed);
+        } 
     
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
@@ -216,6 +230,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_fractal"     ].value = diffuse_fractal;
         uniforms["u_texture"             ].value = texture;         
 
+        controls.update();
         renderer.render(scene,cam);
         }
         render();
@@ -250,27 +265,27 @@ $('#shininess').change(function() {
 });
 
 $('#diffuse_color').change(function() {
-    diffuse_color.setHex($('#diffuse_color').val());
+    diffuse_color.set( $('#diffuse_color').val());
 }); 
    
 $('#ambient_color').change(function() {
-    diffuse_color.setHex($('#diffuse_g').val());
+    ambient_color.set( $('#ambient_color').val());
 });
 
-$('#diffuse_b').change(function() {
-    diffuse_b.setHex($('#diffuse_b').val());
+$('#diffuse_color_b').change(function() {
+    diffuse_b.set( $('#diffuse_color_b').val());
 });
 
-$('#diffuse_c').change(function() {
-    diffuse_c.setHex($('#diffuse_c').val());
+$('#diffuse_color_c').change(function() {
+    diffuse_c.set( $('#diffuse_color_c').val());
 });  
 
-$('#diffuse_d').change(function() {
-    diffuse_d.setHex($('#diffuse_d').val());
+$('#diffuse_color_d').change(function() {
+    diffuse_d.set( $('#diffuse_color_d').val());
 });
 
-$('#specular').change(function() {
-    specular_color.setHex($('#specular_color').val());
+$('#specular_color').change(function() {
+    specular_color.set( $('#specular_color').val());
 });
 
 $('#distance_fields').change(function() {
@@ -290,6 +305,15 @@ $('#repeat').change(function() {
 $('#repeat_distance').change(function() {
     repeat_distance = parseFloat($('#repeat_distance').val());
 });
+
+$('#light_rotate_around_target').change(function() { 
+  
+    if($('#light_rotate_around_target')[0].checked !== false) {
+        light_rotate = true;
+    } else {
+        light_rotate = false;
+    }
+}); 
 
 $('#diffuse_fractal').change(function() {
 
@@ -315,10 +339,12 @@ $('#update_cam_pos').click(function() {
          parseFloat($('#cam_y').val()),
          parseFloat($('#cam_z').val())
          ); 
+
+
 }); 
 
 $('#update_light_pos').click(function() {
-      light.position.set(
+      light.set(
           parseFloat($('#light_x').val()),
           parseFloat($('#light_y').val()),
           parseFloat($('#light_z').val())
