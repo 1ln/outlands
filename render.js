@@ -39,7 +39,10 @@ let orbit_target;
 let cam,scene,geometry,mesh,material;
 let cam_target;
 let cam_speed;
-let cam_move_linear;
+let cam_animate;
+
+let delta;
+let clock;
 
 let uniforms;
 let render;
@@ -55,9 +58,15 @@ h = 512;
 canvas.width  = w;
 canvas.height = h;
 
-aspect = w/h;
-
 renderer = new THREE.WebGLRenderer({canvas:canvas});
+
+aspect = w/h;
+trace_distance = 500.0;
+cam = new THREE.PerspectiveCamera(fov,aspect,1,trace_distance);
+cam.position(0.0,0.0,-2.5);
+
+clock = new THREE.Clock(); 
+delta = 0.0;
 
 nhash = new Math.seedrandom();
 hash = nhash();
@@ -67,7 +76,8 @@ octaves = Math.round(nhash() * 6);
 
 cam_target  = new THREE.Vector3(0.0);
 cam_speed = 0.01;
-cam_move_linear = Math.round(nhash()) ? true : false;
+cam_animate = Math.round(nhash() * 3);
+$('#cam_animate').val(cam_animate);
 
 light = new THREE.Vector3(0.0,10.0,0.0);
 light_rotate = false;
@@ -105,10 +115,6 @@ $('#df').val(df);
 $('#octaves').val(octaves);
 $('#intensity').val(intensity);
 $('#shininess').val(shininess);
-
-    cam = new THREE.PerspectiveCamera(45.0, canvas.width/canvas.height,1,2500);
-    cam.position.set(nhash()*5.0,nhash()*5.0,nhash()*5.0);
-    //cam.lookAt(0.0);
 
 $('#cam_x').val(cam.position.x.toFixed(5));
 $('#cam_y').val(cam.position.y.toFixed(5));
@@ -191,21 +197,34 @@ ShaderLoader("render.vert","render.frag",
 
     render = function(timestamp) {
         requestAnimationFrame(render);
-        
+    
+        delta = clock.getDelta();
+    
         if(light_rotate === true) {
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( Math.PI / 2.0 * light_rotate_speed ) );
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_rotate_speed ) );
         light.applyQuaternion(orbit_target);
         }
 
+        
         //camera.position.applyQuaternion(orbit_target );
 
         //if(swipeRight() === true) {
         //}
       
-        if(cam_move_linear === true) {
-        cam.translateZ(cam_speed);
+        if(cam_animate === 1) {
+        cam.position.z -= cam_speed * delta;
         } 
-    
+
+        if(cam_animate === 2) {
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),delta * cam_speed);
+        cam.position.applyQuaternion(orbit_target);
+        }
+
+        if(cam_animate === 3) {
+        cam.position.z += Math.sin(cam.position.y) * delta;
+        cam.position.y -= Math.cos(cam.position.z) * delta;
+        }
+
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
