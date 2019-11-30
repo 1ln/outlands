@@ -11,8 +11,8 @@ let nhash,hash;
 let mouse, mouse_pressed;
 
 let light;
-let light_rotate;
-let light_rotate_speed;
+let light_animate;
+let light_speed;
 
 let shininess;
 
@@ -29,20 +29,24 @@ let diffuse_color;
 let diffuse_a,diffuse_b,diffuse_c;
 let intensity;
 
-let diffuse_distort;
-let diffuse_fractal;
+let diffuse_noise;
+let position_noise;
 
 let controls;
 
 let orbit_target;
 
 let cam,scene,geometry,mesh,material;
+let fov;
+
 let cam_target;
 let cam_speed;
 let cam_animate;
 
 let delta;
 let clock;
+
+let spherical;
 
 let uniforms;
 let render;
@@ -60,10 +64,13 @@ canvas.height = h;
 
 renderer = new THREE.WebGLRenderer({canvas:canvas});
 
+let mouse_ray = new THREE.Vector3(0.0);
+
 aspect = w/h;
+fov = 45.0;
 trace_distance = 500.0;
+
 cam = new THREE.PerspectiveCamera(fov,aspect,1,trace_distance);
-cam.position(0.0,0.0,-2.5);
 
 clock = new THREE.Clock(); 
 delta = 0.0;
@@ -72,18 +79,23 @@ nhash = new Math.seedrandom();
 hash = nhash();
 $('#hash').val(hash.toFixed(8)); 
 
-octaves = Math.round(nhash() * 6);
+octaves = 4;
 
+spherical = new THREE.Spherical();
+spherical.theta = Math.PI * 2.0 * nhash();
+spherical.phi = Math.acos((2.0 * nhash()) - 1.0);
+spherical.radius = 5.0;
+
+cam.position.set(0.0,0.0,-2.5);
 cam_target  = new THREE.Vector3(0.0);
 cam_speed = 0.01;
-cam_animate = Math.round(nhash() * 3);
+cam_animate = 0;
 $('#cam_animate').val(cam_animate);
 
 light = new THREE.Vector3(0.0,10.0,0.0);
-light_rotate = false;
-light_rotate_speed = 0.001;
-
-let mouse_ray = new THREE.Vector3(0.0); 
+light_animate = 0;
+$('#light_animate').val(light_animate);
+light_speed = 0.001; 
 
 orbit_target   = new THREE.Quaternion();
 
@@ -92,17 +104,17 @@ $('#epsilon').val(epsilon);
 
 trace_distance = 1000.0;     
 
-repeat = Math.round(nhash()) ? true : false;
-repeat_distance = Math.round(nhash() * 25.0) + 2.5;   
+repeat = false;
+repeat_distance = 5.0;  
 
-diffuse_distort = Math.round(nhash()) ? true : false;
-diffuse_fractal = Math.round(nhash()) ? true : false;
+diffuse_noise = Math.round(nhash() * 3); 
+positon_noise = Math.round(nhash() * 3);
 
-ambient_color   = new THREE.Color(nhash(),nhash(),nhash()); 
+ambient_color   = new THREE.Color(0.0); 
 
-specular_color  = new THREE.Color(nhash(),nhash(),nhash());
-shininess      = nhash() * 100.0;
-intensity      = ( nhash() * 10.0) +  1.0;
+specular_color  = new THREE.Color(1.0);
+shininess      = 100.0;
+intensity      = 1.0;
 
 diffuse_color   = new THREE.Color( nhash(),nhash(),nhash());
 diffuse_b       = new THREE.Color( nhash(),nhash(),nhash());
@@ -116,9 +128,9 @@ $('#octaves').val(octaves);
 $('#intensity').val(intensity);
 $('#shininess').val(shininess);
 
-$('#cam_x').val(cam.position.x.toFixed(5));
-$('#cam_y').val(cam.position.y.toFixed(5));
-$('#cam_z').val(cam.position.z.toFixed(5));
+$('#cam_x').val(cam.position.x);
+$('#cam_y').val(cam.position.y);
+$('#cam_z').val(cam.position.z);
 
 $('#light_x').val(light.x);
 $('#light_y').val(light.y);
@@ -167,9 +179,8 @@ uniforms = {
     "u_diffuse_b"           : new THREE.Uniform(new THREE.Color(diffuse_b)),
     "u_diffuse_c"           : new THREE.Uniform(new THREE.Color(diffuse_c)),
     "u_diffuse_d"           : new THREE.Uniform(new THREE.Color(diffuse_d)),
-    "u_diffuse_distort"     : { value: diffuse_distort },
-    "u_diffuse_fractal"     : { value: diffuse_fractal },
-    //"u_diffuse_cell"     : new THREE.Uniform(new THREE.Vector3(diffuse_cell)),
+    "u_diffuse_noise"       : { value: diffuse_noise },
+    "u_position_noise"      : { value: position_noise },
     "u_texture"             : { type : "t", value: texture }
 
 
@@ -200,8 +211,8 @@ ShaderLoader("render.vert","render.frag",
     
         delta = clock.getDelta();
     
-        if(light_rotate === true) {
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_rotate_speed ) );
+        if(light_animate === 1) {
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_speed ) );
         light.applyQuaternion(orbit_target);
         }
 
@@ -245,8 +256,8 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_b"           ].value = diffuse_b;
         uniforms["u_diffuse_c"           ].value = diffuse_c;
         uniforms["u_diffuse_d"           ].value = diffuse_d;
-        uniforms["u_diffuse_distort"     ].value = diffuse_distort;
-        uniforms["u_diffuse_fractal"     ].value = diffuse_fractal;
+        uniforms["u_diffuse_noise"       ].value = diffuse_noise;
+        uniforms["u_position_noise"      ].value = position_noise;
         uniforms["u_texture"             ].value = texture;         
 
         controls.update();
@@ -254,10 +265,6 @@ ShaderLoader("render.vert","render.frag",
         }
         render();
         }) 
-
-$('#re_init').click(function() {
-    init();      
-});
 
 $('#update_hash').click(function() {
     hash = parseFloat($('#hash').val());
@@ -311,6 +318,22 @@ $('#distance_fields').change(function() {
     df = parseInt($('#distance_fields').val());
 });
 
+$('#cam_animate').change(function() {
+   cam_animate = parseInt($('#cam_animate').val());
+});
+
+$('#light_animate').change(function() {
+   light_animate = parseInt($('#light_animate').val());
+});
+
+$('#diffuse_noise').change(function() {
+   diffuse_noise = parseInt($('#diffuse_noise').val());
+});
+
+$('#position_noise').change(function() {
+   position_noise = parseInt($('#position').val());
+});
+
 $('#repeat').change(function() {
     
     if($('#repeat')[0].checked !== false) {
@@ -323,32 +346,6 @@ $('#repeat').change(function() {
 
 $('#repeat_distance').change(function() {
     repeat_distance = parseFloat($('#repeat_distance').val());
-});
-
-$('#light_rotate_around_target').change(function() { 
-  
-    if($('#light_rotate_around_target')[0].checked !== false) {
-        light_rotate = true;
-    } else {
-        light_rotate = false;
-    }
-}); 
-
-$('#diffuse_fractal').change(function() {
-
-    if($('#diffuse_fractal')[0].checked !== false) {
-        diffuse_fractal = true;
-    } else { 
-        diffuse_fractal = false;
-    }
-});
-
-$('#diffuse_distort').change(function() {
-    if($('#diffuse_distort')[0].checked !== false) {
-        diffuse_distort = true;
-    } else {
-        diffuse_distort = false;
-    }
 });
 
 $('#update_cam_pos').click(function() {

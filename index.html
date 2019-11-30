@@ -23,10 +23,6 @@
 
              <h3> Raymarcher configuration </h3>
 
-             <label>Hash</label><br> 
-             <input type="text" id="hash"><br>
-             <button id="update_hash">update hash</button><br>
-
              <label>Epsilon</label><br>
              <input type="text" id="epsilon"><br>
              <button id="update_epsilon">update epsilon</button><br>
@@ -51,19 +47,52 @@
                     <button id="update_cam_pos">update</button><br> 
           
                 </div>
+                
+                <div class="config_group">
+
+                    <h5>Camera Animation</h5>
+                    <select id="cam_animate">
+                        <option value="0">none</option>
+                        <option value="1">linear</option>
+                        <option value="2">rotate around target</option>
+                        <option value="3">sine loop</option>
+                    </select><br>
 
         </div>
 
         <div class="config_container">
             <h3>Noise Configuration</h3>
+
+            <label>Hash</label><br>
+            <input type ="text" id="hash"><br>
+            <button id="update_hash">update hash</button><br>
+
             <label>Octaves</label><br>
-            <input type="range" id="octaves">
+            <input type="range" id="octaves"><br>
+             
+            <label>Diffuse Noise</label>
+            <select id="diffuse_noise">
+                <option value="0">none</option>
+                <option value="1">Fractal</option>
+                <option value="2">Fractal Distort</option>
+                <option value="3">Cell</option>
+            </select><br>
+
+            <label>Position Noise</label>
+            <select id="position_noise">
+
+                <option value="0">none</option>
+                <option value="1">fractal</option>
+                <option value="2">sine</option>
+         
+            </select>
+
         </div>
 
         <div class="config_group">
             <h3>Distance Field Configuration</h3>
             <label>Distance Field Equations</label><br>
-            <select id="distance_fields" size="10">
+            <select id="distance_fields">
                 <option value="0">Sphere        </option>
                 <option value="1">Box           </option>
                 <option value="2">Capsule       </option>
@@ -137,19 +166,9 @@
 
                </div>
 
-               <div class="config_group">
-
-                  <h5>Diffuse Noise</h5>
-                  <input type="checkbox" id="diffuse_distort"><label>Diffuse Distort</label><br>
-
-               </div>
-
                <div class="config_group">  
 
-                  <h5> Light Rotation</h5>
-                  <input type="checkbox" id="light_rotate_around_target"> <label>Rotate light around target</label>   <br>
-                  <label>Speed</label><br>
-                  <input type="range" id="light_rotate_speed"><br>
+                  <h5> Light Animation</h5>
 
                </div>
 
