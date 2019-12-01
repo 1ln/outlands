@@ -25,9 +25,16 @@ uniform int u_df;
 uniform sampler2D u_texture;
 
 uniform int u_repeat;
+uniform int u_repeat_limit;
+
 uniform float u_repeat_distance;
+uniform vec3 u_repeat_direction;
 
 uniform int u_octaves;
+
+uniform float u_cell_iterations;
+uniform int u_cell_distance_type;
+
 uniform float u_epsilon;
 uniform float u_trace_distance;
 
@@ -42,8 +49,8 @@ uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
 
-uniform int u_diffuse_distort;
-uniform int u_diffuse_fractal;
+uniform int u_diffuse_noise;
+uniform int u_positional_noise;
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -69,9 +76,6 @@ float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 float rand2d(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
 }
-
-//float sin3(vec3 p) {
-//return sin(p.x * u_hash) * sin(p.y * u_hash) * sin(p.z * u_hash);
 
 //2D Noise functions
 
@@ -109,9 +113,9 @@ float sin3(vec3 p) {
     return sin(p.x * u_hash) * sin(p.y * u_hash) * sin(p.z * u_hash);
 } 
  
-float cell(vec3 x,float s) {
+float cell(vec3 x) {
  
-    x *= s;
+    x *= u_cell_iterations;
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -122,15 +126,23 @@ float cell(vec3 x,float s) {
         for(int j = -1; j <= 1; j++) {
             for(int k = -1; k <= 1; k++) { 
 
-             vec3 b = vec3(float(k),float(j),float(i));
-             vec3 r = hash3(p + b);
-             vec3 diff = (b + r - f);
+                vec3 b = vec3(float(k),float(j),float(i));
+                vec3 r = hash3(p + b);
+                vec3 diff = (b + r - f);
 
-             float d = length(diff);
-             min_dist = min(min_dist,d);
+                float d = length(diff);
 
-            //min_dist = min( abs(min_dist),d );
-            //min_dist = max(min_dist,d);
+                    if(u_cell_distance_type == 0) { 
+                        min_dist = min(min_dist,d);
+                    }
+ 
+                    if(u_cell_distance_type == 1) {
+                        min_dist = min(min_dist,abs(diff.x)+abs(diff.y)+abs(diff.z));
+                    }
+
+                    if(u_cell_distance_type == 2) {
+                        min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
+                    }
 
             }
         }
@@ -144,12 +156,13 @@ float cellTexture255(vec3 x) {
     
     vec4 tx = texture2D(u_texture,vec2(0.0 ));
     float m_dist = 1.0;
+    /*
     for(int i = 0; i < 64; ++i) {
         m_dist = min(m_dist,distance(vec2( x.xy),vec2( mod(float(i),tx.x),mod(float(i+1),tx.x) ))) ;
-    }
-    //m_dist = min(m_dist,distance(vec2(x.xy),vec2(.23,.4)));
-    // m_dist = min(m_dist,distance(vec2(x.xy),vec2(.03,.76)));
-    // m_dist = min(m_dist,distance(vec2(x.xy),vec2(.443,.26)));
+    }*/
+    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.23,.4)));
+    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.03,.76)));
+    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.443,.26)));
  
     return m_dist;
 }
@@ -230,7 +243,7 @@ float fractal312(vec3 x) {
     return value;
 }
 
-float distort(vec3 p) {
+float distortFractal(vec3 p) {
     
     vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0)),      
                   fractal312(p + vec3(4.5,1.8,6.3)),
@@ -552,11 +565,31 @@ float sphereFractal(vec3 p,float r,float h) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
+float n = 0.0;
+
+if(u_positional_noise == 0) {
+n = 0.0;
+}
+
+if(u_positional_noise == 1) {
+n = fractal312(p);
+}
+
+if(u_positional_noise == 2) {
+n = sin3(p);
+}
 
 if(u_repeat == 1) {
-p = repeat(p,vec3(u_repeat_distance));
+p = repeat(p,vec3(u_repeat_direction));
 }  
 
+if(u_repeat_limit) { 
+p = repeatLimit(p,u_repeat_distance,vec3(u_repeat_direction));
+}
+
+//res = vec2(link(p,0.0,0.0,0.5),0.0);
+
+/*
 if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
 if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
 if(u_df == 2) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
@@ -567,6 +600,7 @@ if(u_df == 6) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
 if(u_df == 7) { res = vec2(cylinder(p,1.0,0.5),6.0);}
 if(u_df == 8) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); }
 if(u_df == 9) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); } 
+*/
 
 return res;
 }
@@ -665,7 +699,7 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
 
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
-
+     
      vec3 light  = vec3( u_light  ) ;
 
      vec3 intensity = vec3(u_intensity);
@@ -703,27 +737,39 @@ vec3 ks = vec3(0.0);
 float shininess = u_shininess;
 float n = 0.0;
 
-//fade effect
-//if(u_time < 10.0) {
-//n = n * u_time * 0.1 ; 
-//}
-
     if(d.x > TRACE_DIST - EPSILON) {
 
         color = vec3(0.0);
 
     } else {
        
-      if(u_diffuse_distort == 1) {
-      n = distort(p);
+      if(u_diffuse_noise == 0) {
+      n = 0.0;
       }
 
-      if(u_diffuse_fractal == 1) {
-      n = fractal312(p);
+      if(u_diffuse_noise == 1) {
+      n = distortFractal(p);
+      }
+
+      if(u_diffuse_noise == 2) {
+      n = fractal312(p); 
       } 
       
-      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+      if(u_diffuse_noise == 3) {
+      n = cell(p);
+      }
 
+      if(u_diffuse_noise == 4) {
+      n = cell(p + fractal312(p));
+      }
+      
+      if(u_diffuse_noise == 5) {
+      n = distortFractal(p + cell(p));
+      }
+
+      kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+     //kd = vec3(u_diffuse_color);
+     //kd+=n;
       vec3 ka = vec3(u_ambient_color);
       vec3 ks = vec3(u_specular_color);
 
