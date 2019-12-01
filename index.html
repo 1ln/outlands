@@ -23,28 +23,29 @@
 
              <h3> Raymarcher configuration </h3>
 
-             <label>Epsilon</label><br>
-             <input type="text" id="epsilon"><br>
+             <label>
+             <input type="text" id="epsilon">
+             
              <button id="update_epsilon">update epsilon</button><br>
+             </label>
 
-             <label>Trace Distance</label><br>
-             <input type="range" id="trace_distance" min="0.0" max="2000.0"><br> 
+             <label>Trace Distance
+             <input type="range" id="trace_distance" min="0.0" max="2000.0">
+             </label>
 
         </div>
 
         <div class="config_container">
 
             <h3>Camera settings</h3>
- 
-            <input type="checkbox" id="orbit_control">use orbit controls<br>
 
                 <div class="config_group">
       
                     <h5>Camera position</h5>
-                    <input type="text" id="cam_x"> <label>camera x</label>   <br>
-                    <input type="text" id="cam_y"> <label>camera y</label>   <br>
-                    <input type="text" id="cam_z"> <label>camera z</label>   <br>
-                    <button id="update_cam_pos">update</button><br> 
+                  <label>      <input type="text" id="cam_x">camera x</label>  
+                  <label>       <input type="text" id="cam_y">camera y</label>   
+                  <label>       <input type="text" id="cam_z">camera z</label>   
+                    <button id="update_cam_pos">update camera position</button>
           
                 </div>
                 
@@ -56,43 +57,27 @@
                         <option value="1">linear</option>
                         <option value="2">rotate around target</option>
                         <option value="3">sine loop</option>
-                    </select><br>
+                    </select>
 
         </div>
 
         <div class="config_container">
             <h3>Noise Configuration</h3>
 
-            <label>Hash</label><br>
-            <input type ="text" id="hash"><br>
-            <button id="update_hash">update hash</button><br>
+            <label>
+            <input type ="text" id="hash">
+            <button id="update_hash">update hash</button>
+            </label>
 
-            <label>Octaves</label><br>
-            <input type="range" id="octaves"><br>
-             
-            <label>Diffuse Noise</label>
-            <select id="diffuse_noise">
-                <option value="0">none</option>
-                <option value="1">Fractal</option>
-                <option value="2">Fractal Distort</option>
-                <option value="3">Cell</option>
-            </select><br>
-
-            <label>Position Noise</label>
-            <select id="position_noise">
-
-                <option value="0">none</option>
-                <option value="1">fractal</option>
-                <option value="2">sine</option>
-         
-            </select>
+            <label>Octaves
+            <input type="range" id="octaves">
+            </label>
 
         </div>
 
         <div class="config_group">
-            <h3>Distance Field Configuration</h3>
-            <label>Distance Field Equations</label><br>
-            <select id="distance_fields">
+            <h3>Demo Select</h3>
+            <select id="distance_fields" size="10" >
                 <option value="0">Sphere        </option>
                 <option value="1">Box           </option>
                 <option value="2">Capsule       </option>
@@ -104,7 +89,7 @@
                 <option value="8">Prism         </option>
                 <option value="9">Hex Prism     </option>  
         
-            </select><br>
+            </select>
 
         </div>
         
@@ -112,9 +97,10 @@
         <div class="config_container">
      
             <h3>Scene Configuration</h3> 
-            <input type="checkbox" id="repeat"<label>Repeat Modulo</label><br>
-            <label>Repeat Distance</label>
+            <label>   <input type="checkbox" id="repeat">  Repeat Modulo</label>
+            <label>Repeat Distance
             <input type="range" id="repeat_distance">
+            </label>
         </div>
 
         <div class="config_container">
@@ -123,11 +109,11 @@
 
                 <div class="config_group">
 
-                    <h5>Scene light position<h5>
-                    <input type="text" id="light_x"><label>scene light x </label> <br>
-                    <input type="text" id="light_y"><label>scene light y </label> <br>
-                    <input type="text" id="light_z"><label>scene light z </label> <br>
-                    <button id="update_light_pos">update</button><br>
+                    <h5>Scene light position</h5>
+                    <label>      <input type="text" id="light_x"> scene light x </label>
+                    <label>     <input type="text" id="light_y">scene light y </label>
+                    <label>     <input type="text" id="light_z">scene light z </label>
+                    <button id="update_light_pos">update light position</button>
 
                </div>
 
@@ -135,11 +121,13 @@
 
                    <h5>Light phong settings</h5>
                   
-                   <label>Intensity</label><br> 
-                   <input type="range" id="intensity" min="0.0" max="100.0" ></br> 
-                   
-                   <label>Shininess</label<br>
+                   <label>Intensity</label>
+                   <input type="range" id="intensity" min="0.0" max="100.0" >
+                   </label>                   
+
+                   <label>Shininess
                    <input type="range" id="shininess" min="0.0" max="100.0"  >
+                   </label>
 
 
                </div>
@@ -147,29 +135,24 @@
                <div class="config_group">
 
                    <h5>Phong</h5>
-                   <input type="color" id="diffuse_color"> <label>diffuse color</label>   <br>
-
-                   <input type="color" id="ambient_color"> <label>ambient color</label><br> 
-         
-                   <input type="color" id="specular_color"> <label>specular color</label>   <br>  
+                   <label>    <input type="color" id="diffuse_color">diffuse color</label>   
+                   <label>    <input type="color" id="ambient_color">ambient color</label> 
+                   <label>    <input type="color" id="specular_color">specular color</label>   
 
                </div>
 
                <div class="config_group">
 
                    <h5>Diffuse Frequency Modulation</h5> 
-                   <button id="diffuse_frequency_zero">Set to zero</button><br> 
+                   <button id="diffuse_frequency_zero">Set to zero</button>
 
-                   <input type="color" id="diffuse_color_b"> <label>diffuse color b</label><br>
-                   <input type="color" id="diffuse_color_c"> <label>diffuse color c</label><br>
-                   <input type="color" id="diffuse_color_d"> <label>diffuse color d</label><br> 
+                   <label>  <input type="color" id="diffuse_color_b"> diffuse color b</label>
+                   <label>  <input type="color" id="diffuse_color_c"> diffuse color c</label>
+                   <label>  <input type="color" id="diffuse_color_d"> diffuse color d</label> 
 
                </div>
 
                <div class="config_group">  
-
-                  <h5> Light Animation</h5>
-
                </div>
 
         </div> 
