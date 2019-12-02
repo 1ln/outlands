@@ -587,9 +587,7 @@ if(u_repeat_limit) {
 p = repeatLimit(p,u_repeat_distance,vec3(u_repeat_direction));
 }
 
-//res = vec2(link(p,0.0,0.0,0.5),0.0);
 
-/*
 if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
 if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
 if(u_df == 2) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
@@ -600,7 +598,7 @@ if(u_df == 6) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
 if(u_df == 7) { res = vec2(cylinder(p,1.0,0.5),6.0);}
 if(u_df == 8) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); }
 if(u_df == 9) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); } 
-*/
+
 
 return res;
 }
