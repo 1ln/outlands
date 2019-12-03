@@ -41,14 +41,33 @@
 
                 <div class="config_group">
       
-                    <h5>Camera position</h5>
+                  <label>Fov
+                  <input type="text" id="fov">
+                  </label>     
+                  
+                  <h5>Camera position</h5>
                   <label>      <input type="text" id="cam_x">camera x</label>  
                   <label>       <input type="text" id="cam_y">camera y</label>   
                   <label>       <input type="text" id="cam_z">camera z</label>   
-                    <button id="update_cam_pos">update camera position</button>
+                  <button id="update_cam_pos">update camera position</button>
           
                 </div>
                 
+
+                <div class="config_group">
+
+                  <h5>Camera light enable</h5>
+                  <label>Camera light enabled
+                  <input type="checkbox" id="cam_light_enabled">
+                  </label>                    
+
+                  <h5>Camera light position</h5>
+                  <label><input type="text" id="cam_light_x">camera light x</label>  
+                  <label><input type="text" id="cam_light_y">camera light y</label>   
+                  <label><input type="text" id="cam_light_z">camera light z</label>   
+                  <button id="update_cam_light_pos">update light position</button>
+                </div>               
+
                 <div class="config_group">
 
                     <h5>Camera Animation</h5>
@@ -58,6 +77,7 @@
                         <option value="2">rotate around target</option>
                         <option value="3">sine loop</option>
                     </select>
+                </div>
 
         </div>
 
@@ -70,14 +90,25 @@
             </label>
 
             <label>Octaves
-            <input type="range" id="octaves">
+            <input type="range" id="octaves" min="0.0" max="12.0" step="1" >
             </label>
+
+            <label>Cell Iterations
+            <input type="range" id="cell_iterations" min="0.0" max="256.0" step="1" >
+            </label>
+
+            <h5>Distance Type</h5>
+            <select id="cell_distance_type">
+                <option value="0">Euclidian</option>
+                <option value="1">Rectlinear</option>
+                <option value="2">Chess</option>
+            <select>
 
         </div>
 
         <div class="config_group">
             <h3>Demo Select</h3>
-            <select id="distance_fields" size="10" >
+            <select id="distance_fields" >
                 <option value="0">Sphere        </option>
                 <option value="1">Box           </option>
                 <option value="2">Capsule       </option>
@@ -97,10 +128,25 @@
         <div class="config_container">
      
             <h3>Scene Configuration</h3> 
+
             <label>   <input type="checkbox" id="repeat">  Repeat Modulo</label>
+            <select id="repeat">
+                <option value="0">None</option>
+                <option value="1">Repeat</option>
+                <option value="2">Repeat Limit</option>
+            </select>  
+
             <label>Repeat Distance
             <input type="range" id="repeat_distance">
             </label>
+
+                <div class="config_group">
+
+                    <h5>Repeat Direction</h5>
+                    <label><input type="range" id="repeat_x"> x </label>
+                    <label><input type="range" id="repeat_y"> y </label>
+                    <label><input type="range" id="repeat_z">  z </label>
+
         </div>
 
         <div class="config_container">
@@ -110,7 +156,7 @@
                 <div class="config_group">
 
                     <h5>Scene light position</h5>
-                    <label>      <input type="text" id="light_x"> scene light x </label>
+                    <label>      <input type="text" id="light_x"> scene light x </laabel>
                     <label>     <input type="text" id="light_y">scene light y </label>
                     <label>     <input type="text" id="light_z">scene light z </label>
                     <button id="update_light_pos">update light position</button>
@@ -152,7 +198,15 @@
 
                </div>
 
-               <div class="config_group">  
+               <div class="config_group">
+               <h5>Diffuse Noise</h5>  
+               <select id="diffuse_noise">
+                   <option value="0">None</option>
+                   <option value="1">Distort Fractal</option>
+                   <option value="2">Fractal</option>
+                   <option value="3">Cell</option>
+               </select>
+
                </div>
 
         </div> 

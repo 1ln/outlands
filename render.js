@@ -23,7 +23,6 @@ let octaves;
 
 let df;
 let repeat;
-let repeat_limit;
 let repeat_distance;
 let repeat_direction;
 
@@ -35,7 +34,6 @@ let intensity;
 let scene_background_color;
 
 let diffuse_noise;
-let positional_noise;
 
 let cell_distance_type;
 let cell_iterations;
@@ -124,7 +122,7 @@ $('#epsilon').val(epsilon);
 
 trace_distance = 1000.0;     
 
-repeat = false;
+repeat = 0;
 repeat_distance = 5.0;  
 repeat_direction = new THREE.Vector3(1.0,1.0,1.0);
 
@@ -151,22 +149,19 @@ $('#octaves').val(octaves);
 $('#cell_iterations').val(cell_iterations);
 $('#cell_distance_type').val(cell_distance_type);
 $('#diffuse_noise').val(diffuse_noise);
-$('#positional_noise').val(positional_noise);
 
 $('#intensity').val(intensity);
 $('#shininess').val(shininess);
 
 $('#cam_target').val(cam_target);
-$('#cam_speed').val(cam_speed);
 
 $('#repeat').val(repeat);
-$('#repeat_limit').val(repeat_limit);
 
 $('#repeat_distance').val(repeat_distance);
 
-$('#repeat_direction_x').val(repeat_direction.x);
-$('#repeat_direction_y').val(repeat_direction.y);
-$('#repeat_direction_z').val(repeat_direction.z);
+$('#repeat_x').val(repeat_direction.x);
+$('#repeat_y').val(repeat_direction.y);
+$('#repeat_z').val(repeat_direction.z);
 
 $('#fov').val(fov);
 $('#far').val(far);
@@ -192,7 +187,7 @@ $('#diffuse_color_d').val( '#' + diffuse_d.getHexString());
 $('#ambient_color').val('#' + ambient_color.getHexString());
 $('#specular_color').val('#' + specular_color.getHexString());
 
-$('#scene_background_color').val(scene_background_color);
+//$('#scene_background_color').val(scene_background_color);
 
 controls = new THREE.OrbitControls(cam,canvas);
     controls.minDistance = 1.5;
@@ -221,7 +216,6 @@ uniforms = {
     "u_epsilon"             : { value: epsilon },
     "u_trace_distance"      : { value: trace_distance },
     "u_repeat"              : { value: repeat },
-    "u_repeat_limit"        : { value; repeat_limit },
     "u_repeat_direction"    : new THREE.Uniform(new THREE.Vector3(repeat_direction)),
     "u_repeat_distance"     : { value: repeat_distance },
     "u_scene_background_color"    : new THREE.Uniform(new THREE.Color(scene_background_color)), 
@@ -233,7 +227,6 @@ uniforms = {
     "u_diffuse_c"           : new THREE.Uniform(new THREE.Color(diffuse_c)),
     "u_diffuse_d"           : new THREE.Uniform(new THREE.Color(diffuse_d)),
     "u_diffuse_noise"       : { value: diffuse_noise },
-    "u_positional_noise"      : { value: positional_noise },
     "u_cell_iterations"     : { value: cell_iterations },
     "u_cell_distance_type"  : { value: cell_distance_type },
     "u_texture"             : { type : "t", value: texture }
@@ -267,8 +260,8 @@ ShaderLoader("render.vert","render.frag",
         delta = clock.getDelta();
 
         cam.fov  = fov;
-        cam.far  = far;
-        cam.near = near;
+        //cam.far  = far;
+        //cam.near = near;
     
         if(light_animate === 1) {
         orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_speed ) );
@@ -306,10 +299,9 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_epsilon"             ].value = epsilon;
         uniforms["u_trace_distance"      ].value = trace_distance;
         uniforms["u_repeat"              ].value = repeat;
-        uniforms["u_repeat_limit"        ].value = repeat_limit;
         uniforms["u_repeat_direction"    ].value = repeat_direction;
         uniforms["u_repeat_distance"     ].value = repeat_distance;
-        uniforms["u_scene_background"    ].value = scene_background_color;
+        uniforms["u_scene_background_color"    ].value = scene_background_color;
         uniforms["u_ambient_color"       ].value = ambient_color;
         uniforms["u_diffuse_color"       ].value = diffuse_color;
         uniforms["u_specular_color"      ].value = specular_color;
@@ -318,7 +310,6 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_c"           ].value = diffuse_c;
         uniforms["u_diffuse_d"           ].value = diffuse_d;
         uniforms["u_diffuse_noise"       ].value = diffuse_noise;
-        uniforms["u_positional_noise"      ].value = positional_noise;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_cell_distance_type"  ].value = cell_distance_type;
         uniforms["u_texture"             ].value = texture;         
@@ -345,21 +336,22 @@ $('#octaves').change(function() {
     octaves = parseFloat($('#octaves').val());
 });  
 
-$('#scene_background_color').change(function() {
-    scene_background_color = parseFloat($('#scene_background_color').val());
-});
+//$('#scene_background_color').change(function() {
+//    scene_background_color = parseFloat($('#scene_background_color').val());
+//});
 
 $('#fov').change(function() {
     fov = parseFloat($('#fov').val());
 });
 
+/*
 $('#far').change(function() {
     far = parseFloat($('#far').val());
 });
 
 $('#near').change(function() {
     near = parseFloat($('#near').val());
-});
+});*/
 
 $('#intensity').change(function() {
     intensity = parseFloat($('#intensity').val());
@@ -422,40 +414,25 @@ $('#cell_iterations').change(function() {
 });
 
 $('#repeat').change(function() {
-    
-    if($('#repeat')[0].checked !== false) {
-        repeat = true;
-    } else {
-        repeat = false;
-    }
-
-});
-
-$('#repeat_limit').change(function() {  
-    
-    if($('#repeat_limit')[0].checked !== false) {
-        repeat_limit = true;
-    } else {
-        repeat_limit = false;
-    }
-});
+   repeat = parseInt($('#repeat').val());
+});  
 
 $('#repeat_distance').change(function() {
     repeat_distance = parseFloat($('#repeat_distance').val());
 });
 
-$('#repeat_direction_x').change(function() {
-    repeat_direction.set.x = parseInt($('#repeat_direction_x').val());
+$('#repeat_x').change(function() {
+    repeat_direction.set.x = parseInt($('#repeat_x').val());
     //repeat_direction.set.x = repeat_direction_x;
 });
 
-$('#repeat_direction_y').change(function() {
-    repeat_direction.set.y = parseInt($('#repeat_direction_y').val());
+$('#repeat_y').change(function() {
+    repeat_direction.set.y = parseInt($('#repeat_y').val());
     //repeat_direction.set.y = repeat_direction_y;
 });
 
-$('#repeat_direction_z').change(function() {
-    repeat_direction.set.z = parseInt($('#repeat_direction_z').val());
+$('#repeat_z').change(function() {
+    repeat_direction.set.z = parseInt($('#repeat_z').val());
     //repeat_direction.set.z = repeat_direction_z;
 });
 
