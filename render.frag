@@ -25,7 +25,6 @@ uniform int u_df;
 uniform sampler2D u_texture;
 
 uniform int u_repeat;
-uniform int u_repeat_limit;
 
 uniform float u_repeat_distance;
 uniform vec3 u_repeat_direction;
@@ -50,7 +49,6 @@ uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
 
 uniform int u_diffuse_noise;
-uniform int u_positional_noise;
 
 const float PI  =  3.1415926;
 const float PI_2 = 2.0 * PI;
@@ -565,25 +563,12 @@ float sphereFractal(vec3 p,float r,float h) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-float n = 0.0;
-
-if(u_positional_noise == 0) {
-n = 0.0;
-}
-
-if(u_positional_noise == 1) {
-n = fractal312(p);
-}
-
-if(u_positional_noise == 2) {
-n = sin3(p);
-}
 
 if(u_repeat == 1) {
 p = repeat(p,vec3(u_repeat_direction));
 }  
 
-if(u_repeat_limit) { 
+if(u_repeat == 2) { 
 p = repeatLimit(p,u_repeat_distance,vec3(u_repeat_direction));
 }
 
@@ -766,8 +751,10 @@ float n = 0.0;
       }
 
       kd = fmCol(p.y+n,vec3(u_diffuse_color),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
-     //kd = vec3(u_diffuse_color);
-     //kd+=n;
+ 
+      //kd = vec3(u_diffuse_color);
+      //kd+=n;
+
       vec3 ka = vec3(u_ambient_color);
       vec3 ks = vec3(u_specular_color);
 

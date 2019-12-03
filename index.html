@@ -129,7 +129,6 @@
      
             <h3>Scene Configuration</h3> 
 
-            <label>   <input type="checkbox" id="repeat">  Repeat Modulo</label>
             <select id="repeat">
                 <option value="0">None</option>
                 <option value="1">Repeat</option>
@@ -143,9 +142,9 @@
                 <div class="config_group">
 
                     <h5>Repeat Direction</h5>
-                    <label><input type="range" id="repeat_x"> x </label>
-                    <label><input type="range" id="repeat_y"> y </label>
-                    <label><input type="range" id="repeat_z">  z </label>
+                    <label><input type="range" id="repeat_x" min="0" max="50"> x </label>
+                    <label><input type="range" id="repeat_y" min="0" max="50"> y </label>
+                    <label><input type="range" id="repeat_z" min="0"  max="50">  z </label>
 
         </div>
 
@@ -156,7 +155,7 @@
                 <div class="config_group">
 
                     <h5>Scene light position</h5>
-                    <label>      <input type="text" id="light_x"> scene light x </laabel>
+                    <label>      <input type="text" id="light_x"> scene light x </label>
                     <label>     <input type="text" id="light_y">scene light y </label>
                     <label>     <input type="text" id="light_z">scene light z </label>
                     <button id="update_light_pos">update light position</button>
@@ -205,9 +204,13 @@
                    <option value="1">Distort Fractal</option>
                    <option value="2">Fractal</option>
                    <option value="3">Cell</option>
-               </select>
+                   <option value="4">Cell Fractal</option>
+                   <option value="5">Distort Fractal Cell</option>
+               </select> 
 
                </div>
+        <br>
+        <br>
 
         </div> 
  
