@@ -65,11 +65,8 @@ function init() {
 
 canvas = $('#canvas')[0];
 
-//w = window.innerWidth;
-//h = window.innerHeight; 
-
-w = 512;
-h = 512;
+w = window.innerWidth;
+h = window.innerHeight; 
 
 canvas.width  = w;
 canvas.height = h;
@@ -79,12 +76,12 @@ renderer = new THREE.WebGLRenderer({canvas:canvas});
 let mouse_ray = new THREE.Vector3(0.0);
 
 aspect = w/h;
-fov = 45.0;
-trace_distance = 500.0;
+fov = 25.0;
+trace_distance = 1000.0;
 far = trace_distance;
 near = 1;
 
-cam = new THREE.PerspectiveCamera(fov,aspect,near,far);
+cam = new THREE.PerspectiveCamera(45.0,aspect,0.0,trace_distance);
 
 clock = new THREE.Clock(); 
 delta = 0.0;
@@ -93,45 +90,42 @@ nhash = new Math.seedrandom();
 hash = nhash();
 $('#hash').val(hash.toFixed(8)); 
 
-octaves = 4;
-cell_iterations = 12.0;
-cell_distance_type = 0;
+octaves = Math.round(nhash()*12);
+cell_iterations = Math.round(nhash()*48);
+cell_distance_type = Math.round(nhash() * 3); 
 
 spherical = new THREE.Spherical();
 spherical.theta = Math.PI * 2.0 * nhash();
 spherical.phi = Math.acos((2.0 * nhash()) - 1.0);
 spherical.radius = 5.0;
 
-cam.position.set(0.0,2.5,-2.5);
+cam.position.set(nhash()*5.0,nhash()*5.0,nhash()*5.0);
 cam_target  = new THREE.Vector3(0.0);
 cam_speed = 0.01;
-cam_animate = 0;
-$('#cam_animate').val(cam_animate);
+cam_animate = Math.round(nhash() * 4);
 
 cam_light = new THREE.Vector3(cam.position.x,cam.position.y,cam.position.z);
 
 light = new THREE.Vector3(0.0,10.0,0.0);
+
 light_animate = 0;
-$('#light_animate').val(light_animate);
 light_speed = 0.001; 
 
 orbit_target   = new THREE.Quaternion();
 
 epsilon = 0.0001;
-$('#epsilon').val(epsilon);
 
 trace_distance = 1000.0;     
 
-repeat = 0;
-repeat_distance = 5.0;  
-repeat_direction = new THREE.Vector3(1.0,1.0,1.0);
+repeat = Math.round(nhash() * 2.0);
+repeat_distance = nhash() * 15.0;  
+repeat_direction = new THREE.Vector3(Math.round(nhash()*25,Math.round()*25,Math.round()*25));
 
-scene_background_color = new THREE.Color(0.0);
+scene_background_color = new THREE.Color(nhash(),nhash(),nhash());
 
 diffuse_noise = Math.round(nhash() * 5); 
-positional_noise = Math.round(nhash() * 3);
 
-ambient_color   = new THREE.Color(0.0); 
+ambient_color   = new THREE.Color(nhash(),nhash(),nhash());
 
 specular_color  = new THREE.Color(1.0);
 shininess      = 100.0;
@@ -143,51 +137,6 @@ diffuse_c       = new THREE.Color( nhash(),nhash(),nhash());
 diffuse_d       = new THREE.Color( nhash(),nhash(),nhash());
 
 df = Math.round(nhash() * 10.0);
-$('#df').val(df);
-
-$('#octaves').val(octaves);
-$('#cell_iterations').val(cell_iterations);
-$('#cell_distance_type').val(cell_distance_type);
-$('#diffuse_noise').val(diffuse_noise);
-
-$('#intensity').val(intensity);
-$('#shininess').val(shininess);
-
-$('#cam_target').val(cam_target);
-
-$('#repeat').val(repeat);
-
-$('#repeat_distance').val(repeat_distance);
-
-$('#repeat_x').val(repeat_direction.x);
-$('#repeat_y').val(repeat_direction.y);
-$('#repeat_z').val(repeat_direction.z);
-
-$('#fov').val(fov);
-$('#far').val(far);
-$('#near').val(near);
-$('#aspect').val(aspect);
-$('#cam_x').val(cam.position.x);
-$('#cam_y').val(cam.position.y);
-$('#cam_z').val(cam.position.z);
-
-$('#cam_light_x').val(cam_light.x);
-$('#cam_light_y').val(cam_light.y);
-$('#cam_light_z').val(cam_light.z);
-
-$('#light_x').val(light.x);
-$('#light_y').val(light.y);
-$('#light_z').val(light.z);
-
-$('#diffuse_color').val( '#' +  diffuse_color.getHexString());
-$('#diffuse_color_b').val( '#' +  diffuse_b.getHexString());
-$('#diffuse_color_c').val( '#' + diffuse_c.getHexString());
-$('#diffuse_color_d').val( '#' + diffuse_d.getHexString());
-
-$('#ambient_color').val('#' + ambient_color.getHexString());
-$('#specular_color').val('#' + specular_color.getHexString());
-
-//$('#scene_background_color').val(scene_background_color);
 
 controls = new THREE.OrbitControls(cam,canvas);
     controls.minDistance = 1.5;
@@ -258,10 +207,6 @@ ShaderLoader("render.vert","render.frag",
         requestAnimationFrame(render);
     
         delta = clock.getDelta();
-
-        cam.fov  = fov;
-        //cam.far  = far;
-        //cam.near = near;
     
         if(light_animate === 1) {
         orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_speed ) );
@@ -323,157 +268,6 @@ ShaderLoader("render.vert","render.frag",
 $('#update_hash').click(function() {
     hash = parseFloat($('#hash').val());
 }); 
-   
-$('#update_epsilon').change(function() {
-    epsilon = parseFloat($('#epsilon').val());
-});
-
-$('#trace_distance').change(function() {
-    trace_distance = parseFloat($('#trace_distance').val());
-});
-
-$('#octaves').change(function() {
-    octaves = parseFloat($('#octaves').val());
-});  
-
-//$('#scene_background_color').change(function() {
-//    scene_background_color = parseFloat($('#scene_background_color').val());
-//});
-
-$('#fov').change(function() {
-    fov = parseFloat($('#fov').val());
-});
-
-/*
-$('#far').change(function() {
-    far = parseFloat($('#far').val());
-});
-
-$('#near').change(function() {
-    near = parseFloat($('#near').val());
-});*/
-
-$('#intensity').change(function() {
-    intensity = parseFloat($('#intensity').val());
-});
-
-$('#shininess').change(function() {
-    shininess = parseFloat($('#shininess').val());
-});
-
-$('#diffuse_color').change(function() {
-    diffuse_color.set( $('#diffuse_color').val());
-}); 
-   
-$('#ambient_color').change(function() {
-    ambient_color.set( $('#ambient_color').val());
-});
-
-$('#diffuse_color_b').change(function() {
-    diffuse_b.set( $('#diffuse_color_b').val());
-});
-
-$('#diffuse_color_c').change(function() {
-    diffuse_c.set( $('#diffuse_color_c').val());
-});  
-
-$('#diffuse_color_d').change(function() {
-    diffuse_d.set( $('#diffuse_color_d').val());
-});
-
-$('#specular_color').change(function() {
-    specular_color.set( $('#specular_color').val());
-});
-
-$('#distance_fields').change(function() {
-    df = parseInt($('#distance_fields').val());
-});
-
-$('#cam_animate').change(function() {
-   cam_animate = parseInt($('#cam_animate').val());
-});
-
-$('#light_animate').change(function() {
-   light_animate = parseInt($('#light_animate').val());
-});
-
-$('#diffuse_noise').change(function() {
-   diffuse_noise = parseInt($('#diffuse_noise').val());
-});
-
-$('#positional_noise').change(function() {
-   positional_noise = parseInt($('#positional_noise').val());
-});
-
-$('#cell_distance_type').change(function() {
-   cell_distance_type = parseInt($('#cell_distance_type').val());
-});
-
-$('#cell_iterations').change(function() {
-   cell_iterations = parseInt($('#cell_iterations').val());
-});
-
-$('#repeat').change(function() {
-   repeat = parseInt($('#repeat').val());
-});  
-
-$('#repeat_distance').change(function() {
-    repeat_distance = parseFloat($('#repeat_distance').val());
-});
-
-$('#repeat_x').change(function() {
-    repeat_direction.set.x = parseInt($('#repeat_x').val());
-    //repeat_direction.set.x = repeat_direction_x;
-});
-
-$('#repeat_y').change(function() {
-    repeat_direction.set.y = parseInt($('#repeat_y').val());
-    //repeat_direction.set.y = repeat_direction_y;
-});
-
-$('#repeat_z').change(function() {
-    repeat_direction.set.z = parseInt($('#repeat_z').val());
-    //repeat_direction.set.z = repeat_direction_z;
-});
-
-$('#update_cam_pos').click(function() {
-        
-         cam.position.set( 
-         parseFloat($('#cam_x').val()),
-         parseFloat($('#cam_y').val()),
-         parseFloat($('#cam_z').val())
-         ); 
-}); 
-
-$('#update_cam_light_pos').click(function() {
-
-         cam_light.set(
-            parseFloat($('#cam_light_x').val()),
-            parseFloat($('#cam_light_y').val()),
-            parseFloat($('#cam_light_z').val())
-            );
-}); 
-
-$('#update_light_pos').click(function() {
-      light.set(
-          parseFloat($('#light_x').val()),
-          parseFloat($('#light_y').val()),
-          parseFloat($('#light_z').val())
-          );
-}); 
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /* 
