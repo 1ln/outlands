@@ -12,15 +12,20 @@ varying vec2 vtc;
 //uniform vec3 cameraPosition;
 
 uniform float u_hash;
+
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
+uniform int u_swipe_dir;
+
 uniform vec2 u_resolution;
+
 uniform vec3 u_cam_target;
 uniform float u_time;
 
 uniform vec3 u_light;
 
 uniform int u_df;
+uniform int u_df1;
 
 uniform sampler2D u_texture;
 
@@ -563,6 +568,8 @@ float sphereFractal(vec3 p,float r,float h) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
+float df;
+float df1;
 
 if(u_repeat == 1) {
 p = repeat(p,vec3(u_repeat_direction));
@@ -572,19 +579,33 @@ if(u_repeat == 2) {
 p = repeatLimit(p,u_repeat_distance,vec3(u_repeat_direction));
 }
 
+if(u_df == 0) { df = sphere(p,1.0); }
+if(u_df == 1) { df = box(p,vec3(0.5)); }
+if(u_df == 2) { df = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
+if(u_df == 3) { df = torus(p,vec2(0.5,0.45)); }
+if(u_df == 4) { df = roundedCone(p,0.5,0.25,1.0); }
+if(u_df == 5) { df = link(p,0.5,.5,.25); } 
+if(u_df == 6) { df = boxSphereDiff(p,vec3(.5),1.0); }
+if(u_df == 7) { df = cylinder(p,.5,0.5); }
+if(u_df == 8) { df = prism(p,vec2(1.0,0.5)); } 
+if(u_df == 9) { df = hexPrism(p,vec2(0.5,1.0)); } 
 
-if(u_df == 0) { res = vec2(sphere(p,1.0),0.0); }
-if(u_df == 1) { res = vec2(box(p,vec3(1.0)),1.0); }
-if(u_df == 2) { res = vec2(capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25),3.0); }
-if(u_df == 3) { res = vec2(torus(p,vec2(0.9,0.45)),4.0); }
-if(u_df == 4) { res = vec2(roundedCone(p,0.5,0.25,1.0),2.0); }
-if(u_df == 5) { res = vec2(link(p,0.5,.5,.25),5.0); } 
-if(u_df == 6) { res = vec2(boxSphereDiff(p,vec3(PHI_SPHERE),1.0),7.0); }
-if(u_df == 7) { res = vec2(cylinder(p,1.0,0.5),6.0);}
-if(u_df == 8) { res = vec2(prism(p,vec2(1.0,0.5)),9.0); }
-if(u_df == 9) { res = vec2(hexPrism(p,vec2(0.5,1.0)),8.0); } 
+if(u_df1 == 0) { df1 = sphere(p,1.0); }
+if(u_df1 == 1) { df1 = box(p,vec3(0.5)); }
+if(u_df1 == 2) { df1 = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
+if(u_df1 == 3) { df1 = torus(p,vec2(0.5,0.45)); }
+if(u_df1 == 4) { df1 = roundedCone(p,0.5,0.25,1.0); }
+if(u_df1 == 5) { df1 = link(p,0.5,.5,.25); } 
+if(u_df1 == 6) { df1 = boxSphereDiff(p,vec3(.5),1.0); }
+if(u_df1 == 7) { df1 = cylinder(p,.5,0.5); }
+if(u_df1 == 8) { df1 = prism(p,vec2(1.0,0.5)); } 
+if(u_df1 == 9) { df1 = hexPrism(p,vec2(0.5,1.0)); } 
 
+//df1 = sphere(p,1.0);
+//df1  = torus(p,vec2(0.5,0.25));
 
+res = vec2(mix(df,df1,sin(u_time * 0.000085  ) ), 1.0);
+//res = vec2(df,1.0);
 return res;
 }
 
@@ -683,8 +704,8 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
      
-     vec3 light  = vec3( u_light  ) ;
-
+    // vec3 light  = vec3( u_light  ) ;
+     vec3 light = vec3(0.0,0.0,5.0);
      vec3 intensity = vec3(u_intensity);
 
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
@@ -756,6 +777,7 @@ float n = 0.0;
       //kd+=n;
 
       vec3 ka = vec3(u_ambient_color);
+      //vec3 ka = vec3(0.0); 
       vec3 ks = vec3(u_specular_color);
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
@@ -767,10 +789,10 @@ float n = 0.0;
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,0.0,-2.5);
+vec3 cam_pos = vec3(0.0,1.5,2.5);
 //vec3 cam_target = u_mouse_ray;
 
 //mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);

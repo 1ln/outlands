@@ -41,6 +41,7 @@ let cell_iterations;
 let controls;
 
 let orbit_target;
+let cam_orbit_target;
 
 let cam,scene,geometry,mesh,material;
 let aspect;
@@ -60,6 +61,8 @@ let spherical;
 
 let uniforms;
 let render;
+
+let light_target;
 
 function init() {
 
@@ -99,25 +102,29 @@ spherical.theta = Math.PI * 2.0 * nhash();
 spherical.phi = Math.acos((2.0 * nhash()) - 1.0);
 spherical.radius = 5.0;
 
-cam.position.set(nhash()*5.0,nhash()*5.0,nhash()*5.0);
+//cam.position.set(nhash()*5.0,nhash()*5.0,nhash()*5.0);
+cam.position.set(2.0,0.0,0.0); 
 cam_target  = new THREE.Vector3(0.0);
-cam_speed = 0.01;
+light_target  = new THREE.Vector3(0.0);
+cam_speed = 0.5;
 cam_animate = Math.round(nhash() * 4);
 
 cam_light = new THREE.Vector3(cam.position.x,cam.position.y,cam.position.z);
 
-light = new THREE.Vector3(0.0,10.0,0.0);
+light = new THREE.Vector3(0.0,0.0,1.5);
 
 light_animate = 0;
 light_speed = 0.001; 
 
 orbit_target   = new THREE.Quaternion();
+cam_orbit_target = new THREE.Quaternion();
 
 epsilon = 0.0001;
 
 trace_distance = 1000.0;     
 
-repeat = Math.round(nhash() * 2.0);
+//repeat = Math.round(nhash() * 2.0);
+repeat = 0.0;
 repeat_distance = nhash() * 15.0;  
 repeat_direction = new THREE.Vector3(Math.round(nhash()*25,Math.round()*25,Math.round()*25));
 
@@ -125,7 +132,7 @@ scene_background_color = new THREE.Color(nhash(),nhash(),nhash());
 
 diffuse_noise = Math.round(nhash() * 5); 
 
-ambient_color   = new THREE.Color(nhash(),nhash(),nhash());
+ambient_color   = new THREE.Color(0.0);
 
 specular_color  = new THREE.Color(1.0);
 shininess      = 100.0;
@@ -144,7 +151,7 @@ controls = new THREE.OrbitControls(cam,canvas);
     controls.target = cam_target;
     controls.enableDamping = true;
     controls.enablePan = false; 
-    controls.enabled = true  ; 
+    controls.enabled = false  ; 
 
 scene = new THREE.Scene();
 geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -208,29 +215,20 @@ ShaderLoader("render.vert","render.frag",
     
         delta = clock.getDelta();
     
-        if(light_animate === 1) {
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),( delta * light_speed ) );
+        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,1.0,0.0),( delta * 0.15) );
         light.applyQuaternion(orbit_target);
-        }
-      
-        if(cam_animate === 0) {
-        cam.position = cam.position;
-        }
 
-        if(cam_animate === 1) {
-        cam.position.z -= cam_speed * delta;
-        } 
-
-        if(cam_animate === 2) {
-        orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),delta * cam_speed);
-        cam.position.applyQuaternion(orbit_target);
+        if(swipeUp() == true) {
+        cam_orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,1.0),delta * 0.15  );
         }
 
-        if(cam_animate === 3) {
-        cam.position.z += Math.sin(cam.position.y) * delta;
-        cam.position.y -= Math.cos(cam.position.z) * delta;
+        if(swipeDown() == true) {
+        cam_orbit_target.setFromAxisAngle(new THREE.Vector3(0.0,0.0,-1.0),delta * 0.15); 
         }
 
+
+        cam.position.applyQuaternion(cam_orbit_target);
+        
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
