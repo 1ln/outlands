@@ -1,62 +1,9 @@
-/*
-
-body {
-background-color:grey;
-}
-
-#canvas {
-}
-
-#gui_container {
-
-width:512px;
-height:100%;
-padding-left:10px;
-
-background-color:lightgrey;
-overflow:hidden;
-
-}
-
-#gui_scroll { 
-width: 512px;
-height: 512px;
-overflow-y:scroll;
-
-} 
-
-@media (min-width: 900px) {
-*/
-
 * {
 margin:0;
 } 
 
-html, body {
-display:flex;
-height:100%;
-width:100%;
-}
-
 #canvas {
 display:flex;
-width:512px;
-height:512px;
-}
-
-#gui_container {
-display:flex;
-width:100%;
-height:100%;
-background-color:lightgrey;
-overflow:hidden;
-}
-
-#gui_scroll {
-width:100%;
-height:100%;
-padding:1em;
-overflow-y:scroll;
 }
 
 label {
