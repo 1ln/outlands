@@ -71,6 +71,11 @@ const int MARCH_STEPS = 64;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
+int level_w = 0;
+int level_l = 0;
+int cone_activated = 0;
+float speed = 0.001;
+
 //float hash(float h) { return fract( h * u_hash ); }
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 
@@ -369,13 +374,13 @@ float smoU(float d1,float d2,float k) {
     return mix(d2,d1,h) - k * h * (1.0 - h);
 }
 
-float smoS(float d1,float d2,float k) {
+float diffsm(float d1,float d2,float k) {
 
     float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
     return mix(d2,-d1,h) + k * h * (1.0 - h);
 }
 
-float smoI(float d1,float d2,float k) {
+float intersectsm(float d1,float d2,float k) {
 
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) + k * h * (1.0 - h);
@@ -558,10 +563,10 @@ float innerBoxDiff(vec3 p,vec3 ind,vec3 oud) {
      return max(-inb,oub);
 } 
 
-float cornerBoxDiff(vec3 p, vec3 cd,vec3 od) {
+float cornerBoxDiff(vec3 p, vec3 d,float h) {
    
-     float cdb = box(p-vec3(1.0),cd);
-     float oud = box(p,od);
+     float cdb = box(p-vec3(h),d);
+     float oud = box(p,d);
   
      return max(-cdb,oud);
 } 
@@ -585,6 +590,7 @@ float sphereDiff2Boxes(vec3 p,float sr,float b1r,float b2r) {
 
 vec2 scene(vec3 p) { 
 
+vec3 q = p;
 vec2 res = vec2(1.0,0.0);
 
 float df;
@@ -604,41 +610,26 @@ p = (vec4(p,1.0) * r).xyz;
 //}
 
 
-/*
 if(u_df == 0) { df = sphere(p,1.0); }
-if(u_df == 1) { df = box(p,vec3(.5)); }
-if(u_df == 2) { df = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
+if(u_df == 1) { df = box(p,vec3(0.5)); }
+if(u_df == 2) { df = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.5); }
+if(u_df == 3) { df = octahedron(p,1.0); } 
+if(u_df == 4) { df = ellipsoid(p,vec3(1.0,.5,1.0)) ;} 
+if(u_df == 5) { df = cylinder(p,1.0,0.5); }
+if(u_df == 6) { df = prism(p,vec2(1.,.5)); } 
+if(u_df == 7) { df = hexPrism(p,vec2(1.0,.5)); } 
+
+if(u_df == 8) { df = cornerBoxDiff(p,vec3(0.5),0.5); } 
 
 
-if(u_df == 3) { df = torus(p,vec2(1.0,0.5)); }
-if(u_df == 4) { df =  roundedCone(p,0.5,0.25,1.0); }
-if(u_df == 5) { df = link(p,0.5,.5,.25); } 
-if(u_df == 6) { df = boxSphereDiff(p,vec3(PHI_SPHERE),1.0); }
+//df = cornerBoxDiff(p,vec3(1.0),vec3(1.));
 
-if(u_df == 7) { df = cylinder(p,.5,0.5); }
-if(u_df == 8) { df = prism(p,vec2(1.141,1.0)); } 
-if(u_df == 9) { df = hexPrism(p,vec2(0.5,1.0)); } 
+df1 = roundedCone(q-vec3(0.0,-5.0,0.0)   ,.15,.35,15.);
 
+//res = vec2(max(-df1,df  ), 1.0);
+res = vec2( diffsm(df1,df,.25),1.0);
 
-
-*/
- 
-/*
-if(u_df2 == 2) { df1 = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
-if(u_df2 == 3) { df1 = torus(p,vec2(0.5,0.45)); }
-if(u_df2 == 4) { df1 = roundedCone(p,0.5,0.25,1.0); }
-if(u_df2 == 5) { df1 = link(p,0.5,.5,.25); } 
-if(u_df2 == 6) { df1 = boxSphereDiff(p,vec3(.5),1.0); }
-if(u_df2 == 7) { df1 = cylinder(p,.5,0.5); }
-if(u_df2 == 8) { df1 = prism(p,vec2(1.0,0.5)); } 
-if(u_df2 == 9) { df1 = hexPrism(p,vec2(0.5,1.0)); } 
-*/
-
-df = sphere(p,5.0); 
-
-//res = vec2(max(-df,df1  ), 1.0);
-
-res = vec2(df1,1.0);
+//res = vec2(df1,1.0);
 
 return res;
 }
@@ -738,15 +729,20 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
      
-     vec3 light  = vec3( u_light  ) ;
-     vec3 rot_light = vec3(u_rot_light);
+     vec3 light  = vec3( 0.0,10.0,0.0 ) ;
+     vec3 intensity = vec3(1.0);
    
-     vec3 intensity = vec3(u_intensity);
-     vec3 rot_light_intensity = vec3(u_rot_light_intensity);
+     if(u_mouse_pressed == 1) {
+     speed -= .0005;
+     //speed = 0.0;
+     light.y -= .00001;
+     }
+
+     mat4 light_rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * speed);
+     light = ( vec4(1.0,light) * light_rot).xyz; 
 
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
-     //color += phongModel(kd,ks,alpha,p,cam_ray,rot_light,rot_light_intensity);
-
+    
      return color;
 }
 
@@ -826,11 +822,11 @@ void main() {
 vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,1.5,2.5);
+//vec3 cam_pos = vec3(0.0,1.5,-1.);
 //vec3 cam_target = u_mouse_ray;
 
 mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
-//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
 
