@@ -224,9 +224,7 @@ float fractal3(vec3 x) {
 
 }
 
-float fractal312(vec3 x) {
-
-    int octaves = u_octaves;
+float fractal312(vec3 x,int octaves) {
 
     float value = 0.0;
     float h  = .5;
@@ -250,19 +248,19 @@ float fractal312(vec3 x) {
     return value;
 }
 
-float distortFractal(vec3 p) {
+float distortFractal(vec3 p,float f,int octaves) {
     
-    vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0)),      
-                  fractal312(p + vec3(4.5,1.8,6.3)),
-                  fractal312(p + vec3(1.1,7.2,2.4))
+    vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
+                  fractal312(p + vec3(4.5,1.8,6.3),octaves),
+                  fractal312(p + vec3(1.1,7.2,2.4),octaves)
     );
 
-    vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1)),
-                  fractal312(p + 4.0*q + vec3(5.6,3.7,8.9)),
-                  fractal312(p + 4.0*q + vec3(4.3,0.0,3.1)) 
+    vec3 r = vec3(fractal312(p + f*q + vec3(2.1,9.4,5.1),octaves),
+                  fractal312(p + f*q + vec3(5.6,3.7,8.9),octaves),
+                  fractal312(p + f*q + vec3(4.3,0.0,3.1),octaves) 
     ); 
 
-    return fractal312(p + 4.0* r);
+    return fractal312(p + f * r,octaves);
 } 
 
       
@@ -309,27 +307,7 @@ vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos(PI_2*(c*t+d));
 }
 
-//Rotations
-
-mat2 rot(float a) {
-
-    float s = sin(a);
-    float c = cos(a);
-    return mat2(c,-s,s,c);
-}
-
-mat4 rotY(float theta) {
-
-    float c = cos(theta);
-    float s = sin(theta);
-
-    return mat4( 
-        vec4(c,0,s,0),
-        vec4(0,1,0,0),
-        vec4(-s,0,c,0),
-        vec4(0,0,0,1)
-);
-}
+//Rotation,translation,scale
 
 mat4 rotationAxis(vec3 axis,float theta) {
 
@@ -503,25 +481,12 @@ float torus(vec3 p,vec2 t) {
     return length(q) - t.y; 
 }
 
-
-float torusAngle(vec3 p,vec2 sc, float ra,float rb) {
-    
-    p.x = abs(p.x);
-    float k = (sc.y*p.x > sc.x*p.y) ? dot(p.xy,sc) : length(p.xy);
-    return sqrt(dot(p,p) + ra*ra - 2.0*ra*k) -rb;
-} 
-
 float cylinder(vec3 p,float h,float r) {
     
     float d = length(vec2(p.x,p.z)) - r;
     d = max(d, -p.y - h);
     d = max(d, p.y - h);
     return d; 
-}
-
-float cylinderAxis(vec3 p,vec3 c) {
-
-    return length(vec2(p.x,p.z)- vec2(c.x,c.y)) - c.z;
 }
 
 float hexPrism(vec3 p,vec2 h) {
@@ -532,6 +497,27 @@ float hexPrism(vec3 p,vec2 h) {
  
     vec2 d = vec2(length(p.xy - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x)) * sign(p.y-h.x),p.z-h.y);
     return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
+float octahedron(vec3 p,float s) {
+
+    p = abs(p);
+
+    float m = p.x + p.y + p.z - s;
+    vec3 q;
+
+    if(3.0 * p.x < m) {
+       q = vec3(p.x,p.y,p.z);  
+    } else if(3.0 * p.y < m) {
+       q = vec3(p.y,p.z,p.x); 
+    } else if(3.0 * p.z < m) { 
+       q = vec3(p.z,p.x,p.y);
+    } else { 
+       return m * 0.57735027;
+    }
+
+    float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
+    return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
 
 float boxSphereDiff(vec3 p,vec3 bd,float sr) {
@@ -547,12 +533,12 @@ float boxSphereDiff(vec3 p,vec3 bd,float sr) {
     return min(cap_x,cap_y);
 }
 
-float binarySpheresSmoothUnion(vec3 p,float d,float r1,float r2,float k) {
+float binarySpheres(vec3 p,float d,float r) {
 
-    float negative_y = sphere(p-vec3(0.0,-d,0.0),r1);
-    float positive_y = sphere(p-vec3(0.0,d,0.0),r2);
+    float s = sphere(p-vec3(0.0,-d,0.0),r);
+    float s2 = sphere(p-vec3(0.0,d,0.0),r);
 
-    return smoU(negative_y,positive_y,k);
+    return min(s,s2); 
 }
 
 float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
@@ -564,34 +550,80 @@ float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
     return smoU(c2,smoU(c1,s,sf),sf);
 } 
 
-float sphereFractal(vec3 p,float r,float h) {
+float innerBoxDiff(vec3 p,vec3 ind,vec3 oud) {
+     
+     float inb = box(p,vec3(ind));
+     float oub = box(p,vec3(oud));
+    
+     return max(-inb,oub);
+} 
+
+float cornerBoxDiff(vec3 p, vec3 cd,vec3 od) {
+   
+     float cdb = box(p-vec3(1.0),cd);
+     float oud = box(p,od);
+  
+     return max(-cdb,oud);
+} 
+
+float sphereFractal(vec3 p,float r,float h,int octaves) {
  
-    return length(p) + fractal312(p)*h - r;
+    return length(p) + fractal312(p,octaves)*h - r;
 }
+
+float sphereDiff2Boxes(vec3 p,float sr,float b1r,float b2r) {
+
+    float s = sphere(p,sr);
+    float b1 = box(p-vec3(0.0,0.0,1.0),vec3(b1r));
+    float b2 = box(p-vec3(0.0,0.0,-1.0),vec3(b2r)); 
+    
+    return min(max(-s,b1),max(-s,b2));
+}  
+
+
+
 
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
+
 float df;
 float df1;
 
-if(u_repeat == 1) { 
-//p = repeatLimit(p,u_repeat_dist,vec3(u_repeat_dir ));
-}
+vec2 texres = vec2(16.0);
+vec4 tx = texture2D(u_texture,texres);
+float txr = mod(float(1), tx.x);
 
+float ra = PI_2 * txr;
+
+mat4 r = rotationAxis(vec3(1.0,1.0,0.0),ra);
+p = (vec4(p,1.0) * r).xyz;
+
+//if(u_repeat == 1) { 
+//p = repeatLimit(p,2.5,vec3(1. ));
+//}
+
+
+/*
 if(u_df == 0) { df = sphere(p,1.0); }
-if(u_df == 1) { df = box(p,vec3(0.5)); }
+if(u_df == 1) { df = box(p,vec3(.5)); }
 if(u_df == 2) { df = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
-if(u_df == 3) { df = torus(p,vec2(0.5,0.45)); }
-if(u_df == 4) { df = roundedCone(p,0.5,0.25,1.0); }
+
+
+if(u_df == 3) { df = torus(p,vec2(1.0,0.5)); }
+if(u_df == 4) { df =  roundedCone(p,0.5,0.25,1.0); }
 if(u_df == 5) { df = link(p,0.5,.5,.25); } 
-if(u_df == 6) { df = boxSphereDiff(p,vec3(.5),1.0); }
+if(u_df == 6) { df = boxSphereDiff(p,vec3(PHI_SPHERE),1.0); }
+
 if(u_df == 7) { df = cylinder(p,.5,0.5); }
-if(u_df == 8) { df = prism(p,vec2(1.0,0.5)); } 
+if(u_df == 8) { df = prism(p,vec2(1.141,1.0)); } 
 if(u_df == 9) { df = hexPrism(p,vec2(0.5,1.0)); } 
 
-if(u_df2 == 0) { df1 = sphere(p,1.0); }
-if(u_df2 == 1) { df1 = box(p,vec3(0.5)); }
+
+
+*/
+ 
+/*
 if(u_df2 == 2) { df1 = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25); }
 if(u_df2 == 3) { df1 = torus(p,vec2(0.5,0.45)); }
 if(u_df2 == 4) { df1 = roundedCone(p,0.5,0.25,1.0); }
@@ -600,15 +632,14 @@ if(u_df2 == 6) { df1 = boxSphereDiff(p,vec3(.5),1.0); }
 if(u_df2 == 7) { df1 = cylinder(p,.5,0.5); }
 if(u_df2 == 8) { df1 = prism(p,vec2(1.0,0.5)); } 
 if(u_df2 == 9) { df1 = hexPrism(p,vec2(0.5,1.0)); } 
+*/
 
-//df1 = sphere(p,1.0);
-//df1  = torus(p,vec2(0.5,0.25));
+df = sphere(p,5.0); 
 
-res = vec2(mix(df,df1,sin(u_time * 0.000085  ) ), 1.0);
+//res = vec2(max(-df,df1  ), 1.0);
 
+res = vec2(df1,1.0);
 
-
-//res = vec2(df,1.0);
 return res;
 }
 
@@ -758,11 +789,11 @@ float n = 0.0;
       }
 
       if(u_diffuse_noise == 1) {
-      n = distortFractal(p);
+      n = distortFractal(p,4.0,u_octaves);
       }
 
       if(u_diffuse_noise == 2) {
-      n = fractal312(p); 
+      n = fractal312(p,u_octaves); 
       } 
       
       if(u_diffuse_noise == 3) {
@@ -770,17 +801,17 @@ float n = 0.0;
       }
 
       if(u_diffuse_noise == 4) {
-      n = cell(p + fractal312(p));
+      n = cell(p + fractal312(p,u_octaves));
       }
       
       if(u_diffuse_noise == 5) {
-      n = distortFractal(p + cell(p));
+      n = distortFractal(p + cell(p),4.0,u_octaves);
       }
 
       kd = fmCol(p.y+n,vec3(u_diffuse_col),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
  
       //vec3 ka = vec3(u_ambient_col);
-      vec3 ka = vec3(0.0); 
+      vec3 ka = vec3(0.75); 
       vec3 ks = vec3(u_specular_col);
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
@@ -799,7 +830,7 @@ vec3 cam_target = u_cam_target;
 //vec3 cam_target = u_mouse_ray;
 
 mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
-cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
 
