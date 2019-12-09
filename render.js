@@ -50,6 +50,13 @@ let clock;
 let uniforms;
 let render;
 
+let hd;
+let hnd;
+let hds;
+let hnds;
+let htex;
+let nhtex;
+
 function init() {
 
 canvas = $('#canvas')[0];
@@ -78,6 +85,32 @@ hash = nhash();
 octaves = Math.round(nhash()*12);
 cell_iterations = Math.round(nhash()*48);
 cell_dist_type = Math.round(nhash() * 3); 
+
+hds  = 16*16*16;
+hnds = 32*32*32;  
+
+hd  = new Float32Array(hds); 
+hnd = new Float32Array(hnds);
+
+for(let i = 0; i < hds; i++) {
+    let s = i * 3;
+    hd[s]   = nhash();
+    hd[s+1] = nhash();
+    hd[s+2] = nhash();
+}
+
+for(let i = 0; i < hnds; i++) {
+    let s = i * 3;
+    hnd[s]    = nhash();
+    hnd[s+1]  = nhash();
+    hnd[s+2]  = nhash();
+} 
+
+htex  = new THREE.DataTexture(hd,16,16,THREE.RGBFormat,THREE.FloatType);
+hntex = new THREE.DataTexture(hnd,32,32,THREE.RGBFormat,THREE.FloatType);
+
+htex.needsUpdate  = true;
+hntex.needsUpdate = true;
 
 swipe_dir = 0;
 
@@ -155,12 +188,14 @@ uniforms = {
     "u_diffuse_noise"       : { value: diffuse_noise },
     "u_cell_iterations"     : { value: cell_iterations },
     "u_cell_dist_type"      : { value: cell_dist_type },
-    "u_texture"             : { type : "t", value: texture }
+    "u_hntex"               : { type : "t", value: hntex },
+    "u_htex"                : { type : "t", value: htex }
 
 
 };   
 
 }
+
 init();
 
 ShaderLoader("render.vert","render.frag",
@@ -183,7 +218,7 @@ ShaderLoader("render.vert","render.frag",
     render = function(timestamp) {
         requestAnimationFrame(render);
     
-        delta = clock.getDelta();    
+        //delta = clock.getDelta();    
 
         $('#canvas').mousedown(function() {
         mouse_pressed = true;
@@ -193,17 +228,12 @@ ShaderLoader("render.vert","render.frag",
         moused_pressed = false;
         });
 
-        if(mouse_pressed === true) { 
-        light.set.y += .001;
-        } else {
-        light.set.y -= .01;
-        }
-
+/*
         if(swipeLeft()  === true) { swipe_dir = 1; }
         if(swipeUp()    === true) { swipe_dir = 2; }
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
-
+*/
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
@@ -233,7 +263,8 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_noise"       ].value = diffuse_noise;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_cell_dist_type"      ].value = cell_dist_type;
-        uniforms["u_texture"             ].value = texture;         
+        uniforms["u_hntex"               ].value = hntex;
+        uniforms["u_htex"                ].value = htex;         
 
         controls.update();
         renderer.render(scene,cam);

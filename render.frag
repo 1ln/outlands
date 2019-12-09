@@ -28,7 +28,8 @@ uniform vec3 u_rot_light;
 uniform int u_df;
 uniform int u_df2;
 
-uniform sampler2D u_texture;
+uniform sampler2D u_htex;
+uniform sampler2D u_hntex;
 
 uniform int u_repeat;
 
@@ -166,7 +167,7 @@ float cell(vec3 x) {
 
 float cellTexture255(vec3 x) {
     
-    vec4 tx = texture2D(u_texture,vec2(0.0 ));
+    vec4 tx = texture2D(u_htex,vec2(0.0 ));
     float m_dist = 1.0;
     /*
     for(int i = 0; i < 64; ++i) {
@@ -202,6 +203,12 @@ float noise3d(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
  
     float n = p.x + p.y * 157.0 + 113.0 * p.z;
+
+
+
+             
+  
+
 
     return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x), 
                    mix(hash(n + 157.0),hash(n + 158.0),f.x),f.y),
@@ -597,7 +604,7 @@ float df;
 float df1;
 
 vec2 texres = vec2(16.0);
-vec4 tx = texture2D(u_texture,texres);
+vec4 tx = texture2D(u_htex,texres);
 float txr = mod(float(1), tx.x);
 
 float ra = PI_2 * txr;
