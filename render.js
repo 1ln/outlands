@@ -51,11 +51,8 @@ let uniforms;
 let render;
 
 let hd;
-let hnd;
 let hds;
-let hnds;
 let htex;
-let nhtex;
 
 function init() {
 
@@ -86,11 +83,9 @@ octaves = Math.round(nhash()*12);
 cell_iterations = Math.round(nhash()*48);
 cell_dist_type = Math.round(nhash() * 3); 
 
-hds  = 16*16*16;
-hnds = 32*32*32;  
+hds  = 16*16*16;  
 
 hd  = new Float32Array(hds); 
-hnd = new Float32Array(hnds);
 
 for(let i = 0; i < hds; i++) {
     let s = i * 3;
@@ -99,18 +94,9 @@ for(let i = 0; i < hds; i++) {
     hd[s+2] = nhash();
 }
 
-for(let i = 0; i < hnds; i++) {
-    let s = i * 3;
-    hnd[s]    = nhash();
-    hnd[s+1]  = nhash();
-    hnd[s+2]  = nhash();
-} 
-
 htex  = new THREE.DataTexture(hd,16,16,THREE.RGBFormat,THREE.FloatType);
-hntex = new THREE.DataTexture(hnd,32,32,THREE.RGBFormat,THREE.FloatType);
 
 htex.needsUpdate  = true;
-hntex.needsUpdate = true;
 
 swipe_dir = 0;
 
@@ -151,7 +137,7 @@ controls = new THREE.OrbitControls(cam,canvas);
     controls.target = cam_target;
     controls.enableDamping = true;
     controls.enablePan = false; 
-    controls.enabled = true; 
+    controls.enabled = false; 
 
 scene = new THREE.Scene();
 geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -188,7 +174,6 @@ uniforms = {
     "u_diffuse_noise"       : { value: diffuse_noise },
     "u_cell_iterations"     : { value: cell_iterations },
     "u_cell_dist_type"      : { value: cell_dist_type },
-    "u_hntex"               : { type : "t", value: hntex },
     "u_htex"                : { type : "t", value: htex }
 
 
@@ -228,12 +213,12 @@ ShaderLoader("render.vert","render.frag",
         moused_pressed = false;
         });
 
-/*
+
         if(swipeLeft()  === true) { swipe_dir = 1; }
         if(swipeUp()    === true) { swipe_dir = 2; }
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
-*/
+
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
@@ -263,7 +248,6 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffuse_noise"       ].value = diffuse_noise;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_cell_dist_type"      ].value = cell_dist_type;
-        uniforms["u_hntex"               ].value = hntex;
         uniforms["u_htex"                ].value = htex;         
 
         controls.update();

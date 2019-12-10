@@ -1,4 +1,4 @@
-//Signed Distance Renderer using raymarching
+//Signed Distance using raymarching
 //Copyright 2019, Dan Olson
 
 precision mediump float;
@@ -321,7 +321,7 @@ vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
 
 //Rotation,translation,scale
 
-mat4 rotationAxis(vec3 axis,float theta) {
+mat4 rotAxis(vec3 axis,float theta) {
 
 axis = normalize(axis);
 
@@ -547,10 +547,24 @@ float boxSphereDiff(vec3 p,vec3 bd,float sr) {
 
 float binarySpheres(vec3 p,float d,float r) {
 
-    float s = sphere(p-vec3(0.0,-d,0.0),r);
-    float s2 = sphere(p-vec3(0.0,d,0.0),r);
+    float s = sphere(p-vec3(0.0,-r,0.0),d);
+    float s2 = sphere(p-vec3(0.0,r,0.0),d);
 
     return min(s,s2); 
+}
+
+float binaryBoxes(vec3 p,float d,float r) {
+  
+    float b1 = box(p-vec3(0.0,-r,0.0),vec3(d));
+    float b2 = box(p-vec3(0.0,r,0.0),vec3(d));
+    
+    return min(b1,b2);  
+}
+
+float binaryCylinder(vec3 p,float d,float h,float r) {
+    float c1 = cylinder(p-vec3(0.0,-r,0.0),h,d);
+    float c2 = cylinder(p-vec3(0.0,r,0.0),h,d);
+    return min(c1,c2);
 }
 
 float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
@@ -562,11 +576,14 @@ float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
     return smoU(c2,smoU(c1,s,sf),sf);
 } 
 
-float innerBoxDiff(vec3 p,vec3 ind,vec3 oud) {
+float boxDiffInnerRotate(vec3 p,vec3 d,float s,float a) {
      
-     float inb = box(p,vec3(ind));
-     float oub = box(p,vec3(oud));
-    
+     mat4 r = rotAxis(vec3(1.0,0.0,0.0),a);
+     p = (vec4(p,1.0) * r).xyz;
+
+     float inb = box(p,vec3(d+s));
+     float oub = box(p,vec3(d));
+
      return max(-inb,oub);
 } 
 
@@ -583,7 +600,7 @@ float sphereFractal(vec3 p,float r,float h,int octaves) {
     return length(p) + fractal312(p,octaves)*h - r;
 }
 
-float sphereDiff2Boxes(vec3 p,float sr,float b1r,float b2r) {
+float binarySphereBoxDiffHalf(vec3 p,float sr,float b1r,float b2r) {
 
     float s = sphere(p,sr);
     float b1 = box(p-vec3(0.0,0.0,1.0),vec3(b1r));
@@ -592,13 +609,32 @@ float sphereDiff2Boxes(vec3 p,float sr,float b1r,float b2r) {
     return min(max(-s,b1),max(-s,b2));
 }  
 
+//rotational structures on ring 2 or 3
+
+float ring(vec3 p,float r,float d) {
+    float c = cylinder(p,d,r);
+    float s = sphere(p,r);
+    return max(-s,c);
+}
+
+float hexCylinder(vec3 p,float r, float d) {
+    float h = hexPrism(p,vec2(r,d));
+    float s = sphere(p,r);
+    return max(-s,h);
+}     
 
 
-
+   
 vec2 scene(vec3 p) { 
 
+float s = 0.001;
+float t = u_time;
+
 vec3 q = p;
+
 vec2 res = vec2(1.0,0.0);
+vec2 ir = vec2(0.0,1.0);
+vec2 r1 = vec2(0.0,1.0);
 
 float df;
 float df1;
@@ -609,35 +645,34 @@ float txr = mod(float(1), tx.x);
 
 float ra = PI_2 * txr;
 
-mat4 r = rotationAxis(vec3(1.0,1.0,0.0),ra);
-p = (vec4(p,1.0) * r).xyz;
+mat4 r = rotAxis(vec3(1.0,0.0,0.0),ra );
+q = (vec4(q,1.0) * r).xyz;
 
 //if(u_repeat == 1) { 
 //p = repeatLimit(p,2.5,vec3(1. ));
 //}
 
 
-if(u_df == 0) { df = sphere(p,1.0); }
-if(u_df == 1) { df = box(p,vec3(0.5)); }
-if(u_df == 2) { df = capsule(p,vec3(0.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.5); }
-if(u_df == 3) { df = octahedron(p,1.0); } 
-if(u_df == 4) { df = ellipsoid(p,vec3(1.0,.5,1.0)) ;} 
-if(u_df == 5) { df = cylinder(p,1.0,0.5); }
-if(u_df == 6) { df = prism(p,vec2(1.,.5)); } 
-if(u_df == 7) { df = hexPrism(p,vec2(1.0,.5)); } 
 
-if(u_df == 8) { df = cornerBoxDiff(p,vec3(0.5),0.5); } 
+if(u_df == 0) { r1 = vec2( hexCylinder(q,1.0,0.5),0.0); }
+if(u_df == 1) { r1 = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
+if(u_df == 2) { r1 = vec2( binarySpheres(p,.5,1.0) ,2.0 ); }
+if(u_df == 3) { r1 = vec2( ring(q,1.0,0.5),3.0); } 
+if(u_df == 4) { r1 = vec2( boxSphereDiff(p,vec3(PHI_SPHERE),1.0),4.0); }
+if(u_df == 5) { r1 = vec2( boxDiffInnerRotate(p,vec3(.75),.79,t*s),5.0); }
+if(u_df == 6) { r1 = vec2( binaryBoxes(p,1.,.5),6.0); } 
+if(u_df == 7) { r1 = vec2( link(p,.5,1.,.5),7.0); }
+if(u_df == 8) { r1 = vec2( binarySphereBoxDiffHalf(p,1.0,.5,.5),8.0); }
+if(u_df == 9) { r1 = vec2( binaryCylinder(p,1.0,.25,.5),9.0); } 
 
 
-//df = cornerBoxDiff(p,vec3(1.0),vec3(1.));
 
-df1 = roundedCone(q-vec3(0.0,-5.0,0.0)   ,.15,.35,15.);
 
-//res = vec2(max(-df1,df  ), 1.0);
-res = vec2( diffsm(df1,df,.25),1.0);
-
-//res = vec2(df1,1.0);
-
+ 
+//res = vec2( diffsm(df1,df,.25),1.0);
+res =vec2(r1);
+//res = vec2(min(r1,ir));
+//res = vec2(res);
 return res;
 }
 
@@ -736,18 +771,24 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
      
-     vec3 light  = vec3( 0.0,10.0,0.0 ) ;
+     vec3 light  = vec3( 0.0,0.0,0.0 ) ;
      vec3 intensity = vec3(1.0);
    
+     vec3 light2 = vec3(0.0,10.0,0.0);
+     mat4 l = translate(light2);
+     light2 = (vec4(1.0,light) * l).xyz; 
+     
+
      if(u_mouse_pressed == 1) {
      speed -= .0005;
      //speed = 0.0;
      light.y -= .00001;
      }
 
-     mat4 light_rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * speed);
-     light = ( vec4(1.0,light) * light_rot).xyz; 
+     //mat4 light_rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * speed);
+     //light = ( vec4(1.0,light) * light_rot).xyz; 
 
+     color += phongModel(kd,ks,alpha,p,cam_ray,light2,vec3(1.0));
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
     
      return color;
@@ -826,13 +867,13 @@ float n = 0.0;
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,1.5,-1.);
+vec3 cam_pos = vec3(0.0,1.5,6.);
 //vec3 cam_target = u_mouse_ray;
 
-mat4 cam_rot = rotationAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
+mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
