@@ -360,6 +360,11 @@ vec3 repeat(vec3 p,vec3 s) {
     return q;
 }
 
+float reflectx(vec3 p) {
+    
+   return p.x = abs(p.x);
+} 
+
 vec2 opU(vec2 d1,vec2 d2) {
 
     return (d1.x < d2.x) ? d1 : d2;
@@ -627,36 +632,39 @@ float hexCylinder(vec3 p,float r, float d) {
    
 vec2 scene(vec3 p) { 
 
-float s = 0.001;
-float t = u_time;
+float s  = 0.001;
+float t  = u_time; 
 
-vec3 q = p;
+vec3 tr = vec3(0.0,2.,0.0);
+vec3 rl = vec3(0.0);
+vec3 r = p;
+vec3 rf = p;
 
 vec2 res = vec2(1.0,0.0);
-vec2 ir = vec2(0.0,1.0);
-vec2 r1 = vec2(0.0,1.0);
 
-float df;
-float df1;
+vec2 d1;
+vec2 d2;
+
+vec2 cm;
 
 vec2 texres = vec2(16.0);
 vec4 tx = texture2D(u_htex,texres);
 float txr = mod(float(1), tx.x);
 
 float ra = PI_2 * txr;
+mat4 rm = rotAxis(vec3(1.0,0.0,0.0),ra );
+r = (vec4(r,1.0) * rm).xyz;
 
-mat4 r = rotAxis(vec3(1.0,0.0,0.0),ra );
-q = (vec4(q,1.0) * r).xyz;
+rl = repeatLimit(p,2.5,vec3(1. ));
 
-//if(u_repeat == 1) { 
-//p = repeatLimit(p,2.5,vec3(1. ));
-//}
+rf.y = abs(rf.y);
 
+float pl = dot(p,normalize(vec3(1.0,0.0,0.0)));
 
-
-if(u_df == 0) { r1 = vec2( hexCylinder(q,1.0,0.5),0.0); }
-if(u_df == 1) { r1 = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
-if(u_df == 2) { r1 = vec2( binarySpheres(p,.5,1.0) ,2.0 ); }
+/*
+//r1 = vec2( hexCylinder(q,1.0,0.5),0.0); }
+//r1 = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
+//r1 = vec2( binarySpheres(p,.5,1.0) ,2.0 ); }
 if(u_df == 3) { r1 = vec2( ring(q,1.0,0.5),3.0); } 
 if(u_df == 4) { r1 = vec2( boxSphereDiff(p,vec3(PHI_SPHERE),1.0),4.0); }
 if(u_df == 5) { r1 = vec2( boxDiffInnerRotate(p,vec3(.75),.79,t*s),5.0); }
@@ -665,12 +673,25 @@ if(u_df == 7) { r1 = vec2( link(p,.5,1.,.5),7.0); }
 if(u_df == 8) { r1 = vec2( binarySphereBoxDiffHalf(p,1.0,.5,.5),8.0); }
 if(u_df == 9) { r1 = vec2( binaryCylinder(p,1.0,.25,.5),9.0); } 
 
+*/
 
 
+cm = vec2(sphere(p,1.0),0.0);
+//d1 = vec2(hexPrism(p,vec2(1.0,0.5)),1.0);
+//d1 = vec2(cylinder(1.0,0.5),2.0);
+//d1 = vec2(max(-sphere(q,1.0),sphere(q-vec3(0.0,0.5,0.0),1.0)),3.0);
+//d1 = vec2(torus(p,vec2( 1.0,0.5)),4.0);
+//d1 = vec2(sphere(rf-tr,1.0),5.0);
+//d1 = vec2(box(rf-tr,vec3(1.0)),6.0);
+//d1 = vec2(link(rf-tr,0.25,.5,0.25),7.0);
+//d1 = vec2(max(pl,sphere(p,1.0)) ,8.0);
+
+
+res = d1;
 
  
 //res = vec2( diffsm(df1,df,.25),1.0);
-res =vec2(r1);
+//res =vec2(r1);
 //res = vec2(min(r1,ir));
 //res = vec2(res);
 return res;
