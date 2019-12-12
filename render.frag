@@ -616,15 +616,15 @@ float binarySphereBoxDiffHalf(vec3 p,float sr,float b1r,float b2r) {
 
 //rotational structures on ring 2 or 3
 
-float ring(vec3 p,float r,float d) {
-    float c = cylinder(p,d,r);
-    float s = sphere(p,r);
+float ring(vec3 p,float ir,float or,float d) {
+    float c = cylinder(p,d,or);
+    float s = sphere(p,ir);
     return max(-s,c);
 }
 
-float hexCylinder(vec3 p,float r, float d) {
-    float h = hexPrism(p,vec2(r,d));
-    float s = sphere(p,r);
+float hexRing(vec3 p,float ir,float or,float d) {
+    float h = hexPrism(p,vec2(or,d));
+    float s = sphere(p,ir);
     return max(-s,h);
 }     
 
@@ -632,68 +632,44 @@ float hexCylinder(vec3 p,float r, float d) {
    
 vec2 scene(vec3 p) { 
 
+vec3 q = vec3(p);
+
 float s  = 0.001;
 float t  = u_time; 
 
-vec3 tr = vec3(0.0,2.,0.0);
-vec3 rl = vec3(0.0);
-vec3 r = p;
-vec3 rf = p;
-
 vec2 res = vec2(1.0,0.0);
 
-vec2 d1;
-vec2 d2;
+vec2 resr;
+vec2 resc;
 
-vec2 cm;
+int df;
+int df2;
 
 vec2 texres = vec2(16.0);
 vec4 tx = texture2D(u_htex,texres);
 float txr = mod(float(1), tx.x);
-
 float ra = PI_2 * txr;
-mat4 rm = rotAxis(vec3(1.0,0.0,0.0),ra );
-r = (vec4(r,1.0) * rm).xyz;
 
-rl = repeatLimit(p,2.5,vec3(1. ));
+mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
+p = (vec4(p,1.0) * r).xyz;
 
-rf.y = abs(rf.y);
+mat4 r2 = rotAxis(vec3(0.,1.,0.0),t*s);
+q = (vec4(q,1.0) * r2).xyz;
 
-float pl = dot(p,normalize(vec3(1.0,0.0,0.0)));
-
-/*
-//r1 = vec2( hexCylinder(q,1.0,0.5),0.0); }
-//r1 = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
-//r1 = vec2( binarySpheres(p,.5,1.0) ,2.0 ); }
-if(u_df == 3) { r1 = vec2( ring(q,1.0,0.5),3.0); } 
-if(u_df == 4) { r1 = vec2( boxSphereDiff(p,vec3(PHI_SPHERE),1.0),4.0); }
-if(u_df == 5) { r1 = vec2( boxDiffInnerRotate(p,vec3(.75),.79,t*s),5.0); }
-if(u_df == 6) { r1 = vec2( binaryBoxes(p,1.,.5),6.0); } 
-if(u_df == 7) { r1 = vec2( link(p,.5,1.,.5),7.0); }
-if(u_df == 8) { r1 = vec2( binarySphereBoxDiffHalf(p,1.0,.5,.5),8.0); }
-if(u_df == 9) { r1 = vec2( binaryCylinder(p,1.0,.25,.5),9.0); } 
-
-*/
-
-
-cm = vec2(sphere(p,1.0),0.0);
-//d1 = vec2(hexPrism(p,vec2(1.0,0.5)),1.0);
-//d1 = vec2(cylinder(1.0,0.5),2.0);
-//d1 = vec2(max(-sphere(q,1.0),sphere(q-vec3(0.0,0.5,0.0),1.0)),3.0);
-//d1 = vec2(torus(p,vec2( 1.0,0.5)),4.0);
-//d1 = vec2(sphere(rf-tr,1.0),5.0);
-//d1 = vec2(box(rf-tr,vec3(1.0)),6.0);
-//d1 = vec2(link(rf-tr,0.25,.5,0.25),7.0);
-//d1 = vec2(max(pl,sphere(p,1.0)) ,8.0);
-
-
-res = d1;
-
+df = 1;
+df2 = 1;
  
-//res = vec2( diffsm(df1,df,.25),1.0);
-//res =vec2(r1);
-//res = vec2(min(r1,ir));
-//res = vec2(res);
+if(df == 1) { resr = vec2( hexRing(p,2.,2.1,0.5),0.0); }
+if(df == 2) { resr = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
+if(df == 3) { resr = vec2( ring(p,2.,2.5,.25),3.0); } 
+
+if(df2 == 0) { resc = vec2(boxSphereDiff(q,vec3(PHI_SPHERE),1.0),0.0); }
+if(df2 == 1) { resc = vec2(cornerBoxDiff(q,vec3(1.),1.0),0.0); }
+if(df2 == 2) { resc = vec2(link(p,1.0,0.5,1.0),0.0); }
+
+//res = vec2(max(-c,d1));
+res = min( resc,resr   );
+
 return res;
 }
 
@@ -796,8 +772,8 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      vec3 intensity = vec3(1.0);
    
      vec3 light2 = vec3(0.0,10.0,0.0);
-     mat4 l = translate(light2);
-     light2 = (vec4(1.0,light) * l).xyz; 
+     //mat4 l = translate(light2);
+     //light2 = (vec4(1.0,light) * l).xyz; 
      
 
      if(u_mouse_pressed == 1) {
@@ -848,35 +824,31 @@ float n = 0.0;
         color = vec3(0.0);
 
     } else {
-       
-      if(u_diffuse_noise == 0) {
-      n = 0.0;
-      }
 
-      if(u_diffuse_noise == 1) {
+      if(u_diffuse_noise == 0) {
       n = distortFractal(p,4.0,u_octaves);
       }
 
-      if(u_diffuse_noise == 2) {
+      if(u_diffuse_noise == 1) {
       n = fractal312(p,u_octaves); 
       } 
       
-      if(u_diffuse_noise == 3) {
+      if(u_diffuse_noise == 2) {
       n = cell(p);
       }
 
-      if(u_diffuse_noise == 4) {
+      if(u_diffuse_noise == 3) {
       n = cell(p + fractal312(p,u_octaves));
       }
       
-      if(u_diffuse_noise == 5) {
+      if(u_diffuse_noise == 4) {
       n = distortFractal(p + cell(p),4.0,u_octaves);
       }
 
       kd = fmCol(p.y+n,vec3(u_diffuse_col),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
  
       //vec3 ka = vec3(u_ambient_col);
-      vec3 ka = vec3(0.75); 
+      vec3 ka = vec3(0.0); 
       vec3 ks = vec3(u_specular_col);
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
