@@ -23,36 +23,14 @@ uniform vec3 u_cam_target;
 uniform float u_time;
 
 uniform vec3 u_light;
-uniform vec3 u_rot_light;
 
 uniform int u_df;
 uniform int u_df2;
 
-uniform sampler2D u_htex;
-uniform sampler2D u_hntex;
-
-uniform int u_repeat;
-
-uniform float u_repeat_dist;
-uniform vec3 u_repeat_dir;
-
-uniform int u_octaves;
-
-uniform float u_cell_iterations;
-uniform int u_cell_dist_type;
-
-uniform float u_eps;
-uniform float u_trace_dist;
+uniform vec3 u_inner_rot;
+uniform vec3 u_outer_rot;
 
 uniform vec3 u_diffuse_col;
-uniform vec3 u_ambient_col;
-uniform vec3 u_specular_col;
-uniform vec3 u_background_col;
-
-uniform float u_shininess;
-uniform float u_intensity;
-uniform float u_rot_light_intensity;
-
 uniform vec3 u_diffuse_b;
 uniform vec3 u_diffuse_c;
 uniform vec3 u_diffuse_d;
@@ -126,9 +104,9 @@ float sin3(vec3 p) {
     return sin(p.x * u_hash) * sin(p.y * u_hash) * sin(p.z * u_hash);
 } 
  
-float cell(vec3 x) {
+float cell(vec3 x,int type) {
  
-    x *= u_cell_iterations;
+    x *= 35.0;
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -145,15 +123,15 @@ float cell(vec3 x) {
 
                 float d = length(diff);
 
-                    if(u_cell_dist_type == 0) { 
+                    if(type == 0) { 
                         min_dist = min(min_dist,d);
                     }
  
-                    if(u_cell_dist_type == 1) {
+                    if(type == 1) {
                         min_dist = min(min_dist,abs(diff.x)+abs(diff.y)+abs(diff.z));
                     }
 
-                    if(u_cell_dist_type == 2) {
+                    if(type == 2) {
                         min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
                     }
 
@@ -165,36 +143,6 @@ float cell(vec3 x) {
 
 }
 
-float cellTexture255(vec3 x) {
-    
-    vec4 tx = texture2D(u_htex,vec2(0.0 ));
-    float m_dist = 1.0;
-    /*
-    for(int i = 0; i < 64; ++i) {
-        m_dist = min(m_dist,distance(vec2( x.xy),vec2( mod(float(i),tx.x),mod(float(i+1),tx.x) ))) ;
-    }*/
-    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.23,.4)));
-    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.03,.76)));
-    m_dist = min(m_dist,distance(vec2(x.xy),vec2(.443,.26)));
- 
-    return m_dist;
-}
-
-/*
-float fb2d(in vec2 st_) {
-
-float value = 0.0; 
-float amp = 0.5;
-
-for(int i = 0; i < 6; ++i) {
-value += amp * noise2d(st_);
-    st_ *= 2.0; 
-amp *= 0.5;
-
-}*/ 
-
-//  return value;
-
 float noise3d(vec3 x) {
 
     vec3 p = floor(x);
@@ -204,37 +152,11 @@ float noise3d(vec3 x) {
  
     float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
-
-
-             
-  
-
-
     return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x), 
                    mix(hash(n + 157.0),hash(n + 158.0),f.x),f.y),
                mix(mix(hash(n + 113.0),hash(n + 114.0),f.x),
                    mix(hash(n + 270.0),hash(n + 271.0),f.x),f.y),f.z);
 } 
-
-mat3 m = mat3(0.0,.8,.6,-.8,.36,-.48,-.6,-.48,.64);
-float fractal3(vec3 x) {
-
-    float f = 0.0;
-    f = .5 * noise3d(x);
-    x = 2.01 * x * m;
-    f += .25 * noise3d(x);
-    x = 2.02  * x * m;
-    f += .125 * noise3d(x);
-    x = 2.03 * x * m;
-    f += .0625 * noise3d(x);
-    x = 2.04 * x * m;
-    f += .03125 * noise3d(x);
-    x = 2.05 * x * m;
-    f += .015625 * noise3d(x);
-
-    return f;
-
-}
 
 float fractal312(vec3 x,int octaves) {
 
@@ -645,16 +567,13 @@ vec2 resc;
 int df;
 int df2;
 
-vec2 texres = vec2(16.0);
-vec4 tx = texture2D(u_htex,texres);
-float txr = mod(float(1), tx.x);
-float ra = PI_2 * txr;
-
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
-p = (vec4(p,1.0) * r).xyz;
+//  p = (vec4(p,1.0) * r).xyz;
 
 mat4 r2 = rotAxis(vec3(0.,1.,0.0),t*s);
-q = (vec4(q,1.0) * r2).xyz;
+//  q = (vec4(q,1.0) * r2).xyz;
+
+p += u_inner_rot;
 
 df = 1;
 df2 = 1;
@@ -669,6 +588,17 @@ if(df2 == 2) { resc = vec2(link(p,1.0,0.5,1.0),0.0); }
 
 //res = vec2(max(-c,d1));
 res = min( resc,resr   );
+
+
+
+/*
+df = sphere(p,1.);
+df = box(p,vec3(1.0);
+df = cylinder(p,1.0,.5);
+df = octahedron(p,1.0);
+df = prism(p,vec2(1.0,0.0));
+df = hexPrism(p,vec2(1.0,d));
+*/
 
 return res;
 }
@@ -693,31 +623,6 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         return vec2(depth,d);
 
 }
-
-/*
-float rayReflect(vec3 ro,vec3 rd) {
-
-float depth = 0.0;
-//float d = -1.0;
-
-    for(int i = 0; i < 3; ++i) {
-
-    float distance =  scene(ro + start * rd);
-
-            if(distance < EPSILON) { 
-            return depth;
-            }
-
-depth += distance;
-
-
-    if(start >= end) {
-    return end;
-    }
- 
-return end;
-}
-} */
 
 vec3 calcNormal(vec3 p) {
 
@@ -772,18 +677,7 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
      vec3 intensity = vec3(1.0);
    
      vec3 light2 = vec3(0.0,10.0,0.0);
-     //mat4 l = translate(light2);
-     //light2 = (vec4(1.0,light) * l).xyz; 
-     
 
-     if(u_mouse_pressed == 1) {
-     speed -= .0005;
-     //speed = 0.0;
-     light.y -= .00001;
-     }
-
-     //mat4 light_rot = rotationAxis(vec3(1.0,0.0,0.0),u_time * speed);
-     //light = ( vec4(1.0,light) * light_rot).xyz; 
 
      color += phongModel(kd,ks,alpha,p,cam_ray,light2,vec3(1.0));
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
@@ -816,7 +710,7 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
-float shininess = u_shininess;
+float shininess = 10.0;
 float n = 0.0;
 
     if(d.x > TRACE_DIST - EPSILON) {
@@ -826,30 +720,34 @@ float n = 0.0;
     } else {
 
       if(u_diffuse_noise == 0) {
-      n = distortFractal(p,4.0,u_octaves);
+      n = distortFractal(p,4.0,6);
       }
 
       if(u_diffuse_noise == 1) {
-      n = fractal312(p,u_octaves); 
+      n = fractal312(p,6); 
       } 
       
       if(u_diffuse_noise == 2) {
-      n = cell(p);
+      n = cell(p,1);
       }
 
       if(u_diffuse_noise == 3) {
-      n = cell(p + fractal312(p,u_octaves));
+      n = cell(p + fractal312(p,6),2);
       }
       
       if(u_diffuse_noise == 4) {
-      n = distortFractal(p + cell(p),4.0,u_octaves);
+      n = distortFractal(p + cell(p,3),4.0,6);
+      }
+
+      if(u_diffuse_noise == 5) {
+      n = fractal312(p,4);
       }
 
       kd = fmCol(p.y+n,vec3(u_diffuse_col),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
  
       //vec3 ka = vec3(u_ambient_col);
       vec3 ka = vec3(0.0); 
-      vec3 ks = vec3(u_specular_col);
+      vec3 ks = vec3(1.0);
 
       color = phongLight(ka,kd,ks,shininess,p,ro);
 
@@ -867,7 +765,7 @@ vec3 cam_pos = vec3(0.0,1.5,6.);
 //vec3 cam_target = u_mouse_ray;
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
-cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
 
