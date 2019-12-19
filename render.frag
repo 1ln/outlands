@@ -6,11 +6,6 @@ precision mediump float;
 varying vec2 vUv;
 varying vec2 vtc;
 
-//uniform mat4 viewMatrix;
-//uniform mat4 cameraWorldMatrix;
-//uniform mat4 cameraProjectionMatrixInverse;
-//uniform vec3 cameraPosition;
-
 uniform float u_hash;
 
 uniform vec2 u_mouse;
@@ -22,13 +17,7 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform vec3 u_light;
-
 uniform int u_df;
-uniform int u_df2;
-
-uniform vec3 u_inner_rot;
-uniform vec3 u_outer_rot;
 
 uniform vec3 u_diffuse_col;
 uniform vec3 u_diffuse_b;
@@ -45,40 +34,27 @@ const float PHI =  1.6180339;
 const float PHI_INV = 1.0/PHI;
 const float PHI_SPHERE = 1.0 - PHI/6.0;
 
-const int MARCH_STEPS = 64;
+const int MARCH_STEPS = 128;
 
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
-int level_w = 0;
-int level_l = 0;
-int cone_activated = 0;
-float speed = 0.001;
-
-//float hash(float h) { return fract( h * u_hash ); }
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
+//float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }
 
-
-//float hash(float h) { 
-//return fract(PHI/log(23324.0 ) * h  * 981123324.0  );
-//}
-
-//2D Hash Functions
-float rand2d(vec2 st) {
+float hash2(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
 }
 
-//2D Noise functions
-
-float noise2d(in vec2 st_) {
+float noise2(in vec2 st_) {
 
     vec2 i = floor(st_);
     vec2 f = fract(st_);
 
-float a = rand2d(i);
-    float b = rand2d(i + vec2(1.0,0.0));
-    float c = rand2d(i + vec2(0.0,1.0));
-    float d = rand2d(i + vec2(1.0,1.0));
+    float a = hash2(i);
+    float b = hash2(i + vec2(1.0,0.0));
+    float c = hash2(i + vec2(0.0,1.0));
+    float d = hash2(i + vec2(1.0,1.0));
  
     vec2 u = f * f * (3.0 - 2.0 * f);
 
@@ -86,8 +62,6 @@ float a = rand2d(i);
         (c - a) * u.y * (1.0 - u.x) +
         (d - b) * u.x * u.y;
 }
-
-//3D Hash Functions
 
 vec3 hash3(vec3 x) {
  
@@ -97,16 +71,10 @@ vec3 hash3(vec3 x) {
 
     return fract(sin(x) * 92352.3635 * u_hash);
 }
-
-//3D Noise Functions
-
-float sin3(vec3 p) {
-    return sin(p.x * u_hash) * sin(p.y * u_hash) * sin(p.z * u_hash);
-} 
  
-float cell(vec3 x,int type) {
+float cell(vec3 x,float iterations,int type) {
  
-    x *= 35.0;
+    x *= iterations;
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -197,17 +165,9 @@ float distortFractal(vec3 p,float f,int octaves) {
     return fractal312(p + f * r,octaves);
 } 
 
-      
-//Shaping Functions
-
-float linear(float x) {
-
-    return x;
-}
-
-float power(float x,float f) {
-
-    return pow(x,f);
+float sinDisplace3(vec3 p,float h) {
+    
+    return sin(p.x*h) * sin(p.y*h) * sin(p.z*h);
 }
 
 float envImpulse(float x,float k) {
@@ -241,7 +201,13 @@ vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos(PI_2*(c*t+d));
 }
 
-//Rotation,translation,scale
+mat2 rot2(float a) {
+
+    float c = cos(a);
+    float s = sin(a);
+    
+    return mat2(c,-s,s,c);
+}
 
 mat4 rotAxis(vec3 axis,float theta) {
 
@@ -282,63 +248,65 @@ vec3 repeat(vec3 p,vec3 s) {
     return q;
 }
 
-float reflectx(vec3 p) {
+float refx(vec3 p) {
     
    return p.x = abs(p.x);
 } 
 
-vec2 opU(vec2 d1,vec2 d2) {
+vec2 opu(vec2 d1,vec2 d2) {
 
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
-float opIf(float d1,float d2) {
+float opu(float d1,float d2) {
+    
+    return min(d1,d2);
+}
+
+float opi(float d1,float d2) {
 
     return max(d1,d2);
 }
 
-float opSf(float d1,float d2) {
+float opd(float d1,float d2) {
 
     return max(-d1,d2);
 }
 
-float smoU(float d1,float d2,float k) {
+float smou(float d1,float d2,float k) {
 
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) - k * h * (1.0 - h);
 }
 
-float diffsm(float d1,float d2,float k) {
+float smod(float d1,float d2,float k) {
 
     float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
     return mix(d2,-d1,h) + k * h * (1.0 - h);
 }
 
-float intersectsm(float d1,float d2,float k) {
+float smoi(float d1,float d2,float k) {
 
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) + k * h * (1.0 - h);
 }
 
-//Entire scene can be rounded by increasing epsilon const
-float rounding(float d,float h) { 
+float round(float d,float h) { 
 
     return d - h;
 }
 
-float concentric(float d,float h) {
+float layer(float d,float h) {
 
     return abs(d) - h;
 }
-
-//3d Distance Field Geometry
 
 float sphere(vec3 p,float r) { 
      
     return length(p) - r;
 }
 
-float sphereNegativeInterior(vec3 p,float r) {
+float sphereNeg(vec3 p,float r) {
 
     return abs(length(p)-r);
 }
@@ -458,99 +426,6 @@ float octahedron(vec3 p,float s) {
     float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
-
-float boxSphereDiff(vec3 p,vec3 bd,float sr) {
- 
-    float sphere = sphere(p,sr);
-    float box = box(p,bd);
-    return max(-sphere,box);
-}
-
-    float xCapsule(vec3 p) {
-    float cap_x = capsule(p,vec3(1.0,0.0,0.0),vec3(0.0,0.0,1.0),.25);
-    float cap_y = capsule(p,vec3(.0,-1.0,0.0),vec3(0.0,1.0,0.0),0.25);
-    return min(cap_x,cap_y);
-}
-
-float binarySpheres(vec3 p,float d,float r) {
-
-    float s = sphere(p-vec3(0.0,-r,0.0),d);
-    float s2 = sphere(p-vec3(0.0,r,0.0),d);
-
-    return min(s,s2); 
-}
-
-float binaryBoxes(vec3 p,float d,float r) {
-  
-    float b1 = box(p-vec3(0.0,-r,0.0),vec3(d));
-    float b2 = box(p-vec3(0.0,r,0.0),vec3(d));
-    
-    return min(b1,b2);  
-}
-
-float binaryCylinder(vec3 p,float d,float h,float r) {
-    float c1 = cylinder(p-vec3(0.0,-r,0.0),h,d);
-    float c2 = cylinder(p-vec3(0.0,r,0.0),h,d);
-    return min(c1,c2);
-}
-
-float sphereConesSmooth(vec3 p,float r,float sf,vec2 c) {
-   
-    float c1 = cone(p,vec2(c.x,c.y));
-    float c2 = cone(p,vec2(c.x,-c.y)); 
-    float s  = sphere(p,r);
-
-    return smoU(c2,smoU(c1,s,sf),sf);
-} 
-
-float boxDiffInnerRotate(vec3 p,vec3 d,float s,float a) {
-     
-     mat4 r = rotAxis(vec3(1.0,0.0,0.0),a);
-     p = (vec4(p,1.0) * r).xyz;
-
-     float inb = box(p,vec3(d+s));
-     float oub = box(p,vec3(d));
-
-     return max(-inb,oub);
-} 
-
-float cornerBoxDiff(vec3 p, vec3 d,float h) {
-   
-     float cdb = box(p-vec3(h),d);
-     float oud = box(p,d);
-  
-     return max(-cdb,oud);
-} 
-
-float sphereFractal(vec3 p,float r,float h,int octaves) {
- 
-    return length(p) + fractal312(p,octaves)*h - r;
-}
-
-float binarySphereBoxDiffHalf(vec3 p,float sr,float b1r,float b2r) {
-
-    float s = sphere(p,sr);
-    float b1 = box(p-vec3(0.0,0.0,1.0),vec3(b1r));
-    float b2 = box(p-vec3(0.0,0.0,-1.0),vec3(b2r)); 
-    
-    return min(max(-s,b1),max(-s,b2));
-}  
-
-//rotational structures on ring 2 or 3
-
-float ring(vec3 p,float ir,float or,float d) {
-    float c = cylinder(p,d,or);
-    float s = sphere(p,ir);
-    return max(-s,c);
-}
-
-float hexRing(vec3 p,float ir,float or,float d) {
-    float h = hexPrism(p,vec2(or,d));
-    float s = sphere(p,ir);
-    return max(-s,h);
-}     
-
-
    
 vec2 scene(vec3 p) { 
 
@@ -561,35 +436,8 @@ float t  = u_time;
 
 vec2 res = vec2(1.0,0.0);
 
-vec2 resr;
-vec2 resc;
-
-int df;
-int df2;
-
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
-//  p = (vec4(p,1.0) * r).xyz;
-
-mat4 r2 = rotAxis(vec3(0.,1.,0.0),t*s);
-//  q = (vec4(q,1.0) * r2).xyz;
-
-p += u_inner_rot;
-
-df = 1;
-df2 = 1;
- 
-if(df == 1) { resr = vec2( hexRing(p,2.,2.1,0.5),0.0); }
-if(df == 2) { resr = vec2( torus(p,vec2(  1.0,0.5)),1.0); }
-if(df == 3) { resr = vec2( ring(p,2.,2.5,.25),3.0); } 
-
-if(df2 == 0) { resc = vec2(boxSphereDiff(q,vec3(PHI_SPHERE),1.0),0.0); }
-if(df2 == 1) { resc = vec2(cornerBoxDiff(q,vec3(1.),1.0),0.0); }
-if(df2 == 2) { resc = vec2(link(p,1.0,0.5,1.0),0.0); }
-
-//res = vec2(max(-c,d1));
-res = min( resc,resr   );
-
-
+//p = (vec4(p,1.0) * r).xyz;
 
 /*
 df = sphere(p,1.);
@@ -600,6 +448,9 @@ df = prism(p,vec2(1.0,0.0));
 df = hexPrism(p,vec2(1.0,d));
 */
 
+float df = sphere(p,1.0);
+
+res = vec2(df,0.0);
 return res;
 }
 
@@ -715,33 +566,13 @@ float n = 0.0;
 
     if(d.x > TRACE_DIST - EPSILON) {
 
-        color = vec3(0.0);
+      //  color = vec3(0.0);
+          color = vec3(.12) * rd.y*0.5;  
 
     } else {
 
-      if(u_diffuse_noise == 0) {
-      n = distortFractal(p,4.0,6);
-      }
-
-      if(u_diffuse_noise == 1) {
-      n = fractal312(p,6); 
-      } 
+      n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-      if(u_diffuse_noise == 2) {
-      n = cell(p,1);
-      }
-
-      if(u_diffuse_noise == 3) {
-      n = cell(p + fractal312(p,6),2);
-      }
-      
-      if(u_diffuse_noise == 4) {
-      n = distortFractal(p + cell(p,3),4.0,6);
-      }
-
-      if(u_diffuse_noise == 5) {
-      n = fractal312(p,4);
-      }
 
       kd = fmCol(p.y+n,vec3(u_diffuse_col),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
  
@@ -758,41 +589,19 @@ float n = 0.0;
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-vec3 cam_pos = vec3(0.0,1.5,6.);
-//vec3 cam_target = u_mouse_ray;
+//vec3 cam_pos = vec3(0.0,1.5,6.);
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
-
-//vec2 uvu = (gl_FragCoord.xy * 2.0 - u_resolution) / u_resolution;
-//vec2 uvu =  -1.0 + 2.0 * (gl_FragCoord.xy/u_resolution.xy ) * 0.5 ;
-//vec2 uvu = 0.5 * (gl_FragCoord.xy/u_resolution.xy) * 2.0 - 1.0 ;
-
-//vec2 s = (gl_FragCoord.xy * 2.0 - u_resolution)/u_resolution ;
-//vec4 ndcRay =vec4(s.xy,1.0,-1.0);
-//vec3 ray = (cameraWorldMatrix * cameraProjectionMatrixInverse * ndcRay).xyz;
-//ray = normalize(ray);
-//uvu = normalize(uvu);
-
 uvu.x *= u_resolution.x/u_resolution.y; 
-
 vec3 direction = rayCamDir(uvu,cam_pos,cam_target);
-
-//vec dir = rayCamDir(s,camera_position,cam_target);
-
 vec3 color = render(cam_pos,direction);
 
-//vec3 color = render(camera_position,dir);
-//vec3 color = vec3(uvu.xy,0.0);
-//vec3 color = vec3(0.0);
-//vec4 color = texture2D(u_texture,vec2(gl_FragCoord.xy/256.0));
-
-//gl_FragColor = color;
 gl_FragColor = vec4(color,1.0);
 
 }
