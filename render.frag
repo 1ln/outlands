@@ -17,17 +17,8 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform int u_df;
-
-uniform vec3 u_diffuse_col;
-uniform vec3 u_diffuse_b;
-uniform vec3 u_diffuse_c;
-uniform vec3 u_diffuse_d;
-
-uniform int u_diffuse_noise;
-
 const float PI  =  3.1415926;
-const float PI_2 = 2.0 * PI;
+const float PI2 = 2.0 * PI;
 const float PI6 = 6.0 * PI;
 const float PI_6 = 6.0/PI;
 const float PHI =  1.6180339;
@@ -38,8 +29,6 @@ const int MARCH_STEPS = 128;
 
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
-
-vec2 mo = u_mouse / u_resolution;
 
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 //float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }
@@ -200,7 +189,7 @@ float sincPhase(float x,float k) {
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     
-    return a + b * cos(PI_2*(c*t+d));
+    return a + b * cos(PI2 * (c * t + d));
 }
 
 mat2 rot2(float a) {
@@ -437,10 +426,12 @@ float s  = 0.001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
-
+/*
+vec2 mo = vec2(u_mouse/u_resolution);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI2 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI2 * mo.x); 
 p = (vec4(p,1.0) * mxr * myr).xyz;
+*/
 
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
 //p = (vec4(p,1.0) * r).xyz;
@@ -590,10 +581,8 @@ float n = 0.0;
 
       n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-
-      kd = fmCol(p.y+n,vec3(u_diffuse_col),vec3(u_diffuse_b),vec3(u_diffuse_c),vec3(u_diffuse_d));
+      kd = fmCol(p.y+n,vec3(0.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(0.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
-      //vec3 ka = vec3(u_ambient_col);
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
