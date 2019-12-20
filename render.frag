@@ -426,12 +426,12 @@ float s  = 0.001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
-/*
-vec2 mo = vec2(u_mouse/u_resolution);
+
+vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI2 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI2 * mo.x); 
-p = (vec4(p,1.0) * mxr * myr).xyz;
-*/
+//p = (vec4(p,1.0) * mxr * myr).xyz;
+
 
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
 //p = (vec4(p,1.0) * r).xyz;
@@ -541,7 +541,7 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 light,vec3 cam_r
      
      vec3 intensity = vec3(1.0);
    
-     color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
+     color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity);     
     
      return color;
 }
@@ -551,6 +551,7 @@ vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
      vec3 camForward = normalize(camTarget - camPosition);
      vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
      vec3 camUp = normalize(cross(camForward,camRight));
+
 
      vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
 
@@ -562,6 +563,7 @@ vec3 render(vec3 ro,vec3 rd) {
 vec3 color = vec3(0.0);
 
 vec2 d = rayScene(ro, rd);
+//vec2 rf = rayReflect(ro,rd);
 
 vec3 p = ro + rd * d.x;
 
@@ -579,14 +581,18 @@ float n = 0.0;
 
     } else {
 
-      n = distortFractal(p + cell(p,16.0,0),4.0,6);
+//     n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
+      n += fractal312(p,6);
+
       kd = fmCol(p.y+n,vec3(0.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(0.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
-      color = phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,0.0),ro);
+      color += phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,10.0),ro);
+      
+      color = pow(color,vec3(0.4545)); 
 
 }
 
@@ -598,7 +604,7 @@ void main() {
 vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,1.5,6.);
+//vec3 cam_pos = vec3(0.0,0.5,5.0);
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
