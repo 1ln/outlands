@@ -39,6 +39,8 @@ const int MARCH_STEPS = 128;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
+vec2 mo = u_mouse / u_resolution;
+
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 //float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }
 
@@ -436,6 +438,10 @@ float t  = u_time;
 
 vec2 res = vec2(1.0,0.0);
 
+mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI2 * mo.y);
+mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI2 * mo.x); 
+p = (vec4(p,1.0) * mxr * myr).xyz;
+
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
 //p = (vec4(p,1.0) * r).xyz;
 
@@ -473,6 +479,24 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         if(TRACE_DIST < depth) { d = -1.0; }
         return vec2(depth,d);
 
+}
+
+vec2 rayReflect(vec3 ro,vec3 rd) {
+
+    float depth = 0.0;
+    float d = -1.0;
+
+    for(int i = 0; i < 10; ++i) {
+        vec3 p = ro + depth * rd;
+        vec2 dist = scene(p);
+         
+        if(dist.x < EPSILON || TRACE_DIST < dist.x) { break; }
+        depth += dist.x;
+        d = dist.y;
+        }
+        
+        if(TRACE_DIST < depth) { d = -1.0; }
+        return vec2(depth,d);
 }
 
 vec3 calcNormal(vec3 p) {
@@ -519,30 +543,23 @@ vec3 phongModel(vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray,vec3 light_pos,v
      return intensity * (kd * ln + ks * pow(rv,alpha));
 }
 
-vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray) {
+vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 light,vec3 cam_ray) {
 
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
      
-     vec3 light  = vec3( 0.0,0.0,0.0 ) ;
      vec3 intensity = vec3(1.0);
    
-     vec3 light2 = vec3(0.0,10.0,0.0);
-
-
-     color += phongModel(kd,ks,alpha,p,cam_ray,light2,vec3(1.0));
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity); 
     
      return color;
 }
 
-vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget) {
+vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
 
      vec3 camForward = normalize(camTarget - camPosition);
      vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
      vec3 camUp = normalize(cross(camForward,camRight));
-
-     float fPersp = 1.0;
 
      vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
 
@@ -580,7 +597,7 @@ float n = 0.0;
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
-      color = phongLight(ka,kd,ks,shininess,p,ro);
+      color = phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,0.0),ro);
 
 }
 
@@ -599,7 +616,7 @@ mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 
 vec2 uvu = -1.0 + 2.0 * vUv.xy;
 uvu.x *= u_resolution.x/u_resolution.y; 
-vec3 direction = rayCamDir(uvu,cam_pos,cam_target);
+vec3 direction = rayCamDir(uvu,cam_pos,cam_target,1.0);
 vec3 color = render(cam_pos,direction);
 
 gl_FragColor = vec4(color,1.0);
