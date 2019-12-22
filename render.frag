@@ -563,6 +563,10 @@ vec3 render(vec3 ro,vec3 rd) {
 
 vec3 color = vec3(0.0);
 
+//vec3 bkg_col = vec3(0.0);
+vec3 bkg_col = vec3(.25) * rd.y * 0.5;
+
+
 vec2 d = rayScene(ro, rd);
 //vec2 rf = rayReflect(ro,rd);
 
@@ -577,8 +581,7 @@ float n = 0.0;
 
     if(d.x > TRACE_DIST - EPSILON) {
 
-      //  color = vec3(0.0);
-          color = vec3(.12) * rd.y*0.5;  
+      color = bkg_col;
 
     } else {
 
