@@ -519,9 +519,10 @@ vec3 phongModel(vec3 kd,vec3 ks,float alpha,vec3 p,vec3 cam_ray,vec3 light_pos,v
 
      vec3 v = normalize(cam_ray - p);
      vec3 r = normalize(reflect(-l,n));
+     vec3 h = normalize(l + v);
 
      float ln = clamp(dot(l,n),0.0,1.0);
-     float rv = dot(r,v);
+     float rv = dot(r,h);
 
      if(ln < 0.0) {
          return vec3(0.0);  
