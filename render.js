@@ -1,6 +1,6 @@
 let w,h;
 
-let canvas;
+let canvas,context;
 let renderer;
 
 let nhash,hash;  
@@ -25,7 +25,8 @@ let render;
 
 function init() {
 
-canvas = $('#canvas')[0];
+canvas  = $('#canvas')[0];
+context = canvas.getContext('webgl2',{ antialias:false });
 
 w = window.innerWidth;
 h = window.innerHeight; 
@@ -33,7 +34,7 @@ h = window.innerHeight;
 canvas.width  = w;
 canvas.height = h;
 
-renderer = new THREE.WebGLRenderer({canvas:canvas});
+renderer = new THREE.WebGLRenderer({canvas:canvas,context:context});
 
 mouse_pressed = 0;
 
@@ -56,7 +57,6 @@ cam_target  = new THREE.Vector3(0.0);
 controls = new THREE.OrbitControls(cam,canvas);
 
     controls.minDistance = 0.0;
-    controls.maxDistance = 15.0;
     controls.target = cam_target;
     controls.enableDamping = true;
     controls.enablePan = false; 

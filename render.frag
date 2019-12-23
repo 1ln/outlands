@@ -1,10 +1,11 @@
+#version 300 es
+
 //Signed Distance using raymarching
 //Copyright 2019, Dan Olson
 
 precision mediump float;
 
-varying vec2 vUv;
-varying vec2 vtc;
+out vec4 out_FragColor;
 
 uniform float u_hash;
 
@@ -613,11 +614,12 @@ vec3 cam_target = u_cam_target;
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
-vec2 uvu = -1.0 + 2.0 * vUv.xy;
-uvu.x *= u_resolution.x/u_resolution.y; 
-vec3 direction = rayCamDir(uvu,cam_pos,cam_target,1.0);
+vec2 uv = gl_FragCoord.xy/u_resolution * 2.0 - 2.0;
+uv.x *= u_resolution.x/u_resolution.y; 
+
+vec3 direction = rayCamDir(uv,cam_pos,cam_target,1.0);
 vec3 color = render(cam_pos,direction);
 
-gl_FragColor = vec4(color,1.0);
+out_FragColor = vec4(color,1.0);
 
 }
