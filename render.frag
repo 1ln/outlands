@@ -18,6 +18,8 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
+uniform sampler3D noise_tex;
+
 const float PI  =  3.1415926;
 const float PI2 = 2.0 * PI;
 const float PI6 = 6.0 * PI;
@@ -30,6 +32,10 @@ const int MARCH_STEPS = 128;
 
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
+
+float noiseTexure(vec3 x) {
+    return texture(noise_tex,x/32.0).x;
+}
 
 float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 //float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }

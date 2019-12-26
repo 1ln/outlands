@@ -47,7 +47,7 @@ hash = nhash();
 tex_size = 32*32*32;
 noise = new Float32Array(tex_size);
 
-for(let i = 0; i < size; i++) {
+for(let i = 0; i < tex_size; i++) {
 
     noise[i]     = nhash();
     noise[i + 1] = nhash();
