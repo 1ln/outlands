@@ -117,13 +117,15 @@ float noise3d(vec3 x) {
 
     f = f * f * (3.0 - 2.0 * f);
  
-    float n = p.x + p.y * 157.0 + 113.0 * p.z;
+   // float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
-    return mix(mix(mix(hash(n + 0.0),hash(n + 1.0),f.x), 
-                   mix(hash(n + 157.0),hash(n + 158.0),f.x),f.y),
-               mix(mix(hash(n + 113.0),hash(n + 114.0),f.x),
-                   mix(hash(n + 270.0),hash(n + 271.0),f.x),f.y),f.z);
+    return mix(mix(mix(hash(p + vec3(0.0)        ),hash(p + vec3(1.0,0.0,0.0)),f.x), 
+                   mix(hash(p + vec3(0.0,1.0,0.0)),hash(p + vec3(1.0,1.0,0.0)),f.x),f.y),
+               mix(mix(hash(p + vec3(0.0,0.0,1.0)),hash(p + vec3(1.0,0.0,1.0)),f.x),
+                   mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
 } 
+
+
 
 float fractal312(vec3 x,int octaves) {
 
@@ -198,6 +200,37 @@ float sincPhase(float x,float k) {
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     
     return a + b * cos(PI2 * (c * t + d));
+}
+
+float easeIn4(float t) {
+    return t * t;
+}
+
+float easeOut4(float t) {
+    return -1.0 * t * (t - 2.0);
+}
+
+float easeInOut4(float t) {
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t;
+    } else {
+        return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
+    }
+}
+
+float easeIn3(float t) {
+    return t * t * t;
+}
+
+float easeOut3(float t) {
+    return (t = t - 1.0) * t * t + 1.0;
+}
+
+float easeInOut3(float t) {
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t * t;
+    } else { 
+        return 0.5 * ((t -= 2.0) * t * t + 2.0);
 }
 
 mat2 rot2(float a) {
