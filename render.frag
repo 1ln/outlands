@@ -4,6 +4,7 @@
 //Copyright 2019, Dan Olson
 
 precision mediump float;
+precision mediump sampler3D;
 
 out vec4 out_FragColor;
 
@@ -33,7 +34,7 @@ const int MARCH_STEPS = 128;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
-float noiseTexure(vec3 x) {
+float noiseTexture(in vec3 x) {
     return texture(noise_tex,x/32.0).x;
 }
 
@@ -594,7 +595,7 @@ float n = 0.0;
 
 //     n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-      n += fractal312(p,6);
+    //  n += fractal312(p,6);
 
       kd = fmCol(p.y+n,vec3(0.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(0.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
