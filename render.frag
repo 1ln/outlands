@@ -38,11 +38,17 @@ float noiseTexture(in vec3 x) {
     return texture(noise_tex,x/32.0).x;
 }
 
-float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
+//float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
 //float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }
 
 float hash2(vec2 st) {
 return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
+}
+
+float hash(vec3 p) {
+   p = fract((p * .2411494));
+   p += dot(p, p.yzx + 19.19);
+   return fract((p.x + p.y) * p.z);
 }
 
 float noise2(in vec2 st_) {
@@ -151,19 +157,19 @@ float fractal312(vec3 x,int octaves) {
     return value;
 }
 
-float distortFractal(vec3 p,float f,int octaves) {
+float distortFractal(vec3 p,int octaves) {
     
     vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
                   fractal312(p + vec3(4.5,1.8,6.3),octaves),
                   fractal312(p + vec3(1.1,7.2,2.4),octaves)
     );
 
-    vec3 r = vec3(fractal312(p + f*q + vec3(2.1,9.4,5.1),octaves),
-                  fractal312(p + f*q + vec3(5.6,3.7,8.9),octaves),
-                  fractal312(p + f*q + vec3(4.3,0.0,3.1),octaves) 
+    vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1),octaves),
+                  fractal312(p + 4.0*q + vec3(5.6,3.7,8.9),octaves),
+                  fractal312(p + 4.0*q + vec3(4.3,0.0,3.1),octaves) 
     ); 
 
-    return fractal312(p + f * r,octaves);
+    return fractal312(p + 4.0 * r,octaves);
 } 
 
 float sinDisplace3(vec3 p,float h) {
@@ -231,6 +237,7 @@ float easeInOut3(float t) {
         return 0.5 * t * t * t;
     } else { 
         return 0.5 * ((t -= 2.0) * t * t + 2.0);
+    }
 }
 
 mat2 rot2(float a) {
@@ -628,7 +635,8 @@ float n = 0.0;
 
 //     n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-    //  n += fractal312(p,6);
+  //   n += fractal312(p,6);
+       n += distortFractal(p,5);
 
       kd = fmCol(p.y+n,vec3(0.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(0.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
@@ -637,7 +645,7 @@ float n = 0.0;
 
       color += phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,10.0),ro);
       
-      color = pow(color,vec3(0.4545)); 
+    //  color = pow(color,vec3(0.4545)); 
 
 }
 
