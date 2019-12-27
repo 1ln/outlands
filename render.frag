@@ -34,11 +34,15 @@ const int MARCH_STEPS = 128;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
+float hash(float x) {
+    return fract(sin(x) * u_hash * 43758.5453); 
+}
+/*
 float hash(vec3 p) {
    p = fract((p.xyz)*.5121224);
    p += dot(p, p.yzx + 19.19);
    return fract(p.x);
-}
+}*/
 
 vec3 hash3(vec3 x) {
  
@@ -95,12 +99,27 @@ float noise(vec3 x) {
     vec3 f = fract(x);
 
     f = f * f * (3.0 - 2.0 * f);
+    float n = p.x + p.y * 157.0 + 113.0 * p.z;
+
+    return mix(mix(mix(hash(n +   0.0), hash(n + 1.0),f.x),
+                   mix(hash(n + 157.0), hash(n + 158.0),f.x),f.y),
+               mix(mix(hash(n + 113.0), hash(n + 114.0),f.x),
+                   mix(hash(n + 270.0), hash(n + 271.0),f.x),f.y),f.z);
+}
+
+/*
+float noise(vec3 x) {
+
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+
+    f = f * f * (3.0 - 2.0 * f);
 
     return mix(mix(mix(hash(p + vec3(0.0)        ),hash(p + vec3(1.0,0.0,0.0)),f.x), 
                    mix(hash(p + vec3(0.0,1.0,0.0)),hash(p + vec3(1.0,1.0,0.0)),f.x),f.y),
                mix(mix(hash(p + vec3(0.0,0.0,1.0)),hash(p + vec3(1.0,0.0,1.0)),f.x),
                    mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
-} 
+} */
 
 float f6(vec3 x) {
 
