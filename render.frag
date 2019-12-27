@@ -34,38 +34,10 @@ const int MARCH_STEPS = 128;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
-float noiseTexture(in vec3 x) {
-    return texture(noise_tex,x/32.0).x;
-}
-
-//float hash(float h) { return fract(sin(h) * u_hash *  43758.5453 ); }
-//float hash(float h) { return fract(PHI/log(23324.0 ) * h  * 981123324.0  ); }
-
-float hash2(vec2 st) {
-return fract(sin(dot(st.xy,vec2(12.9898,78.233))) * 43758.5453123) * 2.0 - 1.0 ;
-}
-
 float hash(vec3 p) {
-   p = fract((p * .2411494));
+   p = fract((p.xyz)*.5121224);
    p += dot(p, p.yzx + 19.19);
-   return fract((p.x + p.y) * p.z);
-}
-
-float noise2(in vec2 st_) {
-
-    vec2 i = floor(st_);
-    vec2 f = fract(st_);
-
-    float a = hash2(i);
-    float b = hash2(i + vec2(1.0,0.0));
-    float c = hash2(i + vec2(0.0,1.0));
-    float d = hash2(i + vec2(1.0,1.0));
- 
-    vec2 u = f * f * (3.0 - 2.0 * f);
-
-    return mix(a,b,u.x) + 
-        (c - a) * u.y * (1.0 - u.x) +
-        (d - b) * u.x * u.y;
+   return fract(p.x);
 }
 
 vec3 hash3(vec3 x) {
@@ -92,6 +64,7 @@ float cell(vec3 x,float iterations,int type) {
 
                 vec3 b = vec3(float(k),float(j),float(i));
                 vec3 r = hash3(p + b);
+                
                 vec3 diff = (b + r - f);
 
                 float d = length(diff);
@@ -116,14 +89,12 @@ float cell(vec3 x,float iterations,int type) {
 
 }
 
-float noise3d(vec3 x) {
+float noise(vec3 x) {
 
     vec3 p = floor(x);
     vec3 f = fract(x);
 
     f = f * f * (3.0 - 2.0 * f);
- 
-   // float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
     return mix(mix(mix(hash(p + vec3(0.0)        ),hash(p + vec3(1.0,0.0,0.0)),f.x), 
                    mix(hash(p + vec3(0.0,1.0,0.0)),hash(p + vec3(1.0,1.0,0.0)),f.x),f.y),
@@ -131,9 +102,7 @@ float noise3d(vec3 x) {
                    mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
 } 
 
-
-
-float fractal312(vec3 x,int octaves) {
+float f6(vec3 x) {
 
     float value = 0.0;
     float h  = .5;
@@ -141,35 +110,29 @@ float fractal312(vec3 x,int octaves) {
     float amp = 0.5;
     float freq = 1.0;
 
-    if(octaves >= 1)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 2)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 3)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 4)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 5)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 6)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; } 
-    if(octaves >= 7)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 8)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; } 
-    if(octaves >= 9)  { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 10) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 11) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
-    if(octaves >= 12) { value += amp * noise3d(freq * x); freq *= 2.0; amp *= g; }
+    value = amp * noise(freq * x); freq *= 2.0; amp *=  g;  
+    value += amp * noise(freq * x); freq *= 2.0; amp *=  g; 
+    value += amp * noise(freq * x); freq *= 2.0; amp *= g;  
+    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
+    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
+    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
 
     return value;
 }
 
-float distortFractal(vec3 p,int octaves) {
+float distort(vec3 p) {
     
-    vec3 q = vec3(fractal312(p + vec3(0.0,0.0,1.0),octaves),      
-                  fractal312(p + vec3(4.5,1.8,6.3),octaves),
-                  fractal312(p + vec3(1.1,7.2,2.4),octaves)
+    vec3 q = vec3(f6(p + vec3(0.0,0.0,1.0)),      
+                  f6(p + vec3(4.5,1.8,6.3)),
+                  f6(p + vec3(1.1,7.2,2.4))
     );
 
-    vec3 r = vec3(fractal312(p + 4.0*q + vec3(2.1,9.4,5.1),octaves),
-                  fractal312(p + 4.0*q + vec3(5.6,3.7,8.9),octaves),
-                  fractal312(p + 4.0*q + vec3(4.3,0.0,3.1),octaves) 
+    vec3 r = vec3(f6(p + 4.0*q + vec3(2.1,9.4,5.1)),
+                  f6(p + 4.0*q + vec3(5.6,3.7,8.9)),
+                  f6(p + 4.0*q + vec3(4.3,0.0,3.1)) 
     ); 
 
-    return fractal312(p + 4.0 * r,octaves);
+    return f6(p + 4.0 * r);
 } 
 
 float sinDisplace3(vec3 p,float h) {
@@ -588,7 +551,7 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 light,vec3 cam_r
      const vec3 ambient_light = 0.5  * vec3(1.0,1.0,1.0);
      vec3 color = ka * ambient_light;  
      
-     vec3 intensity = vec3(1.0);
+     vec3 intensity = vec3(.5);
    
      color += phongModel(kd,ks,alpha,p,cam_ray,light,intensity);     
     
@@ -624,7 +587,7 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
-float shininess = 10.0;
+float shininess = 100.0;
 float n = 0.0;
 
     if(d.x > TRACE_DIST - EPSILON) {
@@ -635,17 +598,17 @@ float n = 0.0;
 
 //     n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-  //   n += fractal312(p,6);
-       n += distortFractal(p,5);
+     n += f6(p);
+   //  n += distort(p);
 
-      kd = fmCol(p.y+n,vec3(0.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(0.0,0.35,0.45),vec3(0.9,1.0,0.5));
+      kd = fmCol(p.y+n,vec3(1.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(1.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
-      color += phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,10.0),ro);
+      color += phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,100.0),ro);
       
-    //  color = pow(color,vec3(0.4545)); 
+      color = pow(color,vec3(0.4545)); 
 
 }
 
