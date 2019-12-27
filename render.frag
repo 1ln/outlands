@@ -37,12 +37,13 @@ const float TRACE_DIST = 1000.0;
 float hash(float x) {
     return fract(sin(x) * u_hash * 43758.5453); 
 }
-/*
-float hash(vec3 p) {
-   p = fract((p.xyz)*.5121224);
-   p += dot(p, p.yzx + 19.19);
-   return fract(p.x);
-}*/
+
+//15551*89491 = 1391674541
+float hash(uint h) {
+    uvec2 n = h * uvec2(1391674541U,2531151992U);
+    h = (n.x ^ n.y) * 1391674541U;
+    return float(h) * (1.0/float(0xffffffffU));
+}
 
 vec3 hash3(vec3 x) {
  
@@ -101,10 +102,10 @@ float noise(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
     float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
-    return mix(mix(mix(hash(n +   0.0), hash(n + 1.0),f.x),
-                   mix(hash(n + 157.0), hash(n + 158.0),f.x),f.y),
-               mix(mix(hash(n + 113.0), hash(n + 114.0),f.x),
-                   mix(hash(n + 270.0), hash(n + 271.0),f.x),f.y),f.z);
+    return mix(mix(mix(hash(uint(  n +   0.0)) , hash(uint(   n +   1.0))   ,f.x),
+                   mix(hash(uint(  n + 157.0)) , hash(uint(   n + 158.0))   ,f.x),f.y),
+               mix(mix(hash(uint(  n + 113.0)) , hash(uint(   n + 114.0))   ,f.x),
+                   mix(hash(uint(  n + 270.0)) , hash(uint(   n + 271.0))   ,f.x),f.y),f.z);
 }
 
 /*
