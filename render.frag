@@ -45,6 +45,13 @@ float hash(uint h) {
     return float(h) * (1.0/float(0xffffffffU));
 }
 
+vec3 hash3(uvec3 h) {
+   h *= uvec3(1391674541U,2531151992U,2860486313U);
+   h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,2531151992U,2860486313U);
+   return vec3(h) * (1.0/float(0xffffffffU));
+
+}
+/*
 vec3 hash3(vec3 x) {
  
     x = vec3(dot(x,vec3(45.0,325.0,2121.455)), 
@@ -52,7 +59,7 @@ vec3 hash3(vec3 x) {
              dot(x,vec3(67.0,322.4364,1235.0)));
 
     return fract(sin(x) * 92352.3635 * u_hash);
-}
+}*/
  
 float cell(vec3 x,float iterations,int type) {
  
@@ -68,7 +75,7 @@ float cell(vec3 x,float iterations,int type) {
             for(int k = -1; k <= 1; k++) { 
 
                 vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = hash3(p + b);
+                vec3 r = hash3( uvec3(  p + b )     );
                 
                 vec3 diff = (b + r - f);
 
@@ -618,8 +625,9 @@ float n = 0.0;
 
 //     n = distortFractal(p + cell(p,16.0,0),4.0,6);
       
-     n += f6(p);
+   //  n += f6(p);
    //  n += distort(p);
+      n += cell(p, 45.0,0);
 
       kd = fmCol(p.y+n,vec3(1.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(1.0,0.35,0.45),vec3(0.9,1.0,0.5));
  
