@@ -1,10 +1,9 @@
 #version 300 es
 
-//Signed Distance using raymarching
-//Copyright 2019, Dan Olson
+// dolson,2019
 
 precision mediump float;
-precision mediump sampler3D;
+precision mediump sampler2D;
 
 out vec4 out_FragColor;
 
@@ -19,20 +18,19 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform sampler3D noise_tex;
+uniform sampler2D noise_tex;
 
-const float PI  =  3.1415926;
-const float PI2 = 2.0 * PI;
-const float PI6 = 6.0 * PI;
-const float PI_6 = 6.0/PI;
-const float PHI =  1.6180339;
-const float PHI_INV = 1.0/PHI;
-const float PHI_SPHERE = 1.0 - PHI/6.0;
+const float E   =  2.7182818;
+const float PI  =  radians(180.0); 
+const float PHI =  (1.0 + sqrt(5.0)) / 2.0;
 
-const int MARCH_STEPS = 128;
+const int MARCH_STEPS = 256;
 
-const float EPSILON = 0.0001;
-const float TRACE_DIST = 1000.0;
+const float EPSILON = 0.001;
+const float TRACE_DIST = 100.;
+
+const int OCTAVES = 6;
+const float HURST = .2452;
 
 /*
 float hash(float x) {
@@ -130,40 +128,41 @@ float noise(vec3 x) {
                    mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
 } */
 
-float f6(vec3 x) {
+float fractal(vec3 x) {
 
-    float value = 0.0;
-    float h  = .5;
+    float t = 0.0;
+    float h  = HURST;
     float g = exp2(-h); 
-    float amp = 0.5;
-    float freq = 1.0;
+    float a = 0.5;
+    float f = 1.0;
 
-    value = amp * noise(freq * x); freq *= 2.0; amp *=  g;  
-    value += amp * noise(freq * x); freq *= 2.0; amp *=  g; 
-    value += amp * noise(freq * x); freq *= 2.0; amp *= g;  
-    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
-    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
-    value += amp * noise(freq * x); freq *= 2.0; amp *= g; 
+    for(int i = 0; i < OCTAVES; i++) {
+ 
+    t += a * noise(f * x); 
+    f *= 2.0; 
+    a *=  g;  
+    
+    }    
 
-    return value;
+    return t;
 }
 
 float distort(vec3 p) {
     
-    vec3 q = vec3(f6(p + vec3(0.0,0.0,1.0)),      
-                  f6(p + vec3(4.5,1.8,6.3)),
-                  f6(p + vec3(1.1,7.2,2.4))
+    vec3 q = vec3(fractal(p + vec3(0.0,0.0,1.0)),      
+                  fractal(p + vec3(4.5,1.8,6.3)),
+                  fractal(p + vec3(1.1,7.2,2.4))
     );
 
-    vec3 r = vec3(f6(p + 4.0*q + vec3(2.1,9.4,5.1)),
-                  f6(p + 4.0*q + vec3(5.6,3.7,8.9)),
-                  f6(p + 4.0*q + vec3(4.3,0.0,3.1)) 
+    vec3 r = vec3(fractal(p + 4.0*q + vec3(2.1,9.4,5.1)),
+                  fractal(p + 4.0*q + vec3(5.6,3.7,8.9)),
+                  fractal(p + 4.0*q + vec3(4.3,0.0,3.1)) 
     ); 
 
-    return f6(p + 4.0 * r);
+    return fractal(p + 4.0 * r);
 } 
 
-float sinDisplace3(vec3 p,float h) {
+float sin3(vec3 p,float h) {
     
     return sin(p.x*h) * sin(p.y*h) * sin(p.z*h);
 }
@@ -196,7 +195,7 @@ float sincPhase(float x,float k) {
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     
-    return a + b * cos(PI2 * (c * t + d));
+    return a + b * cos( (PI*2.0) * (c * t + d));
 }
 
 float easeIn4(float t) {
@@ -467,8 +466,8 @@ float t  = u_time;
 vec2 res = vec2(1.0,0.0);
 
 vec2 mo = vec2(u_mouse);
-mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI2 * mo.y);
-mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI2 * mo.x); 
+mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
+mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
 
@@ -600,11 +599,18 @@ vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
 
 vec3 render(vec3 ro,vec3 rd) {
 
+float t = u_time;
+
 vec3 color = vec3(0.0);
+
+
+vec3 light = vec3(0.0);
+
+vec3 orbital_light = vec3(0.0,0.0,1000.0);
+mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.0001 );
 
 //vec3 bkg_col = vec3(0.0);
 vec3 bkg_col = vec3(.25) * rd.y * 0.5;
-
 
 vec2 d = rayScene(ro, rd);
 //vec2 rf = rayReflect(ro,rd);
@@ -623,19 +629,25 @@ float n = 0.0;
       color = bkg_col;
 
     } else {
+   
+   orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
+        
 
-//     n = distortFractal(p + cell(p,16.0,0),4.0,6);
-      
-   //  n += f6(p);
+       n += fractal(p);
    //  n += distort(p);
-      n += cell(p, 45.0,0);
+   //  n += cell(p, 45.0,0);
+   //  n += distort(p + cell(p,5.0,0));
+   //    n += sin3(p,45.0);
+   //    n += fractal(p + fractal(p));
+       
 
-      kd = fmCol(p.y+n,vec3(1.0,1.0,0.5),vec3(0.5,.25,0.1),vec3(1.0,0.35,0.45),vec3(0.9,1.0,0.5));
- 
+      kd = fmCol(p.y+n,vec3(.22,.5,.43),vec3(0.5,.25,0.1),vec3(1.0,0.35,0.45),vec3(0.9,1.0,0.5));
+      
+
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
-      color += phongLight(ka,kd,ks,shininess,p,vec3(0.0,0.0,100.0),ro);
+      color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
       
       color = pow(color,vec3(0.4545)); 
 
