@@ -34,19 +34,20 @@ const int MARCH_STEPS = 128;
 const float EPSILON = 0.0001;
 const float TRACE_DIST = 1000.0;
 
+/*
 float hash(float x) {
     return fract(sin(x) * u_hash * 43758.5453); 
-}
+}*/
 
 //15551*89491 = 1391674541
-float hash(uint h) {
-    uvec2 n = h * uvec2(1391674541U,2531151992U);
-    h = (n.x ^ n.y) * 1391674541U;
+float hash(float p) {
+    uvec2 n = uint(int(p)) * uvec2(1391674541U,2531151992U);
+    uint h = (n.x ^ n.y) * 1391674541U;
     return float(h) * (1.0/float(0xffffffffU));
 }
 
-vec3 hash3(uvec3 h) {
-   h *= uvec3(1391674541U,2531151992U,2860486313U);
+vec3 hash3(vec3 p) {
+   uvec3 h = uvec3(ivec3(  p)) *  uvec3(1391674541U,2531151992U,2860486313U);
    h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,2531151992U,2860486313U);
    return vec3(h) * (1.0/float(0xffffffffU));
 
@@ -75,7 +76,7 @@ float cell(vec3 x,float iterations,int type) {
             for(int k = -1; k <= 1; k++) { 
 
                 vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = hash3( uvec3(  p + b )     );
+                vec3 r = hash3( p + b );
                 
                 vec3 diff = (b + r - f);
 
@@ -109,10 +110,10 @@ float noise(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
     float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
-    return mix(mix(mix(hash(uint(  n +   0.0)) , hash(uint(   n +   1.0))   ,f.x),
-                   mix(hash(uint(  n + 157.0)) , hash(uint(   n + 158.0))   ,f.x),f.y),
-               mix(mix(hash(uint(  n + 113.0)) , hash(uint(   n + 114.0))   ,f.x),
-                   mix(hash(uint(  n + 270.0)) , hash(uint(   n + 271.0))   ,f.x),f.y),f.z);
+    return mix(mix(mix(hash(  n +   0.0) , hash(   n +   1.0)  ,f.x),
+                   mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
+               mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
+                   mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
 }
 
 /*
