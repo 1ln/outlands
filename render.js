@@ -45,13 +45,19 @@ nhash = new Math.seedrandom();
 hash = nhash();
 
 tex_size = 16*16;
-noise = new Float32Array(tex_size);
+noise = new Uint8Array(3*  tex_size);
 
 for(let i = 0; i < tex_size; i++) {
-    noise[i]     = nhash();
+
+    let s = 3 * i;
+
+    noise[s]     = Math.floor( 255* nhash());
+    noise[s+1]   = Math.floor( 255* nhash());
+    noise[s+2]   = Math.floor( 255* nhash());   
+
 }
 
-noise_texture = new THREE.DataTexture(noise,16,16);
+noise_texture = new THREE.DataTexture(noise,16,16,THREE.RGBFormat );
 console.log(noise_texture);
 
 mouse = new THREE.Vector2(0.0); 
@@ -81,7 +87,7 @@ uniforms = {
     "u_swipe_dir"           : { value : swipe_dir }, 
     "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
     "u_hash"                : { value: hash },
-    "u_noise_tex"           : { value: noise_texture }
+    "u_noise_tex"           : { type:"t", value: noise_texture }
 
 };   
 

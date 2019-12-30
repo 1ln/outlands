@@ -18,7 +18,7 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform sampler2D noise_tex;
+uniform sampler2D u_noise_tex;
 
 const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
@@ -474,16 +474,14 @@ mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x);
 mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
 //p = (vec4(p,1.0) * r).xyz;
 
-/*
-df = sphere(p,1.);
-df = box(p,vec3(1.0);
-df = cylinder(p,1.0,.5);
-df = octahedron(p,1.0);
-df = prism(p,vec2(1.0,0.0));
-df = hexPrism(p,vec2(1.0,d));
-*/
+float df = 0.0;
 
-float df = sphere(p,1.0);
+df = sphere(p,1.);
+//df = box(p,vec3(1.0));
+//df = cylinder(p,1.0,.5);
+//df = octahedron(p,1.0);
+//df = prism(p,vec2(1.0,0.0));
+//df = hexPrism(p,vec2(1.0,d));
 
 res = vec2(df,0.0);
 return res;
@@ -670,8 +668,11 @@ vec2 uv = gl_FragCoord.xy/u_resolution * 2.0 - 2.0;
 uv.x *= u_resolution.x/u_resolution.y; 
 
 vec3 direction = rayCamDir(uv,cam_pos,cam_target,1.0);
-vec3 color = render(cam_pos,direction);
+//vec3 color = render(cam_pos,direction);
+//vec3 color = vec3(.5);
+//vec4 color = texelFetch(u_noise_tex,ivec2(0,0),0);
+vec4 color = texture2D(u_noise_tex,uv);
 
-out_FragColor = vec4(color,1.0);
+out_FragColor = vec4(color.x,0.0,0.0,1.0);
 
 }
