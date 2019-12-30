@@ -44,25 +44,21 @@ delta = 0.0;
 nhash = new Math.seedrandom();
 hash = nhash();
 
-tex_size = 32*32*32;
+tex_size = 16*16;
 noise = new Float32Array(tex_size);
 
 for(let i = 0; i < tex_size; i++) {
-
     noise[i]     = nhash();
-    noise[i + 1] = nhash();
-    noise[i + 2] = nhash();
-
 }
 
-noise_texture = new THREE.DataTexture3D(noise,32,32,32);
+noise_texture = new THREE.DataTexture(noise,16,16);
 console.log(noise_texture);
 
 mouse = new THREE.Vector2(0.0); 
 mouse_pressed = 0;
 swipe_dir = 0;
 
-cam.position.set(0.0,0.0,5.0); 
+cam.position.set(0.0,0.0,2.0); 
 cam_target  = new THREE.Vector3(0.0);
 
 controls = new THREE.OrbitControls(cam,canvas);
@@ -115,15 +111,12 @@ ShaderLoader("render.vert","render.frag",
         requestAnimationFrame(render);
     
   //      delta = clock.getDelta();    
-
-  /*
+  
         if(swipeLeft()  === true) { swipe_dir = 1; }
         if(swipeUp()    === true) { swipe_dir = 2; }
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
-  */   
 
- 
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
