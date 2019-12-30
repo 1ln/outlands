@@ -29,7 +29,7 @@ const int MARCH_STEPS = 256;
 const float EPSILON = 0.001;
 const float TRACE_DIST = 100.;
 
-const int OCTAVES = 6;
+const int OCTAVES = 4;
 const float HURST = .2452;
 
 /*
@@ -39,13 +39,13 @@ float hash(float x) {
 
 //15551*89491 = 1391674541
 float hash(float p) {
-    uvec2 n = uint(int(p)) * uvec2(1391674541U,2531151992U);
+    uvec2 n = uint(int(p)) * uvec2(1391674541U,2531151992.0*u_hash);
     uint h = (n.x ^ n.y) * 1391674541U;
     return float(h) * (1.0/float(0xffffffffU));
 }
 
 vec3 hash3(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) *  uvec3(1391674541U,2531151992U,2860486313U);
+   uvec3 h = uvec3(ivec3(  p)) *  uvec3(1391674541U,2531151992.0 * u_hash,2860486313U);
    h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,2531151992U,2860486313U);
    return vec3(h) * (1.0/float(0xffffffffU));
 
@@ -90,6 +90,14 @@ float cell(vec3 x,float iterations,int type) {
 
                     if(type == 2) {
                         min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
+                    }
+
+                    if(type == 3) {
+                        min_dist = min(min_dist,d*E);
+                    }
+                  
+                    if(type == 4) {
+                        min_dist = min(min_dist,d*PHI);
                     }
 
             }
@@ -619,6 +627,11 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
+vec4 difa = texelFetch(u_noise_tex,ivec2(0,0),0);
+vec4 difb = texelFetch(u_noise_tex,ivec2(0,1),0);
+vec4 difc = texelFetch(u_noise_tex,ivec2(0,2),0);
+vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
+
 float shininess = 100.0;
 float n = 0.0;
 
@@ -631,16 +644,16 @@ float n = 0.0;
    orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
         
 
-       n += fractal(p);
-   //  n += distort(p);
-   //  n += cell(p, 45.0,0);
+   //  n += fractal(p);
+//     n += distort(p);
+   //  n += cell(p, 14.0,0);
    //  n += distort(p + cell(p,5.0,0));
-   //    n += sin3(p,45.0);
-   //    n += fractal(p + fractal(p));
+   //  n += sin3(p,45.0);
+       n += fractal(p + fractal(p));
        
 
-      kd = fmCol(p.y+n,vec3(.22,.5,.43),vec3(0.5,.25,0.1),vec3(1.0,0.35,0.45),vec3(0.9,1.0,0.5));
-      
+      kd = fmCol(p.y+n,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
+    
 
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
@@ -668,11 +681,11 @@ vec2 uv = gl_FragCoord.xy/u_resolution * 2.0 - 2.0;
 uv.x *= u_resolution.x/u_resolution.y; 
 
 vec3 direction = rayCamDir(uv,cam_pos,cam_target,1.0);
-//vec3 color = render(cam_pos,direction);
+vec3 color = render(cam_pos,direction);
+
 //vec3 color = vec3(.5);
 //vec4 color = texelFetch(u_noise_tex,ivec2(0,0),0);
-vec4 color = texture2D(u_noise_tex,uv);
 
-out_FragColor = vec4(color.x,0.0,0.0,1.0);
+out_FragColor = vec4(color,1.0);
 
 }
