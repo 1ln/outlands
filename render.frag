@@ -6,6 +6,7 @@ precision mediump float;
 precision mediump sampler2D;
 
 out vec4 out_FragColor;
+varying vec2 uVu; 
 
 uniform float u_hash;
 
@@ -484,12 +485,21 @@ mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
 
 float df = 0.0;
 
-df = sphere(p,1.);
+//df =  sphere(p,1.);
 //df = box(p,vec3(1.0));
 //df = cylinder(p,1.0,.5);
+//df = torus(p,vec2(1.0,0.5));
 //df = octahedron(p,1.0);
+//df = link(p,0.5,1.0,0.5);
+//df = capsule(p,vec3(0.0,1.0,0.0),vec3(0.0,-1.0,0.0),.5);
+//df = roundedCone(p,1.0,0.25,2.0);
 //df = prism(p,vec2(1.0,0.0));
 //df = hexPrism(p,vec2(1.0,d));
+//df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
+//df = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
+df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
+//df = smod(roundedCone(p-vec3(0.0,-3.,0.0),1.0,0.125,4. ) ,box(p,vec3(1.0)),.5);
+
 
 res = vec2(df,0.0);
 return res;
@@ -677,10 +687,10 @@ vec3 cam_target = u_cam_target;
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
-vec2 uv = gl_FragCoord.xy/u_resolution * 2.0 - 2.0;
-uv.x *= u_resolution.x/u_resolution.y; 
+vec2 uvu = -1.0 + 2.0 * uVu.xy;
+uvu.x *= u_resolution.x/u_resolution.y; 
 
-vec3 direction = rayCamDir(uv,cam_pos,cam_target,1.0);
+vec3 direction = rayCamDir(uvu,cam_pos,cam_target,1.0);
 vec3 color = render(cam_pos,direction);
 
 //vec3 color = vec3(.5);
