@@ -23,11 +23,7 @@ let cam_target;
 let delta;
 let clock;
 
-let speed = 0.001;
-let fuel  = 1.0;
-
-let rot_speed = 0.001;
-let rot_fuel  = 1.0;
+let speed = 0.01;
 
 function init() {
 
@@ -79,7 +75,7 @@ controls = new THREE.OrbitControls(cam,canvas);
     controls.target = cam_target;
     controls.enableDamping = true;
     controls.enablePan = false; 
-    controls.enabled = true; 
+    controls.enabled = false; 
 
 scene = new THREE.Scene();
 geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -132,28 +128,18 @@ ShaderLoader("render.vert","render.frag",
 
         cam.position.z -= speed;
         
-        if(( mouse_pressed == true && Math.sign(mouse.x ) == 1)  && fuel >= 0.0) {
-        speed = 0.001;
-        fuel -= speed;
-        cam.position.z += speed;
-        } else {
-        }
-        
-        if((mouse_pressed == true && Math.sign(mouse.x) == -1) && rot_fuel >= 0.0) {
-        rot_speed -= 0.001;
-        rot_fuel -= rot_speed;
+        if(cam.position.z < 0.0) {
+        window.location.reload(false);   
         }
         
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
         uniforms["u_swipe_dir"           ].value = swipe_dir;
-        uniforms["u_rot_speed"           ].value = rot_speed;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
-        //controls.update();
         renderer.render(scene,cam);
         }
         render();
