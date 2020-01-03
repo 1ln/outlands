@@ -19,8 +19,6 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform float u_rot_speed;
-
 uniform sampler2D u_noise_tex;
 
 const float E   =  2.7182818;
@@ -472,15 +470,15 @@ vec2 res = vec2(1.0,0.0);
 vec3 tw = vec3(p);
 tw.xy *= rot2(p.z);
 
-vec2 mo = vec2(u_mouse);
-mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
-mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
+//vec2 mo = vec2(u_mouse);
+//mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
+//mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
 
 vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
-mat4 r = rotAxis(vec3(1.0,0.0,0.0), t * u_rot_speed );
-p = (vec4(p,1.0) * r).xyz;
+mat4 r = rotAxis(vec3(1.0,0.0,0.0), 1. );
+//p = (vec4(p,1.0) * r).xyz;
 
 
 float df = 0.0;
@@ -691,6 +689,11 @@ vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
 //vec3 cam_pos = vec3(0.0,0.5,1.25);
+
+vec2 mo = vec2(u_mouse);
+mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
+mat4 myr = rotAxis(vec3(0.0,0.0,0.0),PI*2.0*mo.x);
+cam_pos = (vec4(cam_pos,1.0)*mxr*myr).xyz;
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
