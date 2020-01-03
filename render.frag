@@ -468,7 +468,7 @@ float t  = u_time;
 vec2 res = vec2(1.0,0.0);
 
 vec3 tw = vec3(p);
-tw.xy *= rot2(p.z);
+tw.xy *= rot2(p.z );
 
 //vec2 mo = vec2(u_mouse);
 //mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
@@ -493,14 +493,14 @@ float df = 0.0;
 //df = roundedCone(p,1.0,0.25,2.0);
 //df = prism(p,vec2(1.0,.25));
 //df = hexPrism(p,vec2(1.0,.25));
+
 //df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
-
 //df = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
-df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
+//df = opd(cylinder(p,1.5,.5),opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   ) ) ;
+//df = opd(cylinder(p,2.0,.25),sphere(p,1.0) );
+//df = opd(cylinder(p,2.,.25),cylinder(p,1.5,.5));
+df = opd(sphere(p,1.0),smou(box(p-vec3(-.5),vec3(1.)) , box(p-vec3(.5),vec3(1.0)),.5));
 
-//df = opd(cylinder(p,1.,.85),hexPrism(p,vec2(1.0,.25)));
-//df = mix(sphere(p,1.0)-.75,box(p,vec3(1.0))+.5,sin((PI+(PI/2.0))));
-//df = box(tw,vec3(1.0));
 
 res = vec2(df,0.0);
 return res;
@@ -674,7 +674,7 @@ float n = 0.0;
       vec3 ks = vec3(1.0);
 
       color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
-      //  color += phongLight(ka,kd,ks,shininess,p,light,ro);  
+      color += phongLight(ka,kd,ks,shininess,p,light,ro);  
 
       color = pow(color,vec3(0.4545)); 
 
@@ -688,15 +688,15 @@ void main() {
 vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,0.5,1.25);
+//vec3 cam_pos = vec3(0.0,0.5,15.);
 
 vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
-mat4 myr = rotAxis(vec3(0.0,0.0,0.0),PI*2.0*mo.x);
+mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
 cam_pos = (vec4(cam_pos,1.0)*mxr*myr).xyz;
 
-mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
-//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+mat4 cam_rot = rotAxis(vec3(0.0,-1.0,1.0),u_time * 0.0001);
+cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * uVu.xy;
 uvu.x *= u_resolution.x/u_resolution.y; 

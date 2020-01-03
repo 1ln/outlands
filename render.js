@@ -87,7 +87,6 @@ uniforms = {
     "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed"       : { value : mouse_pressed },
     "u_swipe_dir"           : { value : swipe_dir }, 
-    "u_rot_speed"           : { value : rot_speed },
     "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
     "u_hash"                : { value: hash },
     "u_noise_tex"           : { type:"t", value: noise_texture }
