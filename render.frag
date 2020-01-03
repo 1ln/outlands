@@ -19,6 +19,8 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
+uniform float u_rot_speed;
+
 uniform sampler2D u_noise_tex;
 
 const float E   =  2.7182818;
@@ -475,13 +477,15 @@ mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
-vec3 rx = vec3(p);
-mat4 r = rotAxis(vec3(1.0,0.0,0.0),PI/2.);
-rx = (vec4(p,1.0) * r).xyz;
+
+vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
+mat4 r = rotAxis(vec3(1.0,0.0,0.0), t * u_rot_speed );
+p = (vec4(p,1.0) * r).xyz;
+
 
 float df = 0.0;
 
-df =  sphere(p,1.);
+//df =  sphere(p,1.);
 //df = box(p,vec3(1.0));
 //df = cylinder(p,1.0,.5);
 //df = torus(p,vec2(1.0,0.5));
@@ -492,9 +496,11 @@ df =  sphere(p,1.);
 //df = prism(p,vec2(1.0,.25));
 //df = hexPrism(p,vec2(1.0,.25));
 //df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
+
 //df = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
-//df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
-//df = opd(cylinder(rx,1.,.85),hexPrism(p,vec2(1.0,.25)));
+df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
+
+//df = opd(cylinder(p,1.,.85),hexPrism(p,vec2(1.0,.25)));
 //df = mix(sphere(p,1.0)-.75,box(p,vec3(1.0))+.5,sin((PI+(PI/2.0))));
 //df = box(tw,vec3(1.0));
 
@@ -639,7 +645,7 @@ vec4 difb = texelFetch(u_noise_tex,ivec2(0,1),0);
 vec4 difc = texelFetch(u_noise_tex,ivec2(0,2),0);
 vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
 
-vec4 ra = texelFetch(u_noise_tex,ivec2(1,0),0);
+vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
 
 float shininess = 100.0;
 float n = 0.0;
@@ -656,7 +662,7 @@ float n = 0.0;
    //  n += distort(p);
    //  n += cell(p, 14.0,0);
    //  n += distort(p + cell(p,5.0,0));
-   //  n += sin3(p*sin(ra.r),6.);
+   //  n += sin3(p*sin(r.r),6.);
    //  n += fractal(p + fractal(p));
    //  n += envStep(fractal(p),.5,.45); 
    //  n += mix(sin(p.x),1.0,fractal(p));

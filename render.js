@@ -23,6 +23,12 @@ let cam_target;
 let delta;
 let clock;
 
+let speed = 0.001;
+let fuel  = 1.0;
+
+let rot_speed = 0.001;
+let rot_fuel  = 1.0;
+
 function init() {
 
 canvas  = $('#canvas')[0];
@@ -64,7 +70,7 @@ mouse = new THREE.Vector2(0.0);
 mouse_pressed = 0;
 swipe_dir = 0;
 
-cam.position.set(0.0,0.0,2.0); 
+cam.position.set(0.0,0.0,5.0); 
 cam_target  = new THREE.Vector3(0.0);
 
 controls = new THREE.OrbitControls(cam,canvas);
@@ -85,6 +91,7 @@ uniforms = {
     "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed"       : { value : mouse_pressed },
     "u_swipe_dir"           : { value : swipe_dir }, 
+    "u_rot_speed"           : { value : rot_speed },
     "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
     "u_hash"                : { value: hash },
     "u_noise_tex"           : { type:"t", value: noise_texture }
@@ -123,10 +130,25 @@ ShaderLoader("render.vert","render.frag",
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
 
+        cam.position.z -= speed;
+        
+        if(( mouse_pressed == true && Math.sign(mouse.x ) == 1)  && fuel >= 0.0) {
+        speed = 0.001;
+        fuel -= speed;
+        cam.position.z += speed;
+        } else {
+        }
+        
+        if((mouse_pressed == true && Math.sign(mouse.x) == -1) && rot_fuel >= 0.0) {
+        rot_speed -= 0.001;
+        rot_fuel -= rot_speed;
+        }
+        
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
         uniforms["u_swipe_dir"           ].value = swipe_dir;
+        uniforms["u_rot_speed"           ].value = rot_speed;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
         uniforms["u_noise_tex"           ].value = noise_texture;       
