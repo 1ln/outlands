@@ -329,11 +329,6 @@ float smoi(float d1,float d2,float k) {
     return mix(d2,d1,h) + k * h * (1.0 - h);
 }
 
-float round(float d,float h) { 
-
-    return d - h;
-}
-
 float layer(float d,float h) {
 
     return abs(d) - h;
@@ -344,7 +339,7 @@ float sphere(vec3 p,float r) {
     return length(p) - r;
 }
 
-float sphereNeg(vec3 p,float r) {
+float nSphere(vec3 p,float r) {
 
     return abs(length(p)-r);
 }
@@ -467,25 +462,26 @@ float octahedron(vec3 p,float s) {
    
 vec2 scene(vec3 p) { 
 
-vec3 q = vec3(p);
-
 float s  = 0.001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
+
+vec3 tw = vec3(p);
+tw.xy *= rot2(p.z);
 
 vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
-
-mat4 r = rotAxis(vec3(1.0,0.0,0.0),t*s );
-//p = (vec4(p,1.0) * r).xyz;
+vec3 rx = vec3(p);
+mat4 r = rotAxis(vec3(1.0,0.0,0.0),PI/2.);
+rx = (vec4(p,1.0) * r).xyz;
 
 float df = 0.0;
 
-//df =  sphere(p,1.);
+df =  sphere(p,1.);
 //df = box(p,vec3(1.0));
 //df = cylinder(p,1.0,.5);
 //df = torus(p,vec2(1.0,0.5));
@@ -493,13 +489,14 @@ float df = 0.0;
 //df = link(p,0.5,1.0,0.5);
 //df = capsule(p,vec3(0.0,1.0,0.0),vec3(0.0,-1.0,0.0),.5);
 //df = roundedCone(p,1.0,0.25,2.0);
-//df = prism(p,vec2(1.0,0.0));
-//df = hexPrism(p,vec2(1.0,d));
+//df = prism(p,vec2(1.0,.25));
+//df = hexPrism(p,vec2(1.0,.25));
 //df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
 //df = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
-df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
-//df = smod(roundedCone(p-vec3(0.0,-3.,0.0),1.0,0.125,4. ) ,box(p,vec3(1.0)),.5);
-
+//df = opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   );
+//df = opd(cylinder(rx,1.,.85),hexPrism(p,vec2(1.0,.25)));
+//df = mix(sphere(p,1.0)-.75,box(p,vec3(1.0))+.5,sin((PI+(PI/2.0))));
+//df = box(tw,vec3(1.0));
 
 res = vec2(df,0.0);
 return res;
@@ -622,11 +619,11 @@ vec3 color = vec3(0.0);
 
 vec3 light = vec3(0.0);
 
-vec3 orbital_light = vec3(0.0,0.0,1000.0);
+vec3 orbital_light = vec3(0.0,0.0,10.0);
 mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.0001 );
 
-//vec3 bkg_col = vec3(0.0);
-vec3 bkg_col = vec3(.25) * rd.y * 0.5;
+vec3 bkg_col = vec3(0.0);
+//vec3 bkg_col = vec3(.25) * rd.y * 0.5;
 
 vec2 d = rayScene(ro, rd);
 //vec2 rf = rayReflect(ro,rd);
@@ -642,6 +639,8 @@ vec4 difb = texelFetch(u_noise_tex,ivec2(0,1),0);
 vec4 difc = texelFetch(u_noise_tex,ivec2(0,2),0);
 vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
 
+vec4 ra = texelFetch(u_noise_tex,ivec2(1,0),0);
+
 float shininess = 100.0;
 float n = 0.0;
 
@@ -653,23 +652,26 @@ float n = 0.0;
    
    orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
         
-
    //  n += fractal(p);
-//     n += distort(p);
+   //  n += distort(p);
    //  n += cell(p, 14.0,0);
    //  n += distort(p + cell(p,5.0,0));
-   //  n += sin3(p,45.0);
-       n += fractal(p + fractal(p));
-       
+   //  n += sin3(p*sin(ra.r),6.);
+   //  n += fractal(p + fractal(p));
+   //  n += envStep(fractal(p),.5,.45); 
+   //  n += mix(sin(p.x),1.0,fractal(p));
+   //  n += smoothstep(p.y,1.,fractal(p)); 
+   //  n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y)));
+       n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y)));
 
-      kd = fmCol(p.y+n,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
+      kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
     
-
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
 
       color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
-      
+      //  color += phongLight(ka,kd,ks,shininess,p,light,ro);  
+
       color = pow(color,vec3(0.4545)); 
 
 }
@@ -682,7 +684,7 @@ void main() {
 vec3 cam_pos = cameraPosition;
 vec3 cam_target = u_cam_target;
 
-//vec3 cam_pos = vec3(0.0,0.5,5.0);
+//vec3 cam_pos = vec3(0.0,0.5,1.25);
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.0,0.0),u_time * 0.0001);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
