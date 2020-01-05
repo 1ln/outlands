@@ -125,12 +125,6 @@ ShaderLoader("render.vert","render.frag",
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
 
-        cam.position.z -= speed;
-        
-        if(cam.position.z < 0.0) {
-        window.location.reload(false);   
-        }
-        
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
