@@ -120,10 +120,11 @@ ShaderLoader("render.vert","render.frag",
     
   //      delta = clock.getDelta();    
   
-        if(swipeLeft()  === true) { swipe_dir = 1; }
+   /*   if(swipeLeft()  === true) { swipe_dir = 1; }
         if(swipeUp()    === true) { swipe_dir = 2; }
         if(swipeRight() === true) { swipe_dir = 3; }
         if(swipeDown()  === true) { swipe_dir = 4; }
+    */
 
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
@@ -137,6 +138,35 @@ ShaderLoader("render.vert","render.frag",
         }
         render();
         }) 
+
+$('#canvas').keydown(function(event) {
+ 
+    
+
+    if(event.which == 37) {
+        event.preventDefault(); 
+        hash -= Math.sin(hash*0.0001);    
+
+    }
+
+    if(event.which == 38 ) {
+        event.preventDefault();
+        hash += Math.sin(hash*0.00001);
+
+    }
+    
+    if(event.which == 39 ) {
+        event.preventDefault();
+        hash += Math.sin(hash*0.0001);
+
+    }
+
+    if(event.which == 40 ) {
+        event.preventDefault();
+        hash -= Math.sin(hash*0.00001);
+    }
+
+});
 
 $('#canvas').mousedown(function() { 
     mouse_pressed = true;
