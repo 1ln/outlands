@@ -9,6 +9,8 @@ out vec4 out_FragColor;
 varying vec2 uVu; 
 
 uniform float u_hash;
+uniform float u_df0;
+uniform float u_df1;
 
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
@@ -464,70 +466,72 @@ vec2 scene(vec3 p) {
 
 vec3 q = vec3(p);
 
-float f = 0.0;
-
-float morphf = 0.0;
-float morphs = 0.00001;
-
 vec2 df = vec2(0.0);
-float f1 = 0.0;
 
+vec2 df0 = vec2(0.0);
+vec2 df1 = vec2(0.0);
 
 float s  = 0.0001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
 
-vec3 tw = vec3(p);
-tw.xy *= rot2(p.z );
+vec4 radius = texelFetch(u_noise_tex,ivec2(2,0),0);
+radius.r * 2.;
+radius.g * 2.;
+
+//p.xy *= rot2(p.z );
 
 vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
-
-p = (vec4(p,1.0) * mxr * myr).xyz;
+//p = (vec4(p,1.0) * mxr * myr).xyz;
 
 vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
 mat4 r = rotAxis(vec3(1.0,1.0,0.0),PI *2. * t * 0.0001 );
 //p = (vec4(p,1.0) * r).xyz;
 
-q.z += sin(t*s) * 5. ;
+df0 = vec2(sphere(p,radius.r),0.0);
+df1 = vec2(sphere(p,radius.g),1.0);
 
-f1 = box(p,vec3(1.0));
-
-if(u_hash <= hash(1.0)) { f1 = sphere(p,1.0); }
-if(u_hash <= hash(2.0)) {  f1 = cylinder(p,1.0,.5); }
-if(u_hash <= hash(3.0)) { f1 = torus(p,vec2(1.5,.25)); }
-
-//df = octahedron(p,1.0);
-
-
-//df = link(p,0.5,1.0,0.5);
-//df = capsule(p,vec3(0.0,1.0,0.0),vec3(0.0,-1.0,0.0),.5);
-//df = roundedCone(p,1.0,0.25,2.0);
-//f1 = prism(p,vec2(1.5,.25));
-//df = hexPrism(p,vec2(1.0,.25));
-
-//df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
-//f1 = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
-//f2 = opd(cylinder(p,1.5,.5),opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   ) ) ;
-//f2 = opd(cylinder(p,2.0,.25),sphere(p,1.0) );
-
-if(u_hash <= hash(1.0)) {
-df = vec2( 
-     opd(cylinder(p,4.,.25),cylinder(p,1.5,.5)),0.0);
+if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,0),0).r) { 
+df0 = vec2(cylinder(p,2.,radius.r ),0.0); 
 }
 
-if(u_hash <= hash(2.0)) {
-df = vec2( 
-     smou(box(p-vec3(-.5),vec3(1.)),box(p-vec3(.5),vec3(1.0)),.5),0.0);
+if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,2),0).r) {
+df1 = vec2(cylinder(q,2.,radius.g),1.0); 
 }
+
+if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,4),0).r) {
+df0 = vec2(box(p,vec3(1.0)) ,0.0);
+}
+
+if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,6),0).r) {
+df1 = vec2(box(q,vec3(1.0)),1.0);
+}
+
+if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,8),0).r) {
+df0 = vec2(torus(p,vec2(radius.r,.25)),0.0);
+}
+
+if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,10),0).r) {
+df1 = vec2(torus(q,vec2(radius.g,.5)),1.0);
+}
+
+if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,12),0).r) {
+df0 = vec2( octahedron(p,radius.r),0.0);
+}
+
+if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,14),0).r) {
+df1 = vec2(octahedron(q,radius.g),1.0);
+}
+
  
 //morphf = mix(f1,f2, abs( sin(t * morphs * 2.0 * PI))); 
 
-f = smod(f1,df.x,.5);
+df = vec2(smou(df0.x,df1.x,.5),0.0) ;
 
-res = vec2(f,df.y);
+res = vec2(df.x,df.y);
 return res;
 }
 
@@ -709,10 +713,10 @@ float n = 0.0;
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(3.0,2.,5.);
+//vec3 cam_pos = vec3(3.0,2.,5.);
 vec3 m_pos = vec3(0.0);
 
 vec2 mo = vec2(u_mouse);
