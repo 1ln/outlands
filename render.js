@@ -11,6 +11,8 @@ let tex_size;
 let noise;
 let noise_texture;
 
+let reset_hash;
+
 let df0,df1;
 
 let mouse_pressed,mouse;
@@ -29,99 +31,88 @@ let speed = 0.01;
 
 function init() {
 
-canvas  = $('#canvas')[0];
-context = canvas.getContext('webgl2',{ antialias:false });
+    canvas  = $('#canvas')[0];
+    context = canvas.getContext('webgl2',{ antialias:false });
 
-w = window.innerWidth;
-h = window.innerHeight; 
+    w = window.innerWidth;
+    h = window.innerHeight; 
 
-canvas.width  = w;
-canvas.height = h;
+    canvas.width  = w;
+    canvas.height = h;
 
-renderer = new THREE.WebGLRenderer({canvas:canvas,context:context});
+    renderer = new THREE.WebGLRenderer({canvas:canvas,context:context});
 
-cam = new THREE.PerspectiveCamera(1.0,w/h,0.0,1000.0);
+    cam = new THREE.PerspectiveCamera(1.0,w/h,0.0,1000.0);
 
-clock = new THREE.Clock(); 
-delta = 0.0;
+    clock = new THREE.Clock(); 
+    delta = 0.0;
 
-nhash = new Math.seedrandom();
-hash = nhash();
+    nhash = new Math.seedrandom();
+    hash = nhash();
+ 
+    updateNoiseTex();
 
-tex_size = 16*16;
-noise = new Uint8Array(3*  tex_size);
+    df0 = nhash();
+    df1 = nhash();
 
-for(let i = 0; i < tex_size; i++) {
+    mouse = new THREE.Vector2(0.0); 
+    mouse_pressed = 0;
+    swipe_dir = 0;
 
-    let s = 3 * i;
+    cam.position.set(0.0,0.0,5.0); 
+    cam_target  = new THREE.Vector3(0.0);
 
-    noise[s]     = Math.floor( 255* nhash());
-    noise[s+1]   = Math.floor( 255* nhash());
-    noise[s+2]   = Math.floor( 255* nhash());   
+    controls = new THREE.OrbitControls(cam,canvas);
 
-}
+        controls.minDistance = 1.0;
+        controls.maxDistance = 15.0;
+        controls.target = cam_target;
+        controls.enableDamping = true;
+        controls.enablePan = false; 
+        controls.enabled = true;
 
-noise_texture = new THREE.DataTexture(noise,16,16,THREE.RGBFormat );
-console.log(noise_texture);
+    scene = new THREE.Scene();
+    geometry = new THREE.PlaneBufferGeometry(2,2);
 
-df0 = Math.floor(16.0 * nhash());
-df1 = Math.floor(16.0 * nhash());
+    uniforms = {
 
-mouse = new THREE.Vector2(0.0); 
-mouse_pressed = 0;
-swipe_dir = 0;
+        "u_time"                : { value : 1.0 },
+        "u_resolution"          : new THREE.Uniform(new THREE.Vector2(w,h)),
+        "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
+        "u_mouse_pressed"       : { value : mouse_pressed },
+        "u_df0"                 : { value : df0 },
+        "u_df1"                 : { value : df1 },
+        "u_swipe_dir"           : { value : swipe_dir }, 
+        "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
+        "u_hash"                : { value: hash },
+        "u_noise_tex"           : { type:"t", value: noise_texture }
 
-cam.position.set(0.0,0.0,5.0); 
-cam_target  = new THREE.Vector3(0.0);
-
-controls = new THREE.OrbitControls(cam,canvas);
-
-    controls.minDistance = 0.0;
-    controls.target = cam_target;
-    controls.enableDamping = true;
-    controls.enablePan = false; 
-    controls.enabled = false; 
-
-scene = new THREE.Scene();
-geometry = new THREE.PlaneBufferGeometry(2,2);
-
-uniforms = {
-
-    "u_time"                : { value : 1.0 },
-    "u_resolution"          : new THREE.Uniform(new THREE.Vector2(w,h)),
-    "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
-    "u_mouse_pressed"       : { value : mouse_pressed },
-    "u_df0"                 : { value : df0 },
-    "u_df1"                 : { value : df1 },
-    "u_swipe_dir"           : { value : swipe_dir }, 
-    "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
-    "u_hash"                : { value: hash },
-    "u_noise_tex"           : { type:"t", value: noise_texture }
-
-};   
+    };   
 
 }
 
 init();
 
 ShaderLoader("render.vert","render.frag",
+
     function(vertex,fragment) {
+
         material = new THREE.ShaderMaterial({
 
-        uniforms : uniforms,
-        vertexShader : vertex,
-        fragmentShader : fragment
+            uniforms : uniforms,
+            vertexShader : vertex,
+            fragmentShader : fragment
 
         });
 
-    mesh = new THREE.Mesh(geometry,material);
+        mesh = new THREE.Mesh(geometry,material);
 
-    scene.add(mesh);
+        scene.add(mesh);
 
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(w,h);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(w,h);
 
-    render = function(timestamp) {
+        render = function(timestamp) {
 
         requestAnimationFrame(render);
     
@@ -135,47 +126,76 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_hash"                ].value = hash;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
+        controls.update();
         renderer.render(scene,cam);
-        }
-        render();
-        }) 
+
+        } 
+       
+    render();
+
+    }
+) 
+
+function updateNoiseTex() {
+
+    tex_size = 16*16;
+    noise = new Uint8Array(3*  tex_size);
+
+        for(let i = 0; i < tex_size; i++) {
+
+            let s = 3 * i;
+
+            noise[s]     = Math.floor( 255* nhash());
+            noise[s+1]   = Math.floor( 255* nhash());
+            noise[s+2]   = Math.floor( 255* nhash());   
+
+         }
+
+     noise_texture = new THREE.DataTexture(noise,16,16,THREE.RGBFormat );
+}
 
 $('#canvas').keydown(function(event) {
  
-    
-
     if(event.which == 37) {
         event.preventDefault(); 
-        hash -= 0.0001;    
-
+   
     }
 
     if(event.which == 38 ) {
         event.preventDefault();
-        hash += 0.00001;
 
     }
     
     if(event.which == 39 ) {
         event.preventDefault();
-        hash += 0.0001;
 
     }
 
     if(event.which == 40 ) {
         event.preventDefault();
-        hash -= 0.00001;
+
     }
 
 });
 
 $('#canvas').mousedown(function() { 
-    mouse_pressed = true;
-    });
+ 
+    reset_hash = setTimeout(function() {
+        hash = nhash();
+        df0 = nhash();
+        df1 = nhash();
+        updateNoiseTex();
+    },3500);
+
+});
 
 $('#canvas').mouseup(function() {
-    mouse_pressed = false;
-    });        
+    
+    if(reset_hash) {
+        clearTimeout(reset_hash);
+    };
+
+});        
 
 window.addEventListener('mousemove',onMouseMove,false);
 
