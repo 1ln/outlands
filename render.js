@@ -11,6 +11,8 @@ let tex_size;
 let noise;
 let noise_texture;
 
+let df0,df1;
+
 let mouse_pressed,mouse;
 let swipe_dir;
 
@@ -62,6 +64,9 @@ for(let i = 0; i < tex_size; i++) {
 noise_texture = new THREE.DataTexture(noise,16,16,THREE.RGBFormat );
 console.log(noise_texture);
 
+df0 = Math.floor(16.0 * nhash());
+df1 = Math.floor(16.0 * nhash());
+
 mouse = new THREE.Vector2(0.0); 
 mouse_pressed = 0;
 swipe_dir = 0;
@@ -86,6 +91,8 @@ uniforms = {
     "u_resolution"          : new THREE.Uniform(new THREE.Vector2(w,h)),
     "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
     "u_mouse_pressed"       : { value : mouse_pressed },
+    "u_df0"                 : { value : df0 },
+    "u_df1"                 : { value : df1 },
     "u_swipe_dir"           : { value : swipe_dir }, 
     "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
     "u_hash"                : { value: hash },
@@ -118,17 +125,11 @@ ShaderLoader("render.vert","render.frag",
 
         requestAnimationFrame(render);
     
-  //      delta = clock.getDelta();    
-  
-   /*   if(swipeLeft()  === true) { swipe_dir = 1; }
-        if(swipeUp()    === true) { swipe_dir = 2; }
-        if(swipeRight() === true) { swipe_dir = 3; }
-        if(swipeDown()  === true) { swipe_dir = 4; }
-    */
-
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
+        uniforms["u_df0"                 ].value = df0;
+        uniforms["u_df1"                 ].value = df1;
         uniforms["u_swipe_dir"           ].value = swipe_dir;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
@@ -145,25 +146,25 @@ $('#canvas').keydown(function(event) {
 
     if(event.which == 37) {
         event.preventDefault(); 
-        hash -= Math.sin(hash*0.0001);    
+        hash -= 0.0001;    
 
     }
 
     if(event.which == 38 ) {
         event.preventDefault();
-        hash += Math.sin(hash*0.00001);
+        hash += 0.00001;
 
     }
     
     if(event.which == 39 ) {
         event.preventDefault();
-        hash += Math.sin(hash*0.0001);
+        hash += 0.0001;
 
     }
 
     if(event.which == 40 ) {
         event.preventDefault();
-        hash -= Math.sin(hash*0.00001);
+        hash -= 0.00001;
     }
 
 });

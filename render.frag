@@ -464,17 +464,13 @@ vec2 scene(vec3 p) {
 
 vec3 q = vec3(p);
 
-float f1 = 0.0;
-float f2 = 0.0;
+float f = 0.0;
 
 float morphf = 0.0;
 float morphs = 0.00001;
 
-float sf = 0.0;
-float pf = 0.0;
-
-float df = 0.0;
-float ef = 0.0;
+vec2 df = vec2(0.0);
+float f1 = 0.0;
 
 
 float s  = 0.0001;
@@ -497,39 +493,41 @@ mat4 r = rotAxis(vec3(1.0,1.0,0.0),PI *2. * t * 0.0001 );
 
 q.z += sin(t*s) * 5. ;
 
-sf = sphere(p,1.);
-pf = sphere(q,.125);
+f1 = box(p,vec3(1.0));
 
-//f1 = box(p,vec3(1.0));
-//f1 = cylinder(p,1.0,.5);
-//f1 = torus(p,vec2(1.5,.25));
+if(u_hash <= hash(1.0)) { f1 = sphere(p,1.0); }
+if(u_hash <= hash(2.0)) {  f1 = cylinder(p,1.0,.5); }
+if(u_hash <= hash(3.0)) { f1 = torus(p,vec2(1.5,.25)); }
+
 //df = octahedron(p,1.0);
+
+
 //df = link(p,0.5,1.0,0.5);
 //df = capsule(p,vec3(0.0,1.0,0.0),vec3(0.0,-1.0,0.0),.5);
 //df = roundedCone(p,1.0,0.25,2.0);
-f1 = prism(p,vec2(1.5,.25));
+//f1 = prism(p,vec2(1.5,.25));
 //df = hexPrism(p,vec2(1.0,.25));
 
 //df = opd(sphere(p,1.0),sphere(p-vec3(0.0,0.0,1.0)  ,1.0));
-f1 = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
-f2 = opd(cylinder(p,1.5,.5),opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   ) ) ;
+//f1 = opd(sphere(p,1.0),box(p,vec3(1.0-(PHI/6.0))));
+//f2 = opd(cylinder(p,1.5,.5),opd(torus(p,vec2(1.35,0.5)) ,box(p,vec3(1.0))   ) ) ;
 //f2 = opd(cylinder(p,2.0,.25),sphere(p,1.0) );
-//f2 = opd(cylinder(p,2.,.25),cylinder(p,1.5,.5));
-f2 = smou(box(p-vec3(-.5),vec3(1.)) , box(p-vec3(.5),vec3(1.0)),.5);
- 
-morphf = mix(f1,f2, abs( sin(t * morphs * 2.0 * PI))); 
 
-df = max(-sf,morphf);
-
-ef = smou(pf,df ,.5);
-
-if( sign(  sphere(q,.5) ) == -1. ) {
-
-} else {
-
+if(u_hash <= hash(1.0)) {
+df = vec2( 
+     opd(cylinder(p,4.,.25),cylinder(p,1.5,.5)),0.0);
 }
 
-res = vec2(ef,0.0);
+if(u_hash <= hash(2.0)) {
+df = vec2( 
+     smou(box(p-vec3(-.5),vec3(1.)),box(p-vec3(.5),vec3(1.0)),.5),0.0);
+}
+ 
+//morphf = mix(f1,f2, abs( sin(t * morphs * 2.0 * PI))); 
+
+f = smod(f1,df.x,.5);
+
+res = vec2(f,df.y);
 return res;
 }
 
