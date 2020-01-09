@@ -473,7 +473,7 @@ vec2 df1 = vec2(0.0);
 
 float f1 = floor(u_df1*5.);
 
-float s  = 0.0001;
+float s  = 0.00001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
@@ -492,40 +492,9 @@ vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
 //mat4 r = rotAxis(vec3(1.0,1.0,0.0),PI *2. * t * 0.0001 );
 //p = (vec4(p,1.0) * r).xyz;
 
-//df0 = vec2(sphere(p,h0),1.0);
-//df1 = vec2(max(-sphere(p-vec3(-1.),2.),box(p-vec3(0.0,0.0,1.0),vec3(0.0))),0.0);
+float pl = sphere(p,1.0);
 
-if(f1 == 0.0) {
-df1 = vec2(max(-sphere(p,1.0),smou(box(p-vec3(-.5),vec3(1.)),box(p-vec3(.5),vec3(1.0)),.5)),0.0); 
-}
-
-if(f1 == 1.0) {
-df1 = vec2(smod(cylinder(p,1.,.5),cylinder(p,1.0,.25),.5),0.);
-}
-
-if(f1 == 2.0) {
-df1 = vec2(max(-sphere(p,1.0),box(p,vec3(.72))),0.0);
-}
-
-if(f1 == 3.0) {
-//df1 = vec2(max(-box(p,vec3(1.0)),box(p-vec3(-.1),vec3(1.)),0.0));
-}
-
-if(f1 == 4.0) {
-df1 = vec2(smod(box(p,vec3(1.)), cylinder(p,1.,.25),.5),0.0);
-} 
-
-if(f1 == 5.0) {
-df1 = vec2(max(-box(p-vec3(-.5),vec3(1.)),box(p-vec3(-.75),vec3(1.0))),0.0);
-}
-
-//morphf = mix(f1,f2, abs( sin(t * morphs * 2.0 * PI))); 
-
-
-//df = vec2(smou(df0.x,df1.x,.5),0.0);
-df = vec2(df1.x,0.0);
-
-res = vec2(df.x,df.y);
+res = vec2(pl,0.0);
 return res;
 }
 
@@ -644,10 +613,10 @@ float t = u_time;
 vec3 color = vec3(0.0);
 
 
-vec3 light = vec3(-10.,0.0,0.0);
+vec3 light = vec3(0.,10.0,100.0);
 
-vec3 orbital_light = vec3(0.0,0.0,-10.0);
-mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.0001 );
+vec3 orbital_light = vec3(0.0,1.0,-100.0);
+mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.00001 );
 
 vec3 bkg_col = vec3(0.0);
 //vec3 bkg_col = vec3(.25) * rd.y * 0.5;
@@ -669,7 +638,7 @@ vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
 
 vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
 
-float shininess = 100.0;
+float shininess = 500.;
 float n = 0.0;
 
     if(d.x > TRACE_DIST - EPSILON) {
@@ -678,25 +647,44 @@ float n = 0.0;
 
     } else {
    
-//   orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
-        
-   //  n += fractal(p);
-   //  n += distort(p);
-   //  n += cell(p, 14.0,0);
-   //  n += distort(p + cell(p,5.0,0)); 
-   //  n += sin3(p,r.r*16.); 
-   //  n += fractal(p + fractal(p)); 
-   //  n += smoothstep(p.y,1.,fractal(p)); 
-     n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
-   //    n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
+   orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
+
+
+   if( noise(vec3(1.0) ) < hash(2.0) ) {    
+   n += fractal(p);
+   } 
+
+   if(noise(vec3(3.0)) < hash(4.0)) {
+   //n += distort(p);
+   }
+
+   if(noise(vec3(5.0)) < hash(6.0)) {
+   n += cell(p, 14.0,0);
+   }
+
+   if(noise(vec3(7.0)) < hash(8.0)) {
+   n += fractal(p + fractal(p));
+   } 
+   
+   if(noise(vec3(9.0)) < hash(10.0)) { 
+   n += smoothstep(p.y,1.,fractal(p)); 
+   }
+
+   if(noise(vec3(11.0)) < hash(12.0)) {
+   n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
+   }
+
+   if(noise(vec3(13.0)) < hash(14.0)) {
+   n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
+   }
 
       kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
     
       vec3 ka = vec3(0.0); 
-      vec3 ks = vec3(25.0);
+      vec3 ks = vec3(1.0);
 
       color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
-      color += phongLight(ka,kd,ks,shininess,p,light,ro);  
+   //   color += phongLight(ka,kd,ks,shininess,p,light,ro);  
 
       color = pow(color,vec3(0.4545)); 
 
@@ -707,10 +695,10 @@ float n = 0.0;
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-//vec3 cam_pos = vec3(3.0,2.,5.);
+vec3 cam_pos = vec3(0.0,1.,1.5);
 vec3 m_pos = vec3(0.0);
 
 vec2 mo = vec2(u_mouse);
@@ -722,7 +710,6 @@ mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.0001);
 cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
-//cam_pos.xy += rot2(cam_pos.z);
 
 vec2 uvu = -1.0 + 2.0 * uVu.xy;
 uvu.x *= u_resolution.x/u_resolution.y; 
