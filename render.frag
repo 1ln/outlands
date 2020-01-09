@@ -471,10 +471,7 @@ vec2 df = vec2(0.0);
 vec2 df0 = vec2(0.0);
 vec2 df1 = vec2(0.0);
 
-float h0 = 0.0;
-float h1 = 0.0;
-float r0 = 0.0;
-float r1 = 0.0;
+float f1 = floor(u_df1*5.);
 
 float s  = 0.0001;
 float t  = u_time; 
@@ -483,11 +480,6 @@ vec2 res = vec2(1.0,0.0);
 
 vec4 r = texelFetch(u_noise_tex,ivec2(2,0),0);
 vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
-
-if(h.r < .5) { h0 = 1.0; } else { r0 = 2.0; }
-if(h.g < .5) { h1 = 1.0; } else { r1 = 2.0; }
-if(r.r < .5) { r0 = 1.0; } else { r0 = 2.0; }
-if(r.g < .5) { r1 = 1.0; } else { r1 = 2.0; }
 
 //p.xy *= rot2(p.z );
 
@@ -500,50 +492,38 @@ vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
 //mat4 r = rotAxis(vec3(1.0,1.0,0.0),PI *2. * t * 0.0001 );
 //p = (vec4(p,1.0) * r).xyz;
 
-df0 = vec2(sphere(p,h0),1.0);
-df1 = vec2(sphere(p,h1),1.0);
+//df0 = vec2(sphere(p,h0),1.0);
+//df1 = vec2(max(-sphere(p-vec3(-1.),2.),box(p-vec3(0.0,0.0,1.0),vec3(0.0))),0.0);
 
-if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,0),0).r) { 
-df0 = vec2(box(p,vec3(h0)),0.0); 
+if(f1 == 0.0) {
+df1 = vec2(max(-sphere(p,1.0),smou(box(p-vec3(-.5),vec3(1.)),box(p-vec3(.5),vec3(1.0)),.5)),0.0); 
 }
 
-if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,2),0).r) {
-df1 = vec2(box(p,vec3(h1)),0.0); 
+if(f1 == 1.0) {
+df1 = vec2(smod(cylinder(p,1.,.5),cylinder(p,1.0,.25),.5),0.);
 }
 
-if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,4),0).r) {
-df0 = vec2(cylinder(p,h0,r0),0.0);
+if(f1 == 2.0) {
+df1 = vec2(max(-sphere(p,1.0),box(p,vec3(.72))),0.0);
 }
 
-if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,6),0).r) {
-df1 = vec2(cylinder(p,h1,r1),0.0);
+if(f1 == 3.0) {
+//df1 = vec2(max(-box(p,vec3(1.0)),box(p-vec3(-.1),vec3(1.)),0.0));
 }
 
-if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,8),0).r) {
-df0 = vec2(torus(p,vec2(h0,r0)),0.0);
-}
-
-if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,10),0).r) {
-df1 = vec2(torus(p,vec2(h1,r1)),0.0);
-}
-
-if(u_df0 <= texelFetch(u_noise_tex,ivec2(4,12),0).r) {
-df0 = vec2(octahedron(p,r0),0.0);
+if(f1 == 4.0) {
+df1 = vec2(smod(box(p,vec3(1.)), cylinder(p,1.,.25),.5),0.0);
 } 
 
-if(u_df1 <= texelFetch(u_noise_tex,ivec2(4,14),0).r) {
-df1 = vec2(octahedron(p,r1),0.0);
+if(f1 == 5.0) {
+df1 = vec2(max(-box(p-vec3(-.5),vec3(1.)),box(p-vec3(-.75),vec3(1.0))),0.0);
 }
 
 //morphf = mix(f1,f2, abs( sin(t * morphs * 2.0 * PI))); 
 
-if(texelFetch(u_noise_tex,ivec2(6,0),0).r < .5) {
-df = vec2(smou(df0.x,df1.x,.5),0.0);
-}
-/*
-if( texelFetch(u_noise_tex,ivec2(6,1),0).r < .5) {
-df = vec2(smod(df0.x,df1.x,.5),0.0);
-}*/
+
+//df = vec2(smou(df0.x,df1.x,.5),0.0);
+df = vec2(df1.x,0.0);
 
 res = vec2(df.x,df.y);
 return res;
