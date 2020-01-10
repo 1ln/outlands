@@ -461,7 +461,19 @@ float octahedron(vec3 p,float s) {
     float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
-   
+ 
+float elora(vec3 p) {
+
+float h = smou(torus(p,vec2(1.0,0.125)),octahedron(p,.65),.5);
+float e = smod(sphere(p-vec3(0.0,2.0,0.0),1.),  roundedCone(p-vec3(0.0,1.,0.0),.25,.125,1.) ,.15) ;
+
+float c = smou(h,e,.5);
+
+return c;
+
+}
+
+
 vec2 scene(vec3 p) { 
 
 vec3 q = vec3(p);
@@ -478,7 +490,6 @@ float t  = u_time;
 
 vec2 res = vec2(1.0,0.0);
 
-vec4 r = texelFetch(u_noise_tex,ivec2(2,0),0);
 vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
 
 //p.xy *= rot2(p.z );
@@ -489,12 +500,15 @@ mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x);
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
 vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
-//mat4 r = rotAxis(vec3(1.0,1.0,0.0),PI *2. * t * 0.0001 );
-//p = (vec4(p,1.0) * r).xyz;
+mat4 r = rotAxis(vec3(-1.0,.0,0.0),PI *2. * t * 0.000001 );
+q = (vec4(q,1.0) * r).xyz;
 
-float pl = sphere(p,1.0);
+vec2 pl = vec2(sphere(p,1.0),0.0);
+vec2 ship = vec2(  elora(q-vec3(0.0,0.0,1.002)/.05)*.05,1.);
 
-res = vec2(pl,0.0);
+df = vec2(min(pl,ship) );
+
+res = vec2(opu(pl,ship));
 return res;
 }
 
@@ -678,10 +692,14 @@ float n = 0.0;
    n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
    }
 
+      if(d.y == 0.0) {
       kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
-    
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
+      }
+      else {
+      kd = vec3(.5);
+      }
 
       color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
    //   color += phongLight(ka,kd,ks,shininess,p,light,ro);  
@@ -695,10 +713,10 @@ float n = 0.0;
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(0.0,1.,1.5);
+//vec3 cam_pos = vec3(0.0,1.,1.5);
 vec3 m_pos = vec3(0.0);
 
 vec2 mo = vec2(u_mouse);
@@ -709,7 +727,7 @@ mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
 //cam_pos = (vec4(cam_pos,1.0)*mxr*myr).xyz;
 
 mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.0001);
-cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
+//cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * uVu.xy;
 uvu.x *= u_resolution.x/u_resolution.y; 
