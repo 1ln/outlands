@@ -13,8 +13,6 @@ let noise_texture;
 
 let reset_hash;
 
-let df0,df1;
-
 let mouse_pressed,mouse;
 let swipe_dir;
 
@@ -52,9 +50,6 @@ function init() {
  
     updateNoiseTex();
 
-    df0 = nhash();
-    df1 = nhash();
-
     mouse = new THREE.Vector2(0.0); 
     mouse_pressed = 0;
     swipe_dir = 0;
@@ -69,7 +64,7 @@ function init() {
         controls.target = cam_target;
         controls.enableDamping = true;
         controls.enablePan = false; 
-        controls.enabled = true;
+        controls.enabled = false;
 
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -80,8 +75,6 @@ function init() {
         "u_resolution"          : new THREE.Uniform(new THREE.Vector2(w,h)),
         "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
         "u_mouse_pressed"       : { value : mouse_pressed },
-        "u_df0"                 : { value : df0 },
-        "u_df1"                 : { value : df1 },
         "u_swipe_dir"           : { value : swipe_dir }, 
         "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
         "u_hash"                : { value: hash },
@@ -119,14 +112,12 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_time"                ].value = performance.now();
         uniforms["u_mouse"               ].value = mouse;
         uniforms["u_mouse_pressed"       ].value = mouse_pressed;
-        uniforms["u_df0"                 ].value = df0;
-        uniforms["u_df1"                 ].value = df1;
         uniforms["u_swipe_dir"           ].value = swipe_dir;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
-        controls.update();
+        //controls.update();
         renderer.render(scene,cam);
 
         } 
@@ -138,8 +129,8 @@ ShaderLoader("render.vert","render.frag",
 
 function updateNoiseTex() {
 
-    tex_size = 16*16;
-    noise = new Uint8Array(3*  tex_size);
+    tex_size = 16*16*16;
+    noise = new Uint8Array(3*tex_size);
 
         for(let i = 0; i < tex_size; i++) {
 
@@ -151,7 +142,7 @@ function updateNoiseTex() {
 
          }
 
-     noise_texture = new THREE.DataTexture(noise,16,16,THREE.RGBFormat );
+     noise_texture = new THREE.DataTexture3D(noise,16,16,16);
 }
 
 $('#canvas').keydown(function(event) {
@@ -182,10 +173,8 @@ $('#canvas').mousedown(function() {
  
     reset_hash = setTimeout(function() {
         hash = nhash();
-        df0 = nhash();
-        df1 = nhash();
         updateNoiseTex();
-    },3500);
+    },5000);
 
 });
 

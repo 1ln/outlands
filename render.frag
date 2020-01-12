@@ -3,14 +3,12 @@
 // dolson,2019
 
 precision mediump float;
-precision mediump sampler2D;
+precision mediump sampler3D;
 
 out vec4 out_FragColor;
 varying vec2 uVu; 
 
 uniform float u_hash;
-uniform float u_df0;
-uniform float u_df1;
 
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
@@ -21,7 +19,7 @@ uniform vec2 u_resolution;
 uniform vec3 u_cam_target;
 uniform float u_time;
 
-uniform sampler2D u_noise_tex;
+uniform sampler3D u_noise_tex;
 
 const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
@@ -112,6 +110,10 @@ float cell(vec3 x,float iterations,int type) {
 }
 
 float noise(vec3 x) {
+return texture(u_noise_tex,x/16.0).x;
+}
+/*
+float noise(vec3 x) {
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -123,7 +125,7 @@ float noise(vec3 x) {
                    mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
                mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
                    mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
-}
+}*/
 
 /*
 float noise(vec3 x) {
@@ -483,25 +485,23 @@ vec2 df = vec2(0.0);
 vec2 df0 = vec2(0.0);
 vec2 df1 = vec2(0.0);
 
-float f1 = floor(u_df1*5.);
-
 float s  = 0.00001;
 float t  = u_time; 
 
 vec2 res = vec2(1.0,0.0);
 
-vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
+//vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
 
 //p.xy *= rot2(p.z );
 
-vec2 mo = vec2(u_mouse);
-mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
-mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
+//vec2 mo = vec2(u_mouse);
+//mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
+//mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
-vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
-mat4 r = rotAxis(vec3(-1.0,.0,0.0),PI *2. * t * 0.000001 );
-q = (vec4(q,1.0) * r).xyz;
+//vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
+//mat4 r = rotAxis(vec3(-1.0,.0,0.0),PI *2. * t * 0.000001 );
+//q = (vec4(q,1.0) * r).xyz;
 
 vec2 pl = vec2(sphere(p,1.0),0.0);
 vec2 ship = vec2(  elora(q-vec3(0.0,0.0,1.002)/.05)*.05,1.);
@@ -645,12 +645,14 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
+/*
 vec4 difa = texelFetch(u_noise_tex,ivec2(0,0),0);
 vec4 difb = texelFetch(u_noise_tex,ivec2(0,1),0);
 vec4 difc = texelFetch(u_noise_tex,ivec2(0,2),0);
 vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
+*/
 
-vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
+//vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
 
 float shininess = 500.;
 float n = 0.0;
@@ -693,7 +695,8 @@ float n = 0.0;
    }
 
       if(d.y == 0.0) {
-      kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
+      kd = vec3(1.,0.0,0.);
+  //  kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
       vec3 ka = vec3(0.0); 
       vec3 ks = vec3(1.0);
       }
@@ -713,14 +716,12 @@ float n = 0.0;
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-//vec3 cam_pos = vec3(0.0,1.,1.5);
-vec3 m_pos = vec3(0.0);
+vec3 cam_pos = vec3(5.0,1.,1.5);
 
 vec2 mo = vec2(u_mouse);
-m_pos = vec3(mo,1.);
 
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
