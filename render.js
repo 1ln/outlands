@@ -8,7 +8,8 @@ let uniforms;
 
 let nhash,hash;  
 let tex_size;
-let noise;
+let tex;
+let n;
 let noise_texture;
 
 let reset_hash;
@@ -129,20 +130,29 @@ ShaderLoader("render.vert","render.frag",
 
 function updateNoiseTex() {
 
-    tex_size = 16*16*16;
-    noise = new Uint8Array(3*tex_size);
+    n = new THREE.ImprovedNoise();
 
-        for(let i = 0; i < tex_size; i++) {
+    tex_size = 32*32*32;
+    tex = new Uint8ClampedArray(4*tex_size);
 
-            let s = 3 * i;
+        for(let i = 0; i < 32; i++) {
+            for(let j = 0; j < 32; j++) {
+                for(let k = 0; k < 32; k++) {                
+         
+                let s = (i+j+k*tex_size)*4;
 
-            noise[s]     = Math.floor( 255* nhash());
-            noise[s+1]   = Math.floor( 255* nhash());
-            noise[s+2]   = Math.floor( 255* nhash());   
+                tex[s]     = Math.floor( 255* n.noise(i,j,k));
+                tex[s+1]   = Math.floor( 255* n.noise(i,j,k));
+                tex[s+2]   = Math.floor( 255* n.noise(i,j,k));   
+                tex[s+3]   = 255;
 
          }
+            }
+               }
 
-     noise_texture = new THREE.DataTexture3D(noise,16,16,16);
+     noise_texture = new THREE.DataTexture3D(tex,32,32,32,THREE.RGBFormat);
+     noise_texture.magFilter = THREE.LinearFilter;
+     console.log(noise_texture);
 }
 
 $('#canvas').keydown(function(event) {
