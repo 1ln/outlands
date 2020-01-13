@@ -12,7 +12,7 @@ let tex;
 let n;
 let noise_texture;
 
-let reset_hash;
+let reset;
 
 let mouse_pressed,mouse;
 let swipe_dir;
@@ -26,7 +26,10 @@ let cam_target;
 let delta;
 let clock;
 
-let speed = 0.01;
+let orbiter_pos;
+let dv,fuel,speed;
+
+let r = new THREE.Quaternion();
 
 function init() {
 
@@ -70,6 +73,14 @@ function init() {
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
 
+    orbiter_pos = new THREE.Vector3(0,0,2.5); 
+    r.setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
+    orbiter_pos.applyQuaternion(r);
+
+    fuel  = 100.0;
+    dv = 0.0001;
+    speed  = 0.0;
+
     uniforms = {
 
         "u_time"                : { value : 1.0 },
@@ -79,6 +90,10 @@ function init() {
         "u_swipe_dir"           : { value : swipe_dir }, 
         "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
         "u_hash"                : { value: hash },
+        "u_orbiter_pos"         : new THREE.Uniform(new THREE.Vector3(orbiter_pos)),
+        "u_fuel"                : { value: fuel },
+        "u_dv"                  : { value: dv },
+        "u_speed"               : { value: speed },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -108,6 +123,12 @@ ShaderLoader("render.vert","render.frag",
 
         render = function(timestamp) {
 
+        orbiter_pos.applyQuaternion(r);
+
+        if(orbiter_pos.y > 2.5) {
+//            hash = nhash();
+        }
+
         requestAnimationFrame(render);
     
         uniforms["u_time"                ].value = performance.now();
@@ -116,6 +137,10 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_swipe_dir"           ].value = swipe_dir;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
+        uniforms["u_orbiter_pos"         ].value = orbiter_pos;
+        uniforms["u_fuel"                ].value = fuel;
+        uniforms["u_dv"                  ].value = dv;
+        uniforms["u_speed"               ].value = speed;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
         controls.update();
@@ -181,16 +206,22 @@ $('#canvas').keydown(function(event) {
 
 $('#canvas').mousedown(function() { 
  
-    reset_hash = setTimeout(function() {
+    reset = setTimeout(function() {
     
+    if(fuel > 0.0) {
+ //   orbiter_pos.y += speed;    
+    }   
+
+   // fuel -= .05;
+
     },5000);
 
 });
 
 $('#canvas').mouseup(function() {
     
-    if(reset_hash) {
-        clearTimeout(reset_hash);
+    if(reset) {
+        clearTimeout(reset);
     };
 
 });        
