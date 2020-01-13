@@ -65,7 +65,7 @@ function init() {
         controls.target = cam_target;
         controls.enableDamping = true;
         controls.enablePan = false; 
-        controls.enabled = false;
+        controls.enabled = true;
 
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -118,7 +118,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_hash"                ].value = hash;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
-        //controls.update();
+        controls.update();
         renderer.render(scene,cam);
 
         } 
@@ -182,8 +182,7 @@ $('#canvas').keydown(function(event) {
 $('#canvas').mousedown(function() { 
  
     reset_hash = setTimeout(function() {
-        hash = nhash();
-        updateNoiseTex();
+    
     },5000);
 
 });
