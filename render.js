@@ -14,7 +14,7 @@ let noise_texture;
 
 let reset;
 
-let mouse_pressed,mouse;
+let mouse_pressed,mouse_held,mouse;
 let swipe_dir;
 
 let controls;
@@ -56,6 +56,7 @@ function init() {
 
     mouse = new THREE.Vector2(0.0); 
     mouse_pressed = 0;
+    mouse_held = 0;
     swipe_dir = 0;
 
     cam.position.set(0.0,0.0,5.0); 
@@ -77,7 +78,7 @@ function init() {
     r.setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
     orbiter_pos.applyQuaternion(r);
 
-    fuel  = 100.0;
+    fuel  = 1.0;
     dv = 0.0001;
     speed  = 0.0;
 
@@ -91,9 +92,6 @@ function init() {
         "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
         "u_hash"                : { value: hash },
         "u_orbiter_pos"         : new THREE.Uniform(new THREE.Vector3(orbiter_pos)),
-        "u_fuel"                : { value: fuel },
-        "u_dv"                  : { value: dv },
-        "u_speed"               : { value: speed },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -125,8 +123,13 @@ ShaderLoader("render.vert","render.frag",
 
         orbiter_pos.applyQuaternion(r);
 
-        if(orbiter_pos.y > 2.5) {
-//            hash = nhash();
+        if(mouse_held === true && mouse_pressed === true) {
+        orbiter_pos.z += 0.05;
+        fuel -= .025;
+        }
+
+        if(orbiter_pos.z > 10) {
+            hash = nhash();
         }
 
         requestAnimationFrame(render);
@@ -138,9 +141,6 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
         uniforms["u_orbiter_pos"         ].value = orbiter_pos;
-        uniforms["u_fuel"                ].value = fuel;
-        uniforms["u_dv"                  ].value = dv;
-        uniforms["u_speed"               ].value = speed;
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
         controls.update();
@@ -206,8 +206,11 @@ $('#canvas').keydown(function(event) {
 
 $('#canvas').mousedown(function() { 
  
+    mouse_pressed = true;
+   
     reset = setTimeout(function() {
-    
+    mouse_held = true; 
+     
     if(fuel > 0.0) {
  //   orbiter_pos.y += speed;    
     }   
@@ -220,6 +223,9 @@ $('#canvas').mousedown(function() {
 
 $('#canvas').mouseup(function() {
     
+    mouse_pressed = false;    
+    mouse_held = false;
+
     if(reset) {
         clearTimeout(reset);
     };
