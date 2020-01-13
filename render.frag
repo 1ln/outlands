@@ -25,10 +25,10 @@ const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
 const float PHI =  (1.0 + sqrt(5.0)) / 2.0;
 
-const int MARCH_STEPS = 256;
+const int MARCH_STEPS = 100;
 
 const float EPSILON = 0.001;
-const float TRACE_DIST = 100.;
+const float TRACE_DIST = 3.;
 
 const int OCTAVES = 4;
 const float HURST = .2452;
@@ -110,10 +110,6 @@ float cell(vec3 x,float iterations,int type) {
 }
 
 float noise(vec3 x) {
-return texture(u_noise_tex,x/16.0).x;
-}
-/*
-float noise(vec3 x) {
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -125,7 +121,7 @@ float noise(vec3 x) {
                    mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
                mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
                    mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
-}*/
+}
 
 /*
 float noise(vec3 x) {
@@ -492,7 +488,7 @@ vec2 res = vec2(1.0,0.0);
 
 //vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
 
-//p.xy *= rot2(p.z );
+//q.xy *= rot2(t*0.001);
 
 //vec2 mo = vec2(u_mouse);
 //mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
@@ -500,15 +496,19 @@ vec2 res = vec2(1.0,0.0);
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
 //vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
-//mat4 r = rotAxis(vec3(-1.0,.0,0.0),PI *2. * t * 0.000001 );
-//q = (vec4(q,1.0) * r).xyz;
+mat4 r = rotAxis(vec3(0.,.0,-1.0),PI *2. * t * 0.0001 );
+q = (vec4(q,1.) * r).xyz;
 
-vec2 pl = vec2(sphere(p,1.0),0.0);
-vec2 ship = vec2(  elora(q-vec3(0.0,0.0,1.002)/.05)*.05,1.);
+//p = repeat(p,vec3(5.));
+vec3 ind = vec3(floor(p/10.));
 
-df = vec2(min(pl,ship) );
 
-res = vec2(opu(pl,ship));
+vec2 box = vec2( box(q-vec3(0.0,0.0,1.1),vec3(.05)),1.0) ;
+vec2 sphere = vec2( sphere(p,1.),0.0);
+
+df = vec2(opu(sphere,box));
+
+res = vec2(df );
 return res;
 }
 
@@ -629,8 +629,8 @@ vec3 color = vec3(0.0);
 
 vec3 light = vec3(0.,10.0,100.0);
 
-vec3 orbital_light = vec3(0.0,1.0,-100.0);
-mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.00001 );
+vec3 orbital_light = vec3(0.0,1.0,100.0);
+mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.0001 );
 
 vec3 bkg_col = vec3(0.0);
 //vec3 bkg_col = vec3(.25) * rd.y * 0.5;
@@ -695,14 +695,16 @@ float n = 0.0;
    }
 
       if(d.y == 0.0) {
-      kd = vec3(1.,0.0,0.);
-  //  kd = fmCol((p.y+n  )   ,vec3(difa.rgb),vec3(difb.rgb),vec3(difc.rgb),vec3(difd.rgb ));
-      vec3 ka = vec3(0.0); 
-      vec3 ks = vec3(1.0);
-      }
-      else {
+  //    kd = vec3(1.,0.0,0.);
+    kd = fmCol((p.y+n  )   ,vec3(hash(133.0),hash(23.0),hash(36.0) ),vec3(hash(45.0),hash(15.0),hash(65.0)),vec3(hash(73.0),hash(44.0),hash(22.0)),vec3(0. ));
+     } else {
       kd = vec3(.5);
       }
+
+      vec3 ka = vec3(0.0); 
+      vec3 ks = vec3(1.0);
+    
+  
 
       color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
    //   color += phongLight(ka,kd,ks,shininess,p,light,ro);  
@@ -719,7 +721,7 @@ void main() {
 //vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(5.0,1.,1.5);
+vec3 cam_pos = vec3(0.0,0.,1.5 );
 
 vec2 mo = vec2(u_mouse);
 
@@ -727,7 +729,7 @@ mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
 //cam_pos = (vec4(cam_pos,1.0)*mxr*myr).xyz;
 
-mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.0001);
+mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.000005);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * uVu.xy;
