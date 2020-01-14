@@ -13,9 +13,13 @@ let n;
 let noise_texture;
 
 let reset;
+let update_pos;
+let update_pos_new;
 
 let mouse_pressed,mouse_held,mouse;
 let swipe_dir;
+
+let raycaster;
 
 let controls;
 
@@ -30,6 +34,7 @@ let orbiter_pos;
 let dv,fuel,speed;
 
 let r = new THREE.Quaternion();
+let axishelper;
 
 function init() {
 
@@ -42,9 +47,12 @@ function init() {
     canvas.width  = w;
     canvas.height = h;
 
+    
+
     renderer = new THREE.WebGLRenderer({canvas:canvas,context:context});
 
-    cam = new THREE.PerspectiveCamera(1.0,w/h,0.0,1000.0);
+    cam = new THREE.PerspectiveCamera(45.,w/h,0.0,1000.0);
+    raycaster = new THREE.Raycaster();
 
     clock = new THREE.Clock(); 
     delta = 0.0;
@@ -75,7 +83,7 @@ function init() {
     geometry = new THREE.PlaneBufferGeometry(2,2);
 
     orbiter_pos = new THREE.Vector3(0,0,2.5); 
-    r.setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
+    r.setFromAxisAngle(new THREE.Vector3(0,1,0),0.001);
     orbiter_pos.applyQuaternion(r);
 
     fuel  = 1.0;
@@ -115,13 +123,21 @@ ShaderLoader("render.vert","render.frag",
         mesh = new THREE.Mesh(geometry,material);
 
         scene.add(mesh);
-
+       
+        
+ 
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(w,h);
 
         render = function(timestamp) {
+      
+        raycaster.setFromCamera(mouse,cam);
 
+        if(update_pos_new === false) { 
         orbiter_pos.applyQuaternion(r);
+        } else {
+       // r.setFromAxisAngle(mouse_pos,0.001);
+        }
 
         if(mouse_held === true && mouse_pressed === true) {
         orbiter_pos.z += 0.05;
@@ -129,6 +145,7 @@ ShaderLoader("render.vert","render.frag",
         }
 
         if(orbiter_pos.z > 10) {
+            
             hash = nhash();
         }
 
@@ -145,6 +162,8 @@ ShaderLoader("render.vert","render.frag",
 
         controls.update();
         renderer.render(scene,cam);
+
+    
 
         } 
        
@@ -219,12 +238,17 @@ $('#canvas').mousedown(function() {
 
     },5000);
 
+    update_pos = setTimeout(function() {
+    update_pos_new = true;
+    },2000);
+
 });
 
 $('#canvas').mouseup(function() {
     
     mouse_pressed = false;    
     mouse_held = false;
+    update_pos_new = false;
 
     if(reset) {
         clearTimeout(reset);

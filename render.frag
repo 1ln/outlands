@@ -16,7 +16,14 @@ uniform int u_swipe_dir;
 
 uniform vec2 u_resolution;
 
+//uniform vec3 light_pos;
+uniform vec3 u_orbiter_pos;
 uniform vec3 u_cam_target;
+
+//uniform float u_trace_dist;
+//uniform float u_eps;
+//uniform int u_steps;
+
 uniform float u_time;
 
 uniform sampler3D u_noise_tex;
@@ -28,7 +35,7 @@ const float PHI =  (1.0 + sqrt(5.0)) / 2.0;
 const int MARCH_STEPS = 100;
 
 const float EPSILON = 0.001;
-const float TRACE_DIST = 3.;
+const float TRACE_DIST = 45.;
 
 const int OCTAVES = 4;
 const float HURST = .2452;
@@ -496,14 +503,12 @@ vec2 res = vec2(1.0,0.0);
 //p = (vec4(p,1.0) * mxr * myr).xyz;
 
 //vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
-mat4 r = rotAxis(vec3(0.,.0,-1.0),PI *2. * t * 0.0001 );
+mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
 q = (vec4(q,1.) * r).xyz;
 
 //p = repeat(p,vec3(5.));
-vec3 ind = vec3(floor(p/10.));
 
-
-vec2 box = vec2( box(q-vec3(0.0,0.0,1.1),vec3(.05)),1.0) ;
+vec2 box = vec2( box(p - u_orbiter_pos,vec3(.05)),1.0) ;
 vec2 sphere = vec2( sphere(p,1.),0.0);
 
 df = vec2(opu(sphere,box));
@@ -718,10 +723,10 @@ float n = 0.0;
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(0.0,0.,1.5 );
+//vec3 cam_pos = vec3(0.0,0.,1.5 );
 
 vec2 mo = vec2(u_mouse);
 
