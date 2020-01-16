@@ -6,6 +6,8 @@ let renderer;
 let render;
 let uniforms;
 
+let reset;
+
 let nhash,hash;  
 let tex_size;
 let tex;
@@ -101,12 +103,17 @@ function init() {
     hurst = 0.5;
     fractional_noise = 0;
     cell_noise = 0;
-    cell_iterations;
+    cell_iterations = 10.0;
+
+    light_pos = new THREE.Vector3(0.0,10.0,10.0);
+    cam_light_pos = new THREE.Vector3(0.0,0.0,10.0);
 
     diffuse = new THREE.Color(0.5);
     diffb   = new THREE.Color(0.0);
     diffc   = new THREE.Color(0.0);
     diffd   = new THREE.Color(0.0);
+
+    bkg = new THREE.Color(0.0);
 
     shininess = 100.0;
     gamma = 0.4545;
@@ -114,7 +121,7 @@ function init() {
     cam_intensity = THREE.Vector3(1.0);
 
     repeat = 0;
-    repeat_dir = new THREE.Vector(5.0);
+    repeat_dir = new THREE.Vector3(5.0);
 
     uniforms = {
 
@@ -127,7 +134,7 @@ function init() {
         "u_hash"                : { value: hash },
         "u_march_steps"         : { value: march_steps },
         "u_eps"                 : { value: eps },
-        "u_trace_dist"          : { value: trace_distance },
+        "u_trace_dist"          : { value: trace_dist },
         "u_diffuse"             : new THREE.Uniform(new THREE.Vector3(diffuse)),
         "u_diffb"               : new THREE.Uniform(new THREE.Vector3(diffb)),
         "u_diffc"               : new THREE.Uniform(new THREE.Vector3(diffc)),
@@ -138,6 +145,7 @@ function init() {
         "u_gamma"               : { value: gamma },
         "u_intensity"           : new THREE.Uniform(new THREE.Vector3(intensity)),
         "u_cam_intensity"       : new THREE.Uniform(new THREE.Vector3(cam_intensity)),
+        "u_bkg"                 : new THREE.Uniform(new THREE.Vector3(bkg)),
         "u_repeat"              : { value: repeat },
         "u_repeat_dir"          : new THREE.Uniform(new THREE.Vector3(repeat_dir)),
         "u_octaves"             : { value: octaves },
@@ -178,22 +186,6 @@ ShaderLoader("render.vert","render.frag",
       
         raycaster.setFromCamera(mouse,cam);
 
-        if(update_pos_new === false) { 
-        orbiter_pos.applyQuaternion(r);
-        } else {
-       // r.setFromAxisAngle(mouse_pos,0.001);
-        }
-
-        if(mouse_held === true && mouse_pressed === true) {
-        orbiter_pos.z += 0.05;
-        fuel -= .025;
-        }
-
-        if(orbiter_pos.z > 10) {
-            
-            hash = nhash();
-        }
-
         requestAnimationFrame(render);
     
         uniforms["u_time"                ].value = performance.now();
@@ -205,7 +197,6 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_march_steps"         ].value = march_steps;
         uniforms["u_trace_dist"          ].value = trace_dist;
         uniforms["u_eps"                 ].value = eps;
-        uniforms["u_orbiter_pos"         ].value = orbiter_pos;
         uniforms["u_gamma"               ].value = gamma;
         uniforms["u_light_pos"           ].value = light_pos;
         uniforms["u_cam_light_pos"       ].value = cam_light_pos;
@@ -295,18 +286,10 @@ $('#canvas').mousedown(function() {
    
     reset = setTimeout(function() {
     mouse_held = true; 
-     
-    if(fuel > 0.0) {
- //   orbiter_pos.y += speed;    
-    }   
 
-   // fuel -= .05;
 
     },5000);
 
-    update_pos = setTimeout(function() {
-    update_pos_new = true;
-    },2000);
 
 });
 
@@ -314,7 +297,7 @@ $('#canvas').mouseup(function() {
     
     mouse_pressed = false;    
     mouse_held = false;
-    update_pos_new = false;
+    
 
     if(reset) {
         clearTimeout(reset);

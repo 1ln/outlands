@@ -16,13 +16,32 @@ uniform int u_swipe_dir;
 
 uniform vec2 u_resolution;
 
-//uniform vec3 light_pos;
-uniform vec3 u_orbiter_pos;
+uniform vec3 u_light_pos;
+uniform vec3 u_cam_light_pos;
 uniform vec3 u_cam_target;
 
-//uniform float u_trace_dist;
-//uniform float u_eps;
-//uniform int u_steps;
+uniform vec3 u_diffuse;
+uniform vec3 u_diffb;
+uniform vec3 u_diffc;
+uniform vec3 u_diffd;
+
+uniform float u_gamma;
+uniform vec3 u_bkg;
+uniform float u_shininess;
+uniform vec3 u_intensity;
+uniform vec3 u_cam_intensity;
+
+uniform int u_repeat;
+uniform vec3 u_repeat_dir;
+
+uniform int u_octaves;
+uniform int u_fractional_noise;
+uniform int u_cell_noise;
+uniform float u_cell_iterations;
+
+uniform float u_trace_dist;
+uniform float u_eps;
+uniform int u_march_steps;
 
 uniform float u_time;
 
@@ -506,9 +525,11 @@ vec2 res = vec2(1.0,0.0);
 mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
 q = (vec4(q,1.) * r).xyz;
 
-//p = repeat(p,vec3(5.));
+if(u_repeat == 1) {
+p = repeat(p,vec3(u_repeat_dir));
+}
 
-vec2 box = vec2( box(p - u_orbiter_pos,vec3(.05)),1.0) ;
+vec2 box = vec2( box(p,vec3(.05)),1.0) ;
 vec2 sphere = vec2( sphere(p,1.),0.0);
 
 df = vec2(opu(sphere,box));
@@ -522,43 +543,49 @@ vec2 rayScene(vec3 ro,vec3 rd) {
     float depth = 0.0;
     float d = -1.0;
 
-    for(int i = 0; i < MARCH_STEPS; ++i) {
+    for(int i = 0; i < u_march_steps; ++i) {
 
         vec3 p = ro + depth * rd;
         vec2 dist = scene(p);
    
-        if(dist.x < EPSILON || TRACE_DIST < dist.x ) { break; }
+        if(dist.x < u_eps || u_trace_dist < dist.x ) { break; }
         depth += dist.x;
         d = dist.y;
 
         }
  
-        if(TRACE_DIST < depth) { d = -1.0; }
+        if(u_trace_dist < depth) { d = -1.0; }
         return vec2(depth,d);
 
 }
 
-vec2 rayReflect(vec3 ro,vec3 rd) {
+vec3 fog(vec3 p,vec3 c,float,float distance) {
+    float depth = 1. - exp(-distance *b);
+    return mix(p,c,depth);
+}
 
-    float depth = 0.0;
-    float d = -1.0;
+float shadow(vec3 ro,vec3 rd,float dmin,float dmax,float w) {
 
-    for(int i = 0; i < 10; ++i) {
-        vec3 p = ro + depth * rd;
-        vec2 dist = scene(p);
-         
-        if(dist.x < EPSILON || TRACE_DIST < dist.x) { break; }
-        depth += dist.x;
-        d = dist.y;
-        }
+    float s = 1.0;
+
+    for(float t = dmin; t < dmax; ) {
         
-        if(TRACE_DIST < depth) { d = -1.0; }
-        return vec2(depth,d);
+        float h = scene(ro + rd * t  );
+        s = min(s,0.5 + 0.5 * h/(w*t));
+         
+        if(s < 0.0 ) { break; }
+        t += h;
+
+        }
+
+        s = max(s,0.0);
+        return s*s*(3.0-2.0*s);
+
 }
 
 vec3 calcNormal(vec3 p) {
 
-    vec2 e = vec2(1.0,-1.0) * EPSILON;
+    vec2 e = vec2(1.0,-1.0) * u_eps;
 
     return normalize(vec3(
     vec3(e.x,e.y,e.y) * scene(p + vec3(e.x,e.y,e.y)).x +
@@ -631,20 +658,12 @@ float t = u_time;
 
 vec3 color = vec3(0.0);
 
-
-vec3 light = vec3(0.,10.0,100.0);
-
-vec3 orbital_light = vec3(0.0,1.0,100.0);
-mat4 light_rotation = rotAxis(vec3(0.0,1.0,0.0),   t*0.0001 );
-
-vec3 bkg_col = vec3(0.0);
+vec3 bkg_col = u_bkg;
 //vec3 bkg_col = vec3(.25) * rd.y * 0.5;
 
 vec2 d = rayScene(ro, rd);
-//vec2 rf = rayReflect(ro,rd);
 
 vec3 p = ro + rd * d.x;
-vec3 q = ro + rd * d.x;
 
 vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
@@ -659,62 +678,47 @@ vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
 
 //vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
 
-float shininess = 500.;
+float shininess = u_shininess;
 float n = 0.0;
 
-    if(d.x > TRACE_DIST - EPSILON) {
+    if(d.x > u_trace_dist - u_eps) {
 
       color = bkg_col;
 
     } else {
    
-   orbital_light = (vec4(orbital_light,1.0) * light_rotation).xyz;    
-
-
-   if( noise(vec3(1.0) ) < hash(2.0) ) {    
+  
+   if( u_fractional_noise == 1 ) {    
    n += fractal(p);
    } 
 
-   if(noise(vec3(3.0)) < hash(4.0)) {
+   if( u_fractional_noise == 2) {
    //n += distort(p);
    }
 
-   if(noise(vec3(5.0)) < hash(6.0)) {
+   if( u_cell_noise != 0 ) {
    n += cell(p, 14.0,0);
    }
 
-   if(noise(vec3(7.0)) < hash(8.0)) {
-   n += fractal(p + fractal(p));
-   } 
    
-   if(noise(vec3(9.0)) < hash(10.0)) { 
-   n += smoothstep(p.y,1.,fractal(p)); 
-   }
+   //n += fractal(p + fractal(p));
+   //n += smoothstep(p.y,1.,fractal(p)); 
+   //n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
+   //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
 
-   if(noise(vec3(11.0)) < hash(12.0)) {
-   n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
-   }
+   
+   kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
 
-   if(noise(vec3(13.0)) < hash(14.0)) {
-   n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
-   }
-
-      if(d.y == 0.0) {
-  //    kd = vec3(1.,0.0,0.);
-    kd = fmCol((p.y+n  )   ,vec3(hash(133.0),hash(23.0),hash(36.0) ),vec3(hash(45.0),hash(15.0),hash(65.0)),vec3(hash(73.0),hash(44.0),hash(22.0)),vec3(0. ));
-     } else {
-      kd = vec3(.5);
-      }
-
-      vec3 ka = vec3(0.0); 
-      vec3 ks = vec3(1.0);
+   vec3 ka = vec3(0.0); 
+   vec3 ks = vec3(1.0);
     
   
+ 
+ //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
+     color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
-      color += phongLight(ka,kd,ks,shininess,p,orbital_light,ro);
-   //   color += phongLight(ka,kd,ks,shininess,p,light,ro);  
-
-      color = pow(color,vec3(0.4545)); 
+   
+   color = pow(color,vec3(u_gamma)); 
 
 }
 
