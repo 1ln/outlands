@@ -12,9 +12,7 @@ let tex;
 let n;
 let noise_texture;
 
-let reset;
-let update_pos;
-let update_pos_new;
+let light_pos;
 
 let mouse_pressed,mouse_held,mouse;
 let swipe_dir;
@@ -25,16 +23,31 @@ let controls;
 
 let cam,scene,geometry,mesh,mat;
 
+let cam_light_pos;
 let cam_target;
 
 let delta;
 let clock;
 
-let orbiter_pos;
-let dv,fuel,speed;
+let eps,trace_dist,march_steps;
+
+let gamma;
+let shininess;
+let intensity;
+let bkg;
+
+let fractional_noise;
+let octaves,hurst;
+
+let cell_noise;
+let cell_iterations;
+
+let repeat,repeat_dir
+
+let diffuse,diffb,diffc,diffd;
 
 let r = new THREE.Quaternion();
-let axishelper;
+
 
 function init() {
 
@@ -46,8 +59,6 @@ function init() {
 
     canvas.width  = w;
     canvas.height = h;
-
-    
 
     renderer = new THREE.WebGLRenderer({canvas:canvas,context:context});
 
@@ -82,13 +93,28 @@ function init() {
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
 
-    orbiter_pos = new THREE.Vector3(0,0,2.5); 
-    r.setFromAxisAngle(new THREE.Vector3(0,1,0),0.001);
-    orbiter_pos.applyQuaternion(r);
+    march_steps = 100;
+    eps = 0.0001;
+    trace_dist = 1000;
 
-    fuel  = 1.0;
-    dv = 0.0001;
-    speed  = 0.0;
+    octaves = 4;
+    hurst = 0.5;
+    fractional_noise = 0;
+    cell_noise = 0;
+    cell_iterations;
+
+    diffuse = new THREE.Color(0.5);
+    diffb   = new THREE.Color(0.0);
+    diffc   = new THREE.Color(0.0);
+    diffd   = new THREE.Color(0.0);
+
+    shininess = 100.0;
+    gamma = 0.4545;
+    intensity = new THREE.Vector3(1.0);
+    cam_intensity = THREE.Vector3(1.0);
+
+    repeat = 0;
+    repeat_dir = new THREE.Vector(5.0);
 
     uniforms = {
 
@@ -99,7 +125,26 @@ function init() {
         "u_swipe_dir"           : { value : swipe_dir }, 
         "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
         "u_hash"                : { value: hash },
-        "u_orbiter_pos"         : new THREE.Uniform(new THREE.Vector3(orbiter_pos)),
+        "u_march_steps"         : { value: march_steps },
+        "u_eps"                 : { value: eps },
+        "u_trace_dist"          : { value: trace_distance },
+        "u_diffuse"             : new THREE.Uniform(new THREE.Vector3(diffuse)),
+        "u_diffb"               : new THREE.Uniform(new THREE.Vector3(diffb)),
+        "u_diffc"               : new THREE.Uniform(new THREE.Vector3(diffc)),
+        "u_diffd"               : new THREE.Uniform(new THREE.Vector3(diffd)),
+        "u_light_pos"           : new THREE.Uniform(new THREE.Vector3(light_pos)),
+        "u_cam_light_pos"       : new THREE.Uniform(new THREE.Vector3(cam_light_pos)),
+        "u_shininess"           : { value: shininess },
+        "u_gamma"               : { value: gamma },
+        "u_intensity"           : new THREE.Uniform(new THREE.Vector3(intensity)),
+        "u_cam_intensity"       : new THREE.Uniform(new THREE.Vector3(cam_intensity)),
+        "u_repeat"              : { value: repeat },
+        "u_repeat_dir"          : new THREE.Uniform(new THREE.Vector3(repeat_dir)),
+        "u_octaves"             : { value: octaves },
+        "u_hurst"               : { value: hurst },
+        "u_fractional_noise"    : { value: fractional_noise },
+        "u_cell_noise"          : { value: cell_noise }, 
+        "u_cell_iterations"     : { value: cell_iterations },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -157,7 +202,28 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_swipe_dir"           ].value = swipe_dir;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
+        uniforms["u_march_steps"         ].value = march_steps;
+        uniforms["u_trace_dist"          ].value = trace_dist;
+        uniforms["u_eps"                 ].value = eps;
         uniforms["u_orbiter_pos"         ].value = orbiter_pos;
+        uniforms["u_gamma"               ].value = gamma;
+        uniforms["u_light_pos"           ].value = light_pos;
+        uniforms["u_cam_light_pos"       ].value = cam_light_pos;
+        uniforms["u_shininess"           ].value = shininess;
+        uniforms["u_intensity"           ].value = intensity;
+        uniforms["u_cam_intensity"       ].value = cam_intensity;
+        uniforms["u_diffuse"             ].value = diffuse;
+        uniforms["u_diffb"               ].value = diffb;
+        uniforms["u_diffc"               ].value = diffc;
+        uniforms["u_diffd"               ].value = diffd;
+        uniforms["u_octaves"             ].value = octaves;
+        uniforms["u_hurst"               ].value = hurst;
+        uniforms["u_fractional_noise"    ].value = fractional_noise;
+        uniforms["u_cell_noise"          ].value = cell_noise;
+        uniforms["u_cell_iterations"     ].value = cell_iterations;
+        uniforms["u_bkg"                 ].value = bkg;
+        uniforms["u_repeat"              ].value = repeat;
+        uniforms["u_repeat_dir"          ].value = repeat_dir;    
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
         controls.update();
