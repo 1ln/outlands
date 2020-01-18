@@ -529,10 +529,8 @@ if(u_repeat == 1) {
 p = repeat(p,vec3(u_repeat_dir));
 }
 
-vec2 box = vec2( box(p,vec3(.05)),1.0) ;
-vec2 sphere = vec2( sphere(p,1.),0.0);
 
-df = vec2(opu(sphere,box));
+df = vec2(sphere(p,1.0));
 
 res = vec2(df );
 return res;
@@ -559,9 +557,9 @@ vec2 rayScene(vec3 ro,vec3 rd) {
 
 }
 
-vec3 fog(vec3 p,vec3 c,float,float distance) {
+vec3 fog(vec3 c,vec3 fc,float b,float distance) {
     float depth = 1. - exp(-distance *b);
-    return mix(p,c,depth);
+    return mix(c,fc,depth);
 }
 
 float shadow(vec3 ro,vec3 rd,float dmin,float dmax,float w) {
@@ -570,11 +568,11 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,float w) {
 
     for(float t = dmin; t < dmax; ) {
         
-        float h = scene(ro + rd * t  );
-        s = min(s,0.5 + 0.5 * h/(w*t));
+        vec2 h = scene(ro + rd * t  );
+        s = min(s,0.5 + 0.5 * h.x/(w*t));
          
         if(s < 0.0 ) { break; }
-        t += h;
+        t += h.x;
 
         }
 
@@ -708,12 +706,12 @@ float n = 0.0;
 
    
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
-
+   
    vec3 ka = vec3(0.0); 
    vec3 ks = vec3(1.0);
     
   
- 
+          
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
      color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 

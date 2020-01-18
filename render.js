@@ -47,6 +47,7 @@ let cell_iterations;
 let repeat,repeat_dir
 
 let diffuse,diffb,diffc,diffd;
+let specular,ambient;
 
 let r = new THREE.Quaternion();
 
@@ -108,12 +109,15 @@ function init() {
     light_pos = new THREE.Vector3(0.0,10.0,10.0);
     cam_light_pos = new THREE.Vector3(0.0,0.0,10.0);
 
-    diffuse = new THREE.Color(0.5);
-    diffb   = new THREE.Color(0.0);
-    diffc   = new THREE.Color(0.0);
-    diffd   = new THREE.Color(0.0);
+    specular = new THREE.Color(1.0,1.0,1.0);
+    ambient = new THREE.Color(0.0,0.0,0.0);
 
-    bkg = new THREE.Color(0.0);
+    diffuse = new THREE.Color(0.5,0.5,0.5);
+    diffb   = new THREE.Color(0.0,0.0,0.0);
+    diffc   = new THREE.Color(0.0,0.0,0.0);
+    diffd   = new THREE.Color(0.0,0.0,0.0);
+
+    bkg = new THREE.Color(0.0,0.0,0.0);
 
     shininess = 100.0;
     gamma = 0.4545;
@@ -139,6 +143,8 @@ function init() {
         "u_diffb"               : new THREE.Uniform(new THREE.Vector3(diffb)),
         "u_diffc"               : new THREE.Uniform(new THREE.Vector3(diffc)),
         "u_diffd"               : new THREE.Uniform(new THREE.Vector3(diffd)),
+        "u_ambient"             : new THREE.Uniform(new THREE.Vector3(ambient)),
+        "u_specular"            : new THREE.Uniform(new THREE.Vector3(specular)),
         "u_light_pos"           : new THREE.Uniform(new THREE.Vector3(light_pos)),
         "u_cam_light_pos"       : new THREE.Uniform(new THREE.Vector3(cam_light_pos)),
         "u_shininess"           : { value: shininess },
@@ -203,6 +209,8 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_shininess"           ].value = shininess;
         uniforms["u_intensity"           ].value = intensity;
         uniforms["u_cam_intensity"       ].value = cam_intensity;
+        uniforms["u_ambient"             ].value = ambient;
+        uniforms["u_specular"            ].value = specular;
         uniforms["u_diffuse"             ].value = diffuse;
         uniforms["u_diffb"               ].value = diffb;
         uniforms["u_diffc"               ].value = diffc;
