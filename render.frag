@@ -562,22 +562,23 @@ vec3 fog(vec3 c,vec3 fc,float b,float distance) {
     return mix(c,fc,depth);
 }
 
-float shadow(vec3 ro,vec3 rd,float dmin,float dmax,float w) {
+float shadow(vec3 ro,vec3 rd,float dmin,float dmax) {
 
-    float s = 1.0;
+    float res = 1.0;
+    float t = dmin;
 
-    for(float t = dmin; t < dmax; ) {
+    for(int i = 0; i < 16; i++ ) {
         
-        vec2 h = scene(ro + rd * t  );
-        s = min(s,0.5 + 0.5 * h.x/(w*t));
-         
-        if(s < 0.0 ) { break; }
-        t += h.x;
+        float h = scene(ro + rd * t  ).x;
+        float s = clamp(8.0*h/t,0.0,1.0);
+        res = min(res,s*s*(3.-2. *s ));         
+        t += clamp(h,0.02,0.1 );
+
+        if(res < 0.005 || t > dmax ) { break; }
+
 
         }
-
-        s = max(s,0.0);
-        return s*s*(3.0-2.0*s);
+        return clamp(res,0.0,1.0);
 
 }
 
@@ -667,15 +668,6 @@ vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
 vec3 ks = vec3(0.0);
 
-/*
-vec4 difa = texelFetch(u_noise_tex,ivec2(0,0),0);
-vec4 difb = texelFetch(u_noise_tex,ivec2(0,1),0);
-vec4 difc = texelFetch(u_noise_tex,ivec2(0,2),0);
-vec4 difd = texelFetch(u_noise_tex,ivec2(0,3),0);
-*/
-
-//vec4 r = texelFetch(u_noise_tex,ivec2(1,0),0);
-
 float shininess = u_shininess;
 float n = 0.0;
 
@@ -704,14 +696,13 @@ float n = 0.0;
    //n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
    //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
 
-   
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
-   
+ 
+   kd *= shadow(p,normalize(u_light_pos),0.02,2.5);
+  
    vec3 ka = vec3(0.0); 
    vec3 ks = vec3(1.0);
-    
-  
-          
+              
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
      color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
