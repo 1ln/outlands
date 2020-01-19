@@ -35,6 +35,7 @@ uniform int u_repeat;
 uniform vec3 u_repeat_dir;
 
 uniform int u_octaves;
+uniform float u_hurst;
 uniform int u_fractional_noise;
 uniform int u_cell_noise;
 uniform float u_cell_iterations;
@@ -50,14 +51,6 @@ uniform sampler3D u_noise_tex;
 const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
 const float PHI =  (1.0 + sqrt(5.0)) / 2.0;
-
-const int MARCH_STEPS = 100;
-
-const float EPSILON = 0.001;
-const float TRACE_DIST = 45.;
-
-const int OCTAVES = 4;
-const float HURST = .2452;
 
 /*
 float hash(float x) {
@@ -119,14 +112,6 @@ float cell(vec3 x,float iterations,int type) {
                         min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
                     }
 
-                    if(type == 3) {
-                        min_dist = min(min_dist,d*E);
-                    }
-                  
-                    if(type == 4) {
-                        min_dist = min(min_dist,d*PHI);
-                    }
-
             }
         }
     }
@@ -166,12 +151,12 @@ float noise(vec3 x) {
 float fractal(vec3 x) {
 
     float t = 0.0;
-    float h  = HURST;
+    float h  = u_hurst;
     float g = exp2(-h); 
     float a = 0.5;
     float f = 1.0;
 
-    for(int i = 0; i < OCTAVES; i++) {
+    for(int i = 0; i < u_octaves; i++) {
  
     t += a * noise(f * x); 
     f *= 2.0; 
@@ -383,7 +368,7 @@ float cone(vec3 p,vec2 c) {
     return dot(c,vec2(q,p.z));
 }
 
-float roundedCone(vec3 p,float r1,float r2,float h) {
+float roundCone(vec3 p,float r1,float r2,float h) {
 
     vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
     float b = (r1-r2)/h;
@@ -485,18 +470,33 @@ float octahedron(vec3 p,float s) {
     float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
- 
-float elora(vec3 p) {
 
-float h = smou(torus(p,vec2(1.0,0.125)),octahedron(p,.65),.5);
-float e = smod(sphere(p-vec3(0.0,2.0,0.0),1.),  roundedCone(p-vec3(0.0,1.,0.0),.25,.125,1.) ,.15) ;
+float crossBox(vec3 p,float l) {
 
-float c = smou(h,e,.5);
+    float b0 = box(p.xyz,vec3(l,1.,1.));
+    float b1 = box(p.yzx,vec3(1.,l,1.));
+    float b2 = box(p.zxy,vec3(1.,1.,l));
+    
+    return min(b0,min(b1,b2));
+}
 
-return c;
+float cylinderBox(vec3 p,float r,float s) { 
+    return smod(cylinder(p,1.05,r),box(p,vec3(1.0)),s);
+}
+
+float hyperboloidBox(vec3 p) {
+    return max(-torus(p,vec2(1.61,.73)),box(p,vec3(1.0)));
+}   
+
+float octaBox(vec3 p,float s) {
+return smou(octahedron(p,1.),box(p,vec3(.5)),s);
 
 }
 
+float sphereBox(vec3 p,float r,float s) {
+   return smod(sphere(p,r),box(p,vec3(1.)),s);
+
+} 
 
 vec2 scene(vec3 p) { 
 
@@ -530,7 +530,8 @@ p = repeat(p,vec3(u_repeat_dir));
 }
 
 
-df = vec2(sphere(p,1.0));
+df = vec2(octaBox(p,.1)  );
+
 
 res = vec2(df );
 return res;
