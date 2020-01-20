@@ -33,18 +33,20 @@ let clock;
 
 let eps,trace_dist,march_steps;
 
-let gamma;
 let shininess;
 let intensity;
 let bkg;
 
-let fractional_noise;
+let df;
+let noise;
+let fractal;
+
 let octaves,hurst;
 
 let cell_noise;
 let cell_iterations;
 
-let repeat,repeat_dir
+let repeat_dir;
 
 let diffuse,diffb,diffc,diffd;
 let specular,ambient;
@@ -100,31 +102,33 @@ function init() {
     eps = 0.0001;
     trace_dist = 1000;
 
-    octaves = 4;
-    hurst = 0.5;
-    fractional_noise = 0;
+    octaves = 6;
+    hurst = nhash();
+    
     cell_noise = 0;
     cell_iterations = 10.0;
 
     light_pos = new THREE.Vector3(0.0,10.0,10.0);
     cam_light_pos = new THREE.Vector3(0.0,0.0,10.0);
 
-    specular = new THREE.Color(1.0,1.0,1.0);
+    specular = new THREE.Color(nhash(),nhash(),nhash());
     ambient = new THREE.Color(0.0,0.0,0.0);
 
-    diffuse = new THREE.Color(0.5,0.5,0.5);
-    diffb   = new THREE.Color(0.0,0.0,0.0);
-    diffc   = new THREE.Color(0.0,0.0,0.0);
-    diffd   = new THREE.Color(0.0,0.0,0.0);
+    diffuse = new THREE.Color(nhash(),nhash(),nhash());
+    diffb   = new THREE.Color(nhash(),nhash(),nhash());
+    diffc   = new THREE.Color(nhash(),nhash(),nhash());
+    diffd   = new THREE.Color(nhash(),nhash(),nhash());
 
     bkg = new THREE.Color(0.0,0.0,0.0);
 
-    shininess = 100.0;
-    gamma = 0.4545;
+    shininess = nhash() * 100.0;
+   
     intensity = new THREE.Vector3(1.0);
     cam_intensity = THREE.Vector3(1.0);
 
-    repeat = 0;
+    df = Math.floor(nhash() * 10);
+    noise = Math.floor(nhash() * 10 );
+    fractal = Math.floor( nhash() * 10 );
     repeat_dir = new THREE.Vector3(5.0);
 
     uniforms = {
@@ -148,15 +152,15 @@ function init() {
         "u_light_pos"           : new THREE.Uniform(new THREE.Vector3(light_pos)),
         "u_cam_light_pos"       : new THREE.Uniform(new THREE.Vector3(cam_light_pos)),
         "u_shininess"           : { value: shininess },
-        "u_gamma"               : { value: gamma },
+        "u_df"                  : { value: df  },
         "u_intensity"           : new THREE.Uniform(new THREE.Vector3(intensity)),
         "u_cam_intensity"       : new THREE.Uniform(new THREE.Vector3(cam_intensity)),
         "u_bkg"                 : new THREE.Uniform(new THREE.Vector3(bkg)),
-        "u_repeat"              : { value: repeat },
+        "u_fractal"             : { value: fractal },
         "u_repeat_dir"          : new THREE.Uniform(new THREE.Vector3(repeat_dir)),
         "u_octaves"             : { value: octaves },
         "u_hurst"               : { value: hurst },
-        "u_fractional_noise"    : { value: fractional_noise },
+        "u_noise"               : { value: noise },
         "u_cell_noise"          : { value: cell_noise }, 
         "u_cell_iterations"     : { value: cell_iterations },
         "u_noise_tex"           : { type:"t", value: noise_texture }
@@ -203,7 +207,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_march_steps"         ].value = march_steps;
         uniforms["u_trace_dist"          ].value = trace_dist;
         uniforms["u_eps"                 ].value = eps;
-        uniforms["u_gamma"               ].value = gamma;
+        uniforms["u_df"                  ].value = df;
         uniforms["u_light_pos"           ].value = light_pos;
         uniforms["u_cam_light_pos"       ].value = cam_light_pos;
         uniforms["u_shininess"           ].value = shininess;
@@ -217,11 +221,11 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_diffd"               ].value = diffd;
         uniforms["u_octaves"             ].value = octaves;
         uniforms["u_hurst"               ].value = hurst;
-        uniforms["u_fractional_noise"    ].value = fractional_noise;
+        uniforms["u_noise"               ].value = noise;
         uniforms["u_cell_noise"          ].value = cell_noise;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_bkg"                 ].value = bkg;
-        uniforms["u_repeat"              ].value = repeat;
+        uniforms["u_fractal"             ].value = fractal;
         uniforms["u_repeat_dir"          ].value = repeat_dir;    
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
