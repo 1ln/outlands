@@ -21,6 +21,8 @@ uniform vec3 u_cam_light_pos;
 uniform vec3 u_cam_target;
 
 uniform vec3 u_diffuse;
+uniform vec3 u_ambient;
+uniform vec3 u_specular;
 uniform vec3 u_diffb;
 uniform vec3 u_diffc;
 uniform vec3 u_diffd;
@@ -30,6 +32,12 @@ uniform vec3 u_bkg;
 uniform float u_shininess;
 uniform vec3 u_intensity;
 uniform vec3 u_cam_intensity;
+
+//uniform int u_fog;
+//uniform vec3 u_fog_color;
+//uniform float u_fog_distance;
+
+//uniform int shadow;
 
 uniform int u_repeat;
 uniform vec3 u_repeat_dir;
@@ -481,7 +489,7 @@ float crossBox(vec3 p,float l) {
 }
 
 float cylinderBox(vec3 p,float r,float s) { 
-    return smod(cylinder(p,1.05,r),box(p,vec3(1.0)),s);
+    return smod(cylinder(p,1.5,r),box(p,vec3(1.0)),s);
 }
 
 float hyperboloidBox(vec3 p) {
@@ -493,7 +501,7 @@ return smou(octahedron(p,1.),box(p,vec3(.5)),s);
 
 }
 
-float sphereBox(vec3 p,float r,float s) {
+float archCrate(vec3 p,float r,float s) {
    return smod(sphere(p,r),box(p,vec3(1.)),s);
 
 } 
@@ -547,7 +555,7 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         vec3 p = ro + depth * rd;
         vec2 dist = scene(p);
    
-        if(dist.x < u_eps || u_trace_dist < dist.x ) { break; }
+        if(abs( dist.x) < u_eps || u_trace_dist <  dist.x ) { break; }
         depth += dist.x;
         d = dist.y;
 
@@ -563,17 +571,31 @@ vec3 fog(vec3 c,vec3 fc,float b,float distance) {
     return mix(c,fc,depth);
 }
 
-float shadow(vec3 ro,vec3 rd,float dmin,float dmax) {
+float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
 
     float res = 1.0;
     float t = dmin;
+    float ph = 1e10;
 
     for(int i = 0; i < 16; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
+
+        if(type == 1) {
+
+        float y = h*h/(2. * ph);
+        float d = sqrt(h*h-y*y);
+        res = min(res,10. * d/max(0.0,t-y));
+        ph = h;
+        t += h;
+
+        } else {
+
         float s = clamp(8.0*h/t,0.0,1.0);
         res = min(res,s*s*(3.-2. *s ));         
         t += clamp(h,0.02,0.1 );
+    
+        }       
 
         if(res < 0.005 || t > dmax ) { break; }
 
@@ -699,17 +721,26 @@ float n = 0.0;
 
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
  
-   kd *= shadow(p,normalize(u_light_pos),0.02,2.5);
+ 
+   kd *= shadow(p,normalize(u_light_pos),0.02,2.5,1);
   
-   vec3 ka = vec3(0.0); 
-   vec3 ks = vec3(1.0);
+   vec3 ka = vec3(u_ambient); 
+   vec3 ks = vec3(u_specular);
               
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
      color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
-   
-   color = pow(color,vec3(u_gamma)); 
+   color = fog(color,vec3(0.),.05,10.);
 
+   //  if(u_gamma == 1) {        
+   color = pow(color,vec3(u_gamma)); 
+   // }
+   
+//   if(u_normals == 1) {
+//   color = calcNormal(p);
+//   }
+
+   
 }
 
       return color;
