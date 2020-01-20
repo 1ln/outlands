@@ -27,7 +27,7 @@ uniform vec3 u_diffb;
 uniform vec3 u_diffc;
 uniform vec3 u_diffd;
 
-uniform float u_gamma;
+uniform int u_df;
 uniform vec3 u_bkg;
 uniform float u_shininess;
 uniform vec3 u_intensity;
@@ -39,12 +39,12 @@ uniform vec3 u_cam_intensity;
 
 //uniform int shadow;
 
-uniform int u_repeat;
+uniform int u_fractal;
 uniform vec3 u_repeat_dir;
 
 uniform int u_octaves;
 uniform float u_hurst;
-uniform int u_fractional_noise;
+uniform int u_noise;
 uniform int u_cell_noise;
 uniform float u_cell_iterations;
 
@@ -479,7 +479,7 @@ float octahedron(vec3 p,float s) {
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
 
-float crossBox(vec3 p,float l) {
+float crossbox(vec3 p,float l) {
 
     float b0 = box(p.xyz,vec3(l,1.,1.));
     float b1 = box(p.yzx,vec3(1.,l,1.));
@@ -492,7 +492,7 @@ float cylinderBox(vec3 p,float r,float s) {
     return smod(cylinder(p,1.5,r),box(p,vec3(1.0)),s);
 }
 
-float hyperboloidBox(vec3 p) {
+float hyperboloidbox(vec3 p) {
     return max(-torus(p,vec2(1.61,.73)),box(p,vec3(1.0)));
 }   
 
@@ -533,12 +533,30 @@ vec2 res = vec2(1.0,0.0);
 mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
 q = (vec4(q,1.) * r).xyz;
 
-if(u_repeat == 1) {
-p = repeat(p,vec3(u_repeat_dir));
+if(u_df == 0) {
+p = repeat(p,vec3(0.0,5.0,5.0));
+df = vec2(box(p,vec3(1.0)));
+}
+
+if(u_df == 1) {
+df = vec2(mix(octahedron(p,1.),box(p,vec3(.5)),abs(sin(2. * PI * t * s))));
+}
+
+if(u_df == 2) {
+df = vec2(hyperboloidbox(p));
+}
+
+if(u_df == 3) {
+p = repeat(p,vec3(5.));
+df = vec2(max(-sphere(p,1.35),box(p,vec3(1.))));
+}
+
+if(u_df == 4) {
+df = vec2(crossbox(p,1e10));
 }
 
 
-df = vec2(octaBox(p,.1)  );
+
 
 
 res = vec2(df );
@@ -701,23 +719,28 @@ float n = 0.0;
     } else {
    
   
-   if( u_fractional_noise == 1 ) {    
+   if( u_noise == 1 ) {    
    n += fractal(p);
    } 
 
-   if( u_fractional_noise == 2) {
-   //n += distort(p);
-   }
-
-   if( u_cell_noise != 0 ) {
+   if( u_noise == 2 ) {
    n += cell(p, 14.0,0);
    }
 
+   if(u_noise == 3) {  
+   n += fractal(p + fractal(p));
+   }
+
+   if(u_noise == 4) {
+   n += smoothstep(p.y,1.,fractal(p)); 
+   }
+
+   if(u_noise == 5) {
+   n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
+   }  
+
    
-   //n += fractal(p + fractal(p));
-   //n += smoothstep(p.y,1.,fractal(p)); 
-   //n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
-   //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
+  //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
 
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
  
@@ -730,11 +753,10 @@ float n = 0.0;
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
      color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
-   color = fog(color,vec3(0.),.05,10.);
+//   color = fog(color,vec3(0.),.05,10.);
 
-   //  if(u_gamma == 1) {        
-   color = pow(color,vec3(u_gamma)); 
-   // }
+  
+   color = pow(color,vec3(.4545)); 
    
 //   if(u_normals == 1) {
 //   color = calcNormal(p);
