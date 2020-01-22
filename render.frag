@@ -589,6 +589,23 @@ vec3 fog(vec3 c,vec3 fc,float b,float distance) {
     return mix(c,fc,depth);
 }
 
+float reflection(vec3 ro,vec3 rd,float dmin,float dmax ) {
+
+    float depth = dmin;
+    float d = -1.0;
+
+    for(int i = 0; i < 5; i++ ) {
+        float h = scene(ro + rd * depth).x;
+
+        if(h < 0.0001   ) { return depth; }
+        
+        depth += h;
+    }
+
+    if(dmax <= depth ) { return dmax; }
+    return dmax;
+}
+
 float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
 
     float res = 1.0;
