@@ -305,6 +305,12 @@ vec3 repeat(vec3 p,vec3 s) {
     return q;
 }
 
+vec3 pmod(inout vec3 p,vec3 s) {
+    vec3 c = floor(( p + s * 0.5 ) / s );
+    p = mod(p + s * 0.5,s ) - s * 0.5;
+    return c;
+}
+
 float refx(vec3 p) {
     
    return p.x = abs(p.x);
@@ -358,7 +364,7 @@ float sphere(vec3 p,float r) {
     return length(p) - r;
 }
 
-float nSphere(vec3 p,float r) {
+float nsphere(vec3 p,float r) {
 
     return abs(length(p)-r);
 }
@@ -510,10 +516,7 @@ vec2 scene(vec3 p) {
 
 vec3 q = vec3(p);
 
-vec2 df = vec2(0.0);
-
-vec2 df0 = vec2(0.0);
-vec2 df1 = vec2(0.0);
+float df = 0.0;
 
 float s  = 0.00001;
 float t  = u_time; 
@@ -522,44 +525,64 @@ vec2 res = vec2(1.0,0.0);
 
 //vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
 
-//q.xy *= rot2(t*0.001);
+vec2 mo = vec2(u_mouse);
+mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
+mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
-//vec2 mo = vec2(u_mouse);
-//mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
-//mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
-//p = (vec4(p,1.0) * mxr * myr).xyz;
 
-//vec4 ra = texelFetch(u_noise_tex,ivec2(1,1),0);
 mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
-q = (vec4(q,1.) * r).xyz;
+//q = (vec4(q,1.) * r).xyz;
 
 if(u_df == 0) {
-p = repeat(p,vec3(0.0,5.0,5.0));
-df = vec2(box(p,vec3(1.0)));
+p = repeat(p,vec3(5.,0.0,5.0));
+df = box(p,vec3(1.0));
 }
 
 if(u_df == 1) {
-df = vec2(mix(octahedron(p,1.),box(p,vec3(.5)),abs(sin(2. * PI * t * s))));
+df = mix(octahedron(p,1.),box(p,vec3(.5)),abs(sin(2. * PI * t * s)));
 }
 
 if(u_df == 2) {
-df = vec2(hyperboloidbox(p));
+p.xz *= rot2(t * 0.0001);
+df = hyperboloidbox(p);
 }
 
 if(u_df == 3) {
-p = repeat(p,vec3(5.));
-df = vec2(max(-sphere(p,1.35),box(p,vec3(1.))));
+df = max(-sphere(p,1.35),box(q,vec3(1.)));
 }
 
 if(u_df == 4) {
-df = vec2(crossbox(p,1e10));
+p.xy *= rot2(t * 0.0001);
+df = crossbox(p,1e10);
 }
 
+if(u_df == 5) {
+p = (vec4(p,1.0) * mxr * myr ).xyz;
+df = sphere(p + .05 * sin3(p,10.)  ,1.0);
+}
 
+if(u_df == 6) {
+p = (vec4(p,1.0) * mxr * myr).xyz;
+df = min(1e10,layer(layer(layer(sphere(p,1.),0.5),.25),.015));
+df = max(df,p.y);
+}
 
+if(u_df == 7) {
+df = p.y + sin(p.x );
+df += abs( sin ( 0.0001 * t)) * 2. * PI;
+}
 
+if(u_df == 8) {
+p.xy *= rot2(t * 0.0001);
+p = repeatLimit(p,5.,vec3(1.));
+df = box(p,vec3(.5));
+}
 
-res = vec2(df );
+if(u_df == 9) {
+df = sphere(p,1.0); 
+}
+
+res = vec2(df,1. );
 return res;
 }
 
@@ -734,43 +757,48 @@ float n = 0.0;
       color = bkg_col;
 
     } else {
-   
+
   
-   if( u_noise == 1 ) {    
-   n += fractal(p);
+   if( u_df == 1 ) {    
+   n += distort(p);
    } 
 
-   if( u_noise == 2 ) {
+   if( u_df == 2 ) {
    n += cell(p, 14.0,0);
    }
 
-   if(u_noise == 3) {  
+   if(u_df == 3) {  
    n += fractal(p + fractal(p));
    }
 
-   if(u_noise == 4) {
+   if(u_df == 7) {
    n += smoothstep(p.y,1.,fractal(p)); 
    }
 
-   if(u_noise == 5) {
+   if(u_df == 5) {
    n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
    }  
 
    
   //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
+   
 
+   if(u_df == 1) {
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
- 
- 
+   } else {
+   kd = vec3(hash(1.),hash(2.),hash(3.)); 
+   kd += n;
+   }
+
    kd *= shadow(p,normalize(u_light_pos),0.02,2.5,1);
   
    vec3 ka = vec3(u_ambient); 
-   vec3 ks = vec3(u_specular);
+   vec3 ks = vec3(1.);
               
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
      color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
-//   color = fog(color,vec3(0.),.05,10.);
+ //  color = fog(color,vec3(.5),.05,10.);
 
   
    color = pow(color,vec3(.4545)); 
@@ -787,10 +815,10 @@ float n = 0.0;
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-//vec3 cam_pos = vec3(0.0,0.,1.5 );
+vec3 cam_pos = vec3(0.0,.5,2.5 );
 
 vec2 mo = vec2(u_mouse);
 
