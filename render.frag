@@ -720,6 +720,11 @@ vec3 phongLight(vec3 ka,vec3 kd,vec3 ks,float alpha,vec3 p,vec3 light,vec3 cam_r
      return color;
 }
 
+
+
+
+
+
 vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
 
      vec3 camForward = normalize(camTarget - camPosition);
@@ -736,7 +741,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
 float t = u_time;
 
-vec3 color = vec3(0.0);
+vec3 col = vec3(0.0);
 
 vec3 bkg_col = u_bkg;
 //vec3 bkg_col = vec3(.25) * rd.y * 0.5;
@@ -744,6 +749,35 @@ vec3 bkg_col = u_bkg;
 vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
+vec3 n = calcNormal(p);
+vec3 l = normalize(vec3(0.,0.,10.) );
+vec3 h = normalize(l - rd);
+vec3 ref = reflect(rd,n);
+
+col = .2 + vec3(1.,0.,0.) * d.y;
+
+float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
+float dif = clamp(dot(n,l),0.0,1.0);
+float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.75 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
+
+//dif *= shadow(p,l,0.02,5.,1);
+
+vec3 linear = vec3(0.);
+linear += 5. * dif  * vec3(1.,.5,.65);
+linear += .5 * amb  * vec3(0.,1.,.5);
+col = col * linear;
+col += 5. * spe * vec3(1.,.75,0.);
+
+
+
+
+
+
+
+
+/*
+
+
 
 vec3 kd = vec3(0.0);
 vec3 ka = vec3(0.0);
@@ -789,28 +823,28 @@ float n = 0.0;
    kd = vec3(hash(1.),hash(2.),hash(3.)); 
    kd += n;
    }
-
-   kd *= shadow(p,normalize(u_light_pos),0.02,2.5,1);
+*/
+  // dif *= shadow(p,normalize(u_light_pos),0.02,2.5,1);
   
-   vec3 ka = vec3(u_ambient); 
-   vec3 ks = vec3(1.);
+  // vec3 ka = vec3(u_ambient); 
+  // vec3 ks = vec3(1.);
               
  //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
-     color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
+ //     color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
 
  //  color = fog(color,vec3(.5),.05,10.);
 
   
-   color = pow(color,vec3(.4545)); 
+   col = pow(col,vec3(.4545)); 
    
 //   if(u_normals == 1) {
 //   color = calcNormal(p);
 //   }
 
    
-}
+//}
 
-      return color;
+      return col;
 }
 
 void main() {
