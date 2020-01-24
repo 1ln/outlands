@@ -485,11 +485,11 @@ float octahedron(vec3 p,float s) {
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
 
-float crossbox(vec3 p,float l) {
+float crossbox(vec3 p,float l,float d) {
 
-    float b0 = box(p.xyz,vec3(l,1.,1.));
-    float b1 = box(p.yzx,vec3(1.,l,1.));
-    float b2 = box(p.zxy,vec3(1.,1.,l));
+    float b0 = box(p.xyz,vec3(l,d,d));
+    float b1 = box(p.yzx,vec3(d,l,d));
+    float b2 = box(p.zxy,vec3(d,d,l));
     
     return min(b0,min(b1,b2));
 }
@@ -529,60 +529,13 @@ vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
-
 mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
 //q = (vec4(q,1.) * r).xyz;
 
-if(u_df == 0) {
-p = repeat(p,vec3(5.,0.0,5.0));
-df = box(p,vec3(1.0));
-}
+p = repeat(p,vec3(5.0));
+res = opu(res,vec2(box(p,vec3(1.0)),1.0));
 
-if(u_df == 1) {
-df = mix(octahedron(p,1.),box(p,vec3(.5)),abs(sin(2. * PI * t * s)));
-}
 
-if(u_df == 2) {
-p.xz *= rot2(t * 0.0001);
-df = hyperboloidbox(p);
-}
-
-if(u_df == 3) {
-df = max(-sphere(p,1.35),box(q,vec3(1.)));
-}
-
-if(u_df == 4) {
-p.xy *= rot2(t * 0.0001);
-df = crossbox(p,1e10);
-}
-
-if(u_df == 5) {
-p = (vec4(p,1.0) * mxr * myr ).xyz;
-df = sphere(p + .05 * sin3(p,10.)  ,1.0);
-}
-
-if(u_df == 6) {
-p = (vec4(p,1.0) * mxr * myr).xyz;
-df = min(1e10,layer(layer(layer(sphere(p,1.),0.5),.25),.015));
-df = max(df,p.y);
-}
-
-if(u_df == 7) {
-df = p.y + sin(p.x );
-df += abs( sin ( 0.0001 * t)) * 2. * PI;
-}
-
-if(u_df == 8) {
-p.xy *= rot2(t * 0.0001);
-p = repeatLimit(p,5.,vec3(1.));
-df = box(p,vec3(.5));
-}
-
-if(u_df == 9) {
-df = sphere(p,1.0); 
-}
-
-res = vec2(df,1. );
 return res;
 }
 
@@ -752,93 +705,46 @@ vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
 vec3 l = normalize(vec3(0.,0.,10.) );
 vec3 h = normalize(l - rd);
-vec3 ref = reflect(rd,n);
+vec3 r = reflect(rd,n);
 
-col = .2 + vec3(1.,0.,0.) * d.y;
+col = .2 + vec3(0.02,0.04,0.02) * d.y;
+
+
+
 
 float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
 float dif = clamp(dot(n,l),0.0,1.0);
 float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.75 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
+float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
+float ref = smoothstep(-.2,.2,r.y);
 
-//dif *= shadow(p,l,0.02,5.,1);
+dif *= shadow(p,l,0.02,5.,0);
+ref *= shadow(p,r,0.02,5.,0);
 
 vec3 linear = vec3(0.);
-linear += 5. * dif  * vec3(1.,.5,.65);
-linear += .5 * amb  * vec3(0.,1.,.5);
+linear += 1. * dif  * vec3(.5);
+linear += .5 * amb  * vec3(0.005);
+linear += .75 * ref * vec3(.45,.45,.5);
+linear += .25 * fre * vec3(1.);
+
 col = col * linear;
-col += 5. * spe * vec3(1.,.75,0.);
+col += 5. * spe * vec3(1.);
 
-
-
-
-
-
-
-
-/*
-
-
-
-vec3 kd = vec3(0.0);
-vec3 ka = vec3(0.0);
-vec3 ks = vec3(0.0);
-
-float shininess = u_shininess;
-float n = 0.0;
-
-    if(d.x > u_trace_dist - u_eps) {
-
-      color = bkg_col;
-
-    } else {
-
-  
-   if( u_df == 1 ) {    
+   /*
    n += distort(p);
-   } 
-
-   if( u_df == 2 ) {
    n += cell(p, 14.0,0);
-   }
-
-   if(u_df == 3) {  
-   n += fractal(p + fractal(p));
-   }
-
-   if(u_df == 7) {
+   n += fractal(p + fractal(p)); 
    n += smoothstep(p.y,1.,fractal(p)); 
-   }
-
-   if(u_df == 5) {
    n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
-   }  
-
+   n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
    
-  //n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
-   
-
-   if(u_df == 1) {
    kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
-   } else {
-   kd = vec3(hash(1.),hash(2.),hash(3.)); 
-   kd += n;
-   }
-*/
-  // dif *= shadow(p,normalize(u_light_pos),0.02,2.5,1);
-  
-  // vec3 ka = vec3(u_ambient); 
-  // vec3 ks = vec3(1.);
-              
- //  color += phongLight(ka,kd,ks,shininess,p,u_cam_light_pos,ro);
- //     color += phongLight(ka,kd,ks,shininess,p,u_light_pos,ro);  
-
- //  color = fog(color,vec3(.5),.05,10.);
-
-  
+   */      
+ //col = fog(color,vec3(.5),.05,10.);   
    col = pow(col,vec3(.4545)); 
    
 //   if(u_normals == 1) {
-//   color = calcNormal(p);
+//   col = calcNormal(p * .5 + .5);
 //   }
 
    
@@ -849,10 +755,10 @@ float n = 0.0;
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(0.0,.5,2.5 );
+//vec3 cam_pos = vec3(0.0,.5,2.5 );
 
 vec2 mo = vec2(u_mouse);
 
