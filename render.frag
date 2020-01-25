@@ -494,21 +494,21 @@ float crossbox(vec3 p,float l,float d) {
     return min(b0,min(b1,b2));
 }
 
-float cylinderBox(vec3 p,float r,float s) { 
+float cylinderbox(vec3 p,float r,float s) { 
     return smod(cylinder(p,1.5,r),box(p,vec3(1.0)),s);
 }
 
-float hyperboloidbox(vec3 p) {
+float phiboloid(vec3 p) {
     return max(-torus(p,vec2(1.61,.73)),box(p,vec3(1.0)));
 }   
 
-float octaBox(vec3 p,float s) {
+float octabox(vec3 p,float s) {
 return smou(octahedron(p,1.),box(p,vec3(.5)),s);
 
 }
 
-float archCrate(vec3 p,float r,float s) {
-   return smod(sphere(p,r),box(p,vec3(1.)),s);
+float phisphere(vec3 p) {
+   return max(-sphere(p,1.35),box(p,vec3(1.)));
 
 } 
 
@@ -529,11 +529,24 @@ vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
-mat4 r = rotAxis(vec3(0.,1.,.0),PI *2. * t * 0.0001 );
-//q = (vec4(q,1.) * r).xyz;
+mat4 r = rotAxis(vec3(0.,1.,1.),PI * 2. * hash(3.) );
+q = (vec4(q,1.) * r).xyz;
 
-p = repeat(p,vec3(5.0));
-res = opu(res,vec2(box(p,vec3(1.0)),1.0));
+//p = repeat(p,vec3(5.0));
+res = opu(res,vec2(p.y+1.05,0.0));
+
+res = opu(res,vec2(cylinder(p+vec3(0.0,1.05,0.)  ,0.05,PHI),1.));
+
+//res = opu(res,vec2(sphere(p,1.),4.));
+//res = opu(res,vec2(phiboloid(p),2.));
+//res = opu(res,vec2(octabox(p,hash(2.)),3.));
+res = opu(res,vec2(  phisphere(q),4.) );
+
+
+
+
+
+
 
 
 return res;
@@ -587,7 +600,7 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
     float res = 1.0;
     float t = dmin;
     float ph = 1e10;
-
+    
     for(int i = 0; i < 16; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
@@ -703,13 +716,24 @@ vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(0.,0.,10.) );
+vec3 l = normalize(vec3(0.,10.,0.) );
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
 col = .2 + vec3(0.02,0.04,0.02) * d.y;
 
+float fres = 0.;
+float nse = 0.;
 
+if( d.y == 1.) {
+fres = 2.25;
+col = vec3(.5);
+}
+
+if(d.y >= 2.) {
+fres = 0.;
+col = vec3(1.,0.,0.);
+}
 
 
 float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
@@ -719,13 +743,14 @@ float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
 dif *= shadow(p,l,0.02,5.,0);
-ref *= shadow(p,r,0.02,5.,0);
+
+ref *= shadow(p,r,0.02,15.,0);
 
 vec3 linear = vec3(0.);
 linear += 1. * dif  * vec3(.5);
 linear += .5 * amb  * vec3(0.005);
-linear += .75 * ref * vec3(.45,.45,.5);
-linear += .25 * fre * vec3(1.);
+linear += .45 * ref * vec3(.45,.45,.5);
+linear += fres * fre * vec3(1.);
 
 col = col * linear;
 col += 5. * spe * vec3(1.);
