@@ -507,14 +507,15 @@ return smou(octahedron(p,1.),box(p,vec3(.5)),s);
 
 }
 
-float phisphere(vec3 p) {
+float phiarch(vec3 p) {
    return max(-sphere(p,1.35),box(p,vec3(1.)));
 
 } 
 
 vec2 scene(vec3 p) { 
 
-vec3 q = vec3(p);
+vec3 ra = vec3(p);
+vec3 yza = vec3(p);
 
 float df = 0.0;
 
@@ -529,20 +530,30 @@ vec2 mo = vec2(u_mouse);
 mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
 mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
-mat4 r = rotAxis(vec3(0.,1.,1.),PI * 2. * hash(3.) );
-q = (vec4(q,1.) * r).xyz;
+mat4 ryz = rotAxis(vec3(0.,1.,1.),PI * 2. * hash(3.) );
+ra = (vec4(ra,1.) * ryz).xyz;
+
+mat4 yz = rotAxis(vec3(0.,1.,1.),PI);
+yza = (vec4(yza,1.) * yz).xyz;
 
 //p = repeat(p,vec3(5.0));
-res = opu(res,vec2(p.y+1.05,0.0));
+res = opu(res,vec2(p.y+.35,0.0));
 
-res = opu(res,vec2(cylinder(p+vec3(0.0,1.05,0.)  ,0.05,PHI),1.));
+res = opu(res,vec2(cylinder(p+vec3(0.0,.72,0.)  ,.5,PHI),1.));
 
-//res = opu(res,vec2(sphere(p,1.),4.));
+
+
 //res = opu(res,vec2(phiboloid(p),2.));
-//res = opu(res,vec2(octabox(p,hash(2.)),3.));
-res = opu(res,vec2(  phisphere(q),4.) );
+//res = opu(res,vec2(octabox(ra,hash(2.)),3.));
+//res = opu(res,vec2(phiarch(ra),4.) );
+res = opu(res,vec2(sphere(p + .025*sin3(p,10.),1.),2.));
 
 
+
+
+//res = opu(res,vec2(sphere(p,1.0),2.));
+//res = opu(res,vec2(torus(yza,vec2(1.,.5)) ,2.));
+//res = opu(res,vec2(octahedron(p,1.),2.));
 
 
 
@@ -741,11 +752,16 @@ fres = 2.25;
     ns = fractal(p + fractal(p));
     }
 
+    if(noise(vec3(3. )) < .5) {
+    ns = smoothstep(hash(92.),hash(223.),fractal(p));
+    }
 
-col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),vec3(hash(25.),hash(11.),hash(245.)),vec3(hash(5.),hash(44.),hash(95.)),vec3(hash(212.),hash(4.),hash(135.)));
 
-
-
+        col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
+            vec3(hash(25.),hash(11.),hash(245.)), 
+            vec3(hash(5.),hash(44.),hash(95.)),
+            vec3(hash(212.),hash(4.),hash(135.)));
+    
 
 }
 
