@@ -723,16 +723,30 @@ vec3 r = reflect(rd,n);
 col = .2 + vec3(0.02,0.04,0.02) * d.y;
 
 float fres = 0.;
-float nse = 0.;
+float ns = 0.;
 
 if( d.y == 1.) {
-fres = 2.25;
+fres = 0.;
 col = vec3(.5);
 }
 
 if(d.y >= 2.) {
-fres = 0.;
-col = vec3(1.,0.,0.);
+fres = 2.25;
+
+    if(noise(vec3(1.) ) < .5) { 
+    ns = fractal(p);
+    }
+
+    if(noise(vec3(2.) ) < .5) {
+    ns = fractal(p + fractal(p));
+    }
+
+
+col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),vec3(hash(25.),hash(11.),hash(245.)),vec3(hash(5.),hash(44.),hash(95.)),vec3(hash(212.),hash(4.),hash(135.)));
+
+
+
+
 }
 
 
