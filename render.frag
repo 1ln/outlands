@@ -509,51 +509,65 @@ return smou(octahedron(p,1.),box(p,vec3(.5)),s);
 
 float phiarch(vec3 p) {
    return max(-sphere(p,1.35),box(p,vec3(1.)));
-
+   
 } 
 
 vec2 scene(vec3 p) { 
 
-vec3 ra = vec3(p);
-vec3 yza = vec3(p);
+vec3 q = vec3(p);
 
-float df = 0.0;
-
-float s  = 0.00001;
+float s  = 0.;
 float t  = u_time; 
+float smo = 0.;
+float sin_disp = 10.;
+float sin_offset = .025;
 
 vec2 res = vec2(1.0,0.0);
 
 //vec4 h = texelFetch(u_noise_tex,ivec2(2,1),0);
 
-vec2 mo = vec2(u_mouse);
-mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
-mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
+//vec2 mo = vec2(u_mouse);
+//mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0 * mo.y);
+//mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
-mat4 ryz = rotAxis(vec3(0.,1.,1.),PI * 2. * hash(3.) );
-ra = (vec4(ra,1.) * ryz).xyz;
+mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
+p = (vec4(p,1.) * rm).xyz;
 
-mat4 yz = rotAxis(vec3(0.,1.,1.),PI);
-yza = (vec4(yza,1.) * yz).xyz;
+p += 0.025 * sin3(p,10.);
 
-//p = repeat(p,vec3(5.0));
-res = opu(res,vec2(p.y+.35,0.0));
+res = opu(res,vec2(q.x+2.,0.0));
+res = opu(res,vec2(q.y+2.,0.0));
+res = opu(res,vec2(q.z+2.,0.0));
 
-res = opu(res,vec2(cylinder(p+vec3(0.0,.72,0.)  ,.5,PHI),1.));
+if(u_df == 0) {
+res = opu(res,vec2(phiboloid(p),2.)); }
+
+if(u_df == 1) { 
+res = opu(res,vec2(octabox(p,smo),3.)); }
+
+if(u_df == 2) {
+res = opu(res,vec2(phiarch(p),4.) ); }
+
+if(u_df == 3) {
+res = opu(res,vec2(sphere(p ,1.),2.)); }
+
+if(u_df == 4) {
+res = opu(res,vec2(torus(p,vec2(1.,.5)) ,2.)); }
+
+if(u_df == 5) {
+res = opu(res,vec2(octahedron(p,1.),2.)); }
+
+if(u_df == 6) {
+res = opu(res,vec2(prism(p,vec2(1.,0.5)),2.)); }
+
+if(u_df == 7) {
+res = opu(res,vec2(cylinder(p,.5,smo),2.)); } 
 
 
 
-//res = opu(res,vec2(phiboloid(p),2.));
-//res = opu(res,vec2(octabox(ra,hash(2.)),3.));
-//res = opu(res,vec2(phiarch(ra),4.) );
-res = opu(res,vec2(sphere(p + .025*sin3(p,10.),1.),2.));
 
 
 
-
-//res = opu(res,vec2(sphere(p,1.0),2.));
-//res = opu(res,vec2(torus(yza,vec2(1.,.5)) ,2.));
-//res = opu(res,vec2(octahedron(p,1.),2.));
 
 
 
@@ -718,7 +732,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
 float t = u_time;
 
-vec3 col = vec3(0.0);
+vec3 col = vec3(0.);
 
 vec3 bkg_col = u_bkg;
 //vec3 bkg_col = vec3(.25) * rd.y * 0.5;
@@ -727,7 +741,7 @@ vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(0.,10.,0.) );
+vec3 l = normalize(vec3(1e10) );
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
@@ -736,13 +750,13 @@ col = .2 + vec3(0.02,0.04,0.02) * d.y;
 float fres = 0.;
 float ns = 0.;
 
-if( d.y == 1.) {
-fres = 0.;
-col = vec3(.5);
+if( d.y == 0.) {
+fres = 2.;
+col = vec3(.5,.501,.5 );
 }
 
 if(d.y >= 2.) {
-fres = 2.25;
+fres = 2.;
 
     if(noise(vec3(1.) ) < .5) { 
     ns = fractal(p);
