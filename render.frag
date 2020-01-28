@@ -128,6 +128,21 @@ float cell(vec3 x,float iterations,int type) {
 
 }
 
+float noise(vec2 x) {
+
+vec2 p = floor(x);
+vec2 f = fract(x);
+
+f = f*f*(3.-2.*f);
+float n = p.x + p.y * 157.;
+
+
+return mix(mix(hash(n + 0.), 
+               hash(n + 1.),f.x), 
+       mix(hash(n + 157.), 
+               hash(n + 158.),f.x),f.y);
+}
+
 float noise(vec3 x) {
 
     vec3 p = floor(x);
@@ -531,13 +546,13 @@ vec2 res = vec2(1.0,0.0);
 //mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
 mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
-p = (vec4(p,1.) * rm).xyz;
+//p = (vec4(p,1.) * rm).xyz;
 
-p += 0.025 * sin3(p,10.);
+//p += 0.025 * sin3(p,10.);
 
-res = opu(res,vec2(q.x+2.,0.0));
-res = opu(res,vec2(q.y+2.,0.0));
-res = opu(res,vec2(q.z+2.,0.0));
+//res = opu(res,vec2(q.x+2.,0.0));
+//res = opu(res,vec2(q.y+2.,0.0));
+//res = opu(res,vec2(q.z+2.,0.0));
 
 if(u_df == 0) {
 res = opu(res,vec2(phiboloid(p),2.)); }
