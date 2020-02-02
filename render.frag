@@ -531,11 +531,8 @@ vec2 scene(vec3 p) {
 
 vec3 q = vec3(p);
 
-float s  = 0.;
-float t  = u_time; 
-float smo = 0.;
-float sin_disp = 10.;
-float sin_offset = .025;
+float s  = 0.00001;
+float t  = u_time;
 
 vec2 res = vec2(1.0,0.0);
 
@@ -546,40 +543,13 @@ vec2 res = vec2(1.0,0.0);
 //mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
 mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
-//p = (vec4(p,1.) * rm).xyz;
+p = (vec4(p,1.) * rm).xyz;
 
-//p += 0.025 * sin3(p,10.);
-
-//res = opu(res,vec2(q.x+2.,0.0));
-//res = opu(res,vec2(q.y+2.,0.0));
-//res = opu(res,vec2(q.z+2.,0.0));
-
-if(u_df == 0) {
-res = opu(res,vec2(phiboloid(p),2.)); }
-
-if(u_df == 1) { 
-res = opu(res,vec2(octabox(p,smo),3.)); }
-
-if(u_df == 2) {
-res = opu(res,vec2(phiarch(p),4.) ); }
-
-if(u_df == 3) {
-res = opu(res,vec2(sphere(p ,1.),2.)); }
-
-if(u_df == 4) {
-res = opu(res,vec2(torus(p,vec2(1.,.5)) ,2.)); }
-
-if(u_df == 5) {
-res = opu(res,vec2(octahedron(p,1.),2.)); }
-
-if(u_df == 6) {
-res = opu(res,vec2(prism(p,vec2(1.,0.5)),2.)); }
-
-if(u_df == 7) {
-res = opu(res,vec2(cylinder(p,.5,smo),2.)); } 
+p += 0.025 * sin3(p,10.);
 
 
-
+res = opu(res,vec2(q.x+2.,0.0));
+res = opu(res,vec2(sphere(p,1.0),1.) );
 
 
 
@@ -749,9 +719,6 @@ float t = u_time;
 
 vec3 col = vec3(0.);
 
-vec3 bkg_col = u_bkg;
-//vec3 bkg_col = vec3(.25) * rd.y * 0.5;
-
 vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
@@ -760,40 +727,31 @@ vec3 l = normalize(vec3(1e10) );
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
+mat4 rl = rotAxis(vec3(1.,0.,0.),2.* PI * t * 0.00001); 
+l = (vec4(l,1.) * rl).xyz;
+
 col = .2 + vec3(0.02,0.04,0.02) * d.y;
 
 float fres = 0.;
 float ns = 0.;
+float nl = noise(vec3(5.));
 
-if( d.y == 0.) {
-fres = 2.;
-col = vec3(.5,.501,.5 );
-}
-
-if(d.y >= 2.) {
+if(d.y >= 1.) {
 fres = 2.;
 
-    if(noise(vec3(1.) ) < .5) { 
-    ns = fractal(p);
-    }
-
-    if(noise(vec3(2.) ) < .5) {
-    ns = fractal(p + fractal(p));
-    }
-
-    if(noise(vec3(3. )) < .5) {
-    ns = smoothstep(hash(92.),hash(223.),fractal(p));
-    }
-
+    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p  ));
+        ns += fractal(p+fractal(p)); 
+         
 
         col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
             vec3(hash(25.),hash(11.),hash(245.)), 
             vec3(hash(5.),hash(44.),hash(95.)),
             vec3(hash(212.),hash(4.),hash(135.)));
     
-
+} else {
+fres = 3.;
+col = vec3(.5,.5045,.5);
 }
-
 
 float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
 float dif = clamp(dot(n,l),0.0,1.0);
@@ -814,35 +772,19 @@ linear += fres * fre * vec3(1.);
 col = col * linear;
 col += 5. * spe * vec3(1.);
 
-   /*
-   n += distort(p);
-   n += cell(p, 14.0,0);
-   n += fractal(p + fractal(p)); 
-   n += smoothstep(p.y,1.,fractal(p)); 
-   n += clamp(distance(p.x,p.y),fractal(p),fractal(p+sin(p.y))); 
-   n += clamp(fractal(p),fractal(p+sin(p.x)),fractal(p+cos(p.y))); 
-   
-   kd = fmCol((p.y+n),vec3(u_diffuse),vec3(u_diffb),vec3(u_diffc),vec3(u_diffd));
-   */      
  //col = fog(color,vec3(.5),.05,10.);   
-   col = pow(col,vec3(.4545)); 
-   
-//   if(u_normals == 1) {
-//   col = calcNormal(p * .5 + .5);
-//   }
-
-   
-//}
+   col = pow(col,vec3(.4545));
 
       return col;
 }
 
 void main() {
  
-vec3 cam_pos = cameraPosition;
+//vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-//vec3 cam_pos = vec3(0.0,.5,2.5 );
+vec3 cam_pos = vec3(2.0,-2.,1.61 );
+
 
 vec2 mo = vec2(u_mouse);
 
