@@ -3,7 +3,7 @@
 // dolson,2019
 
 precision mediump float;
-precision mediump sampler3D;
+precision mediump sampler2D;
 
 out vec4 out_FragColor;
 varying vec2 uVu; 
@@ -16,45 +16,11 @@ uniform int u_swipe_dir;
 
 uniform vec2 u_resolution;
 
-uniform vec3 u_light_pos;
-uniform vec3 u_cam_light_pos;
 uniform vec3 u_cam_target;
-
-uniform vec3 u_diffuse;
-uniform vec3 u_ambient;
-uniform vec3 u_specular;
-uniform vec3 u_diffb;
-uniform vec3 u_diffc;
-uniform vec3 u_diffd;
-
-uniform int u_df;
-uniform vec3 u_bkg;
-uniform float u_shininess;
-uniform vec3 u_intensity;
-uniform vec3 u_cam_intensity;
-
-//uniform int u_fog;
-//uniform vec3 u_fog_color;
-//uniform float u_fog_distance;
-
-//uniform int shadow;
-
-uniform int u_fractal;
-uniform vec3 u_repeat_dir;
-
-uniform int u_octaves;
-uniform float u_hurst;
-uniform int u_noise;
-uniform int u_cell_noise;
-uniform float u_cell_iterations;
-
-uniform float u_trace_dist;
-uniform float u_eps;
-uniform int u_march_steps;
 
 uniform float u_time;
 
-uniform sampler3D u_noise_tex;
+uniform sampler2D u_noise_tex;
 
 const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
@@ -171,15 +137,16 @@ float noise(vec3 x) {
                    mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
 } */
 
-float fractal(vec3 x) {
+float fractal(vec3 x,int octaves,float h) {
 
     float t = 0.0;
-    float h  = u_hurst;
+
     float g = exp2(-h); 
+
     float a = 0.5;
     float f = 1.0;
 
-    for(int i = 0; i < u_octaves; i++) {
+    for(int i = 0; i < octaves; i++) {
  
     t += a * noise(f * x); 
     f *= 2.0; 
@@ -189,21 +156,6 @@ float fractal(vec3 x) {
 
     return t;
 }
-
-float distort(vec3 p) {
-    
-    vec3 q = vec3(fractal(p + vec3(0.0,0.0,1.0)),      
-                  fractal(p + vec3(4.5,1.8,6.3)),
-                  fractal(p + vec3(1.1,7.2,2.4))
-    );
-
-    vec3 r = vec3(fractal(p + 4.0*q + vec3(2.1,9.4,5.1)),
-                  fractal(p + 4.0*q + vec3(5.6,3.7,8.9)),
-                  fractal(p + 4.0*q + vec3(4.3,0.0,3.1)) 
-    ); 
-
-    return fractal(p + 4.0 * r);
-} 
 
 float sin3(vec3 p,float h) {
     
@@ -507,24 +459,6 @@ float crossbox(vec3 p,float l,float d) {
     float b2 = box(p.zxy,vec3(d,d,l));
     
     return min(b0,min(b1,b2));
-}
-
-float cylinderbox(vec3 p,float r,float s) { 
-    return smod(cylinder(p,1.5,r),box(p,vec3(1.0)),s);
-}
-
-float phiboloid(vec3 p) {
-    return max(-torus(p,vec2(1.61,.73)),box(p,vec3(1.0)));
-}   
-
-float octabox(vec3 p,float s) {
-return smou(octahedron(p,1.),box(p,vec3(.5)),s);
-
-}
-
-float phiarch(vec3 p) {
-   return max(-sphere(p,1.35),box(p,vec3(1.)));
-   
 } 
 
 vec2 scene(vec3 p) { 
@@ -567,18 +501,18 @@ vec2 rayScene(vec3 ro,vec3 rd) {
     float depth = 0.0;
     float d = -1.0;
 
-    for(int i = 0; i < u_march_steps; ++i) {
+    for(int i = 0; i < 100; ++i) {
 
         vec3 p = ro + depth * rd;
         vec2 dist = scene(p);
    
-        if(abs( dist.x) < u_eps || u_trace_dist <  dist.x ) { break; }
+        if(abs( dist.x) < 0.0001 || 500. <  dist.x ) { break; }
         depth += dist.x;
         d = dist.y;
 
         }
  
-        if(u_trace_dist < depth) { d = -1.0; }
+        if(500. < depth) { d = -1.0; }
         return vec2(depth,d);
 
 }
@@ -631,7 +565,7 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
     
         }       
 
-        if(res < 0.005 || t > dmax ) { break; }
+        if(res < 0.0001 || t > dmax ) { break; }
 
 
         }
@@ -641,7 +575,7 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
 
 vec3 calcNormal(vec3 p) {
 
-    vec2 e = vec2(1.0,-1.0) * u_eps;
+    vec2 e = vec2(1.0,-1.0) * 0.0001;
 
     return normalize(vec3(
     vec3(e.x,e.y,e.y) * scene(p + vec3(e.x,e.y,e.y)).x +
@@ -739,8 +673,8 @@ float nl = noise(vec3(5.));
 if(d.y >= 1.) {
 fres = 2.;
 
-    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p  ));
-        ns += fractal(p+fractal(p)); 
+    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p,5,.5  ));
+        ns += fractal(p+fractal(p,5,.5),5,.5); 
          
 
         col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
