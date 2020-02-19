@@ -21,7 +21,23 @@ let controls;
 
 let cam,scene,geometry,mesh,mat;
 
+let df;
+
 let cam_target;
+
+let light_pos;
+
+let eps;
+let dist;
+let steps;
+
+let dif_noise;
+
+let octaves;
+let frequency;
+
+let cell_iterations;
+let cell_type;
 
 let delta;
 let clock;
@@ -32,7 +48,7 @@ function init() {
     canvas  = $('#canvas')[0];
     context = canvas.getContext('webgl2',{ antialias:false });
 
-    w = window.innerWidth;
+    w = window.innerWidth-256;
     h = window.innerHeight; 
 
     canvas.width  = w;
@@ -58,7 +74,8 @@ function init() {
 
     cam.position.set(0.0,0.0,5.0); 
     cam_target  = new THREE.Vector3(0.0);
-
+    light_pos   = new THREE.Vector3(0.0,0.0,-10.0);
+    
     controls = new THREE.OrbitControls(cam,canvas);
 
         controls.minDistance = 1.0;
@@ -71,7 +88,30 @@ function init() {
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
 
+    eps = 0.0001;
+    dist = 1000.;
+    steps = 64;
 
+    df = 0.0;
+       
+    octaves = 4;
+    frequency = .5;
+    
+    cell_iterations = 10.;
+    cell_type = 0;
+
+    $('#eps').val(eps);
+    $('#dist').val(dist);
+    $('#steps').val(steps);
+
+    $('#octaves').val(octaves);
+    $('#frequency').val(frequency);    
+    $('#cell_iterations').val(cell_iterations);
+    $('#cell_type').val(cell_type);
+    
+    $('#light_pos_x').val(light_pos.x);
+    $('#light_pos_y').val(light_pos.y);
+    $('#light_pos_z').val(light_pos.z);
 
     uniforms = {
 
@@ -81,7 +121,16 @@ function init() {
         "u_mouse_pressed"       : { value : mouse_pressed },
         "u_swipe_dir"           : { value : swipe_dir }, 
         "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
+        "u_light_pos"           : new THREE.Uniform(new THREE.Vector3(light_pos)),
         "u_hash"                : { value: hash },
+        "u_df"                  : { value: df },
+        "u_eps"                 : { value: eps },
+        "u_dist"                : { value: dist },
+        "u_steps"               : { value: steps },
+        "u_octaves"             : { value: octaves },
+        "u_frequency"           : { value: frequency },
+        "u_cell_iterations"     : { value: cell_iterations },
+        "u_cell_type"           : { value: cell_type },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -106,8 +155,6 @@ ShaderLoader("render.vert","render.frag",
 
         scene.add(mesh);
        
-        
- 
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(w,h);
 
@@ -123,6 +170,15 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_swipe_dir"           ].value = swipe_dir;
         uniforms["u_cam_target"          ].value = cam_target;
         uniforms["u_hash"                ].value = hash;
+        uniforms["u_eps"                 ].value = eps;         
+        uniforms["u_dist"                ].value = dist;
+        uniforms["u_steps"               ].value = steps;
+        uniforms["u_octaves"             ].value = octaves;
+        uniforms["u_frequency"           ].value = frequency;
+        uniforms["u_cell_iterations"     ].value = cell_iterations;
+        uniforms["u_cell_type"           ].value = cell_type;           
+
+
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
         controls.update();
@@ -215,3 +271,19 @@ function onMouseMove(event) {
     mouse.x = (event.clientX / w) * 2.0 - 1.0; 
     mouse.y = -(event.clientY / h) * 2.0 + 1.0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

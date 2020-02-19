@@ -2,6 +2,8 @@
 
 <head>
 
+<title> Distance Field Rendering Engine in Webgl, Copyright 2019  </title>
+
 <meta name="viewport" content="width=device-width", user-scalable=no, minimum-scale=0.0 maximum-scale=0.0 /> 
 <meta name="theme-color" content="#000">
 
@@ -10,18 +12,67 @@
 
 </head>
 
-<div id="container">
-<canvas id="canvas"></canvas>
-</div>
+<div id="gui_container"> 
+    
+    <div id="gui_scroll">
+
+        <div class="config_container">
+
+             <h3>Demo Select</h3><br>
+
+
+             <select id="distance_fields">
+                 
+                <option value="0">Sphere        </option>
+                <option value="1">Box           </option>
+                <option value="2">Capsule       </option>
+                <option value="3">Torus         </option>
+                <option value="4">Rounded Cone  </option>
+                <option value="5">Link          </option>
+                <option value="6">Sphere box    </option>
+                <option value="7">Cylinder      </option>
+                <option value="8">Prism         </option>
+                <option value="9">Hex Prism     </option>  
+             
+
+
+             </select>
+
+        </div>
+
+
+        <div class="config_container">
+            <h3>Noise Configuration</h3><br>
+
+            <button id="update_hash">update hash</button>
+        
+            <label>Octaves</label>
+            <input type="range" id="octaves" min="0.0" max="12.0" step="1" >
+        
+            <label>Cell Iterations</label>
+            <input type="range" id="cell_iterations" min="0.0" max="256.0" step="1" >
+        
+            <label>Distance Type</label>
+            <select id="cell_distance_type">
+                <option value="0">Euclidian</option>
+                <option value="1">Rectlinear</option>
+                <option value="2">Chess</option>
+            <select>
+
+        </div>
+        </div> 
+
+    </div>
+
+<canvas id="canvas" > </canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-<script src="https://threejs.org/examples/js/math/ImprovedNoise.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
 
 <script src="ShaderLoader.js"></script>
-<script src="touchEvents.js"></script>
+<script src="textures.js"></script>
 <script src="render.js"></script>
 
 <script src="main.js"></script>
