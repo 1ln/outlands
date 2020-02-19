@@ -272,18 +272,43 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / h) * 2.0 + 1.0;
 }
 
+   
+$('#hash').click(function() {
+    hash = nhash();
+    
+});
 
+$('#eps').change(function() {
+    eps = parseFloat($('#eps').val());
+});
 
+$('#dist').change(function() {
+    dist = parseFloat($('#dist').val());
+});
 
+$('#octaves').change(function() {
+    octaves = parseFloat($('#octaves').val());
+});  
 
+$('#frequency').change(function() {
+    frequency = parseFloat('#frequency').val());
+});
 
+$('#df').change(function() {
+    df = parseInt($('#df').val());
+});
 
+$('#dif_noise').change(function() {
+   dif_noise = parseInt($('#dif_noise').val());
+});
 
+$('#cell_type').change(function() {
+   cell_distance_type = parseInt($('#cell_type').val());
+});
 
-
-
-
-
+$('#cell_iterations').change(function() {
+   cell_iterations = parseInt($('#cell_iterations').val());
+});
 
 
 
