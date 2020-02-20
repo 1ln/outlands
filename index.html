@@ -18,7 +18,7 @@
 
         <div class="config_container">
 
-             <h3>Demo Select</h3><br>
+             <h3>Demo Select</h3>
 
 
              <select id="distance_fields">
@@ -40,20 +40,36 @@
 
         </div>
 
+        <div class="config_container">
+            <h3>Raymarcher Rendering options</h3>
+            <label>Steps<input type="number" id="steps"></label>
+            <label>Epsilon<input type="number" id="eps"></label>
+            <label>Distance<input type="number" id="dist"></label>
+        </div>
 
         <div class="config_container">
-            <h3>Noise Configuration</h3><br>
+            <h3>Light Position</h3>        
+            <label>x<input type="number" id="light_pos_x"></label> 
+            <label>y<input type="number" id="light_pos_y"></label>
+            <label>z<input type="number" id="light_pos_z"></label>
+        </div>
 
-            <button id="update_hash">update hash</button>
+        <div class="config_container">
+            <h3>Noise Configuration</h3>
+
+            <button id="hash">update hash</button>
         
-            <label>Octaves</label>
-            <input type="range" id="octaves" min="0.0" max="12.0" step="1" >
-        
+            <label>Octaves
+            <input type="range" id="octaves" min="0.0" max="12.0" step="1" ></label>
+                     
+            <label>Frequency      
+            <input type="number" id="frequency" step="0.01" ></label>
+
             <label>Cell Iterations</label>
             <input type="range" id="cell_iterations" min="0.0" max="256.0" step="1" >
         
             <label>Distance Type</label>
-            <select id="cell_distance_type">
+            <select id="cell_type">
                 <option value="0">Euclidian</option>
                 <option value="1">Rectlinear</option>
                 <option value="2">Chess</option>

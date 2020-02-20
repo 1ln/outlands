@@ -9,12 +9,24 @@ out vec4 out_FragColor;
 varying vec2 uVu; 
 
 uniform float u_hash;
+uniform int u_df;
+
+uniform float u_eps;
+uniform float u_dist;
+uniform int u_steps;
 
 uniform vec2 u_mouse;
 uniform int u_mouse_pressed;
 uniform int u_swipe_dir;
 
 uniform vec2 u_resolution;
+
+uniform vec3 u_light_pos;
+
+uniform int u_octaves;
+uniform float u_frequency;
+uniform float u_cell_iterations;
+uniform int u_cell_type;
 
 uniform vec3 u_cam_target;
 
@@ -54,9 +66,9 @@ vec3 hash3(vec3 x) {
     return fract(sin(x) * 92352.3635 * u_hash);
 }*/
  
-float cell(vec3 x,float iterations,int type) {
+float cell(vec3 x) {
  
-    x *= iterations;
+    x *= u_cell_iterations;
 
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -74,15 +86,15 @@ float cell(vec3 x,float iterations,int type) {
 
                 float d = length(diff);
 
-                    if(type == 0) { 
+                    if(u_cell_type == 0) { 
                         min_dist = min(min_dist,d);
                     }
  
-                    if(type == 1) {
+                    if(u_cell_type == 1) {
                         min_dist = min(min_dist,abs(diff.x)+abs(diff.y)+abs(diff.z));
                     }
 
-                    if(type == 2) {
+                    if(u_cell_type == 2) {
                         min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
                     }
 
@@ -137,16 +149,16 @@ float noise(vec3 x) {
                    mix(hash(p + vec3(0.0,1.0,1.0)),hash(p + vec3(1.0,1.0,1.0)),f.x),f.y),f.z);
 } */
 
-float fractal(vec3 x,int octaves,float h) {
+float fractal(vec3 x) {
 
     float t = 0.0;
 
-    float g = exp2(-h); 
+    float g = exp2(-u_frequency); 
 
     float a = 0.5;
     float f = 1.0;
 
-    for(int i = 0; i < octaves; i++) {
+    for(int i = 0; i < u_octaves; i++) {
  
     t += a * noise(f * x); 
     f *= 2.0; 
@@ -501,18 +513,18 @@ vec2 rayScene(vec3 ro,vec3 rd) {
     float depth = 0.0;
     float d = -1.0;
 
-    for(int i = 0; i < 100; ++i) {
+    for(int i = 0; i < u_steps; ++i) {
 
         vec3 p = ro + depth * rd;
         vec2 dist = scene(p);
    
-        if(abs( dist.x) < 0.0001 || 500. <  dist.x ) { break; }
+        if(abs( dist.x) < u_eps || u_dist <  dist.x ) { break; }
         depth += dist.x;
         d = dist.y;
 
         }
  
-        if(500. < depth) { d = -1.0; }
+        if(u_dist < depth) { d = -1.0; }
         return vec2(depth,d);
 
 }
@@ -657,12 +669,9 @@ vec2 d = rayScene(ro, rd);
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(1e10) );
+vec3 l = normalize(vec3(u_light_pos) );
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
-
-mat4 rl = rotAxis(vec3(1.,0.,0.),2.* PI * t * 0.00001); 
-l = (vec4(l,1.) * rl).xyz;
 
 col = .2 + vec3(0.02,0.04,0.02) * d.y;
 
@@ -673,8 +682,8 @@ float nl = noise(vec3(5.));
 if(d.y >= 1.) {
 fres = 2.;
 
-    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p,5,.5  ));
-        ns += fractal(p+fractal(p,5,.5),5,.5); 
+    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p  ));
+   
          
 
         col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
@@ -714,19 +723,19 @@ col += 5. * spe * vec3(1.);
 
 void main() {
  
-//vec3 cam_pos = cameraPosition;
+vec3 cam_pos = cameraPosition;
 vec3 cam_target = vec3(0.0);
 
-vec3 cam_pos = vec3(2.0,-2.,1.61 );
+//vec3 cam_pos = vec3(2.0,-2.,1.61 );
 
 
 vec2 mo = vec2(u_mouse);
 
-mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
-mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
+//mat4 mxr = rotAxis(vec3(1.0,0.0,0.0),PI*2.0*mo.y);
+//mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0*mo.x);
 //cam_pos = (vec4(cam_pos,1.0)*mxr*myr).xyz;
 
-mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.000005);
+//mat4 cam_rot = rotAxis(vec3(0.0,1.,0.0),u_time * 0.000005);
 //cam_pos = (vec4(cam_pos,1.0) * cam_rot).xyz;
 
 vec2 uvu = -1.0 + 2.0 * uVu.xy;

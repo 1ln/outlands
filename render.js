@@ -78,7 +78,7 @@ function init() {
     
     controls = new THREE.OrbitControls(cam,canvas);
 
-        controls.minDistance = 1.0;
+        controls.minDistance = 0.0;
         controls.maxDistance = 15.0;
         controls.target = cam_target;
         controls.enableDamping = true;
@@ -92,7 +92,7 @@ function init() {
     dist = 1000.;
     steps = 64;
 
-    df = 0.0;
+    df = 0;
        
     octaves = 4;
     frequency = .5;
@@ -177,7 +177,7 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_frequency"           ].value = frequency;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_cell_type"           ].value = cell_type;           
-
+        uniforms["u_light_pos"           ].value = light_pos;
 
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
@@ -272,10 +272,8 @@ function onMouseMove(event) {
     mouse.y = -(event.clientY / h) * 2.0 + 1.0;
 }
 
-   
 $('#hash').click(function() {
-    hash = nhash();
-    
+    hash = nhash(); 
 });
 
 $('#eps').change(function() {
@@ -291,7 +289,7 @@ $('#octaves').change(function() {
 });  
 
 $('#frequency').change(function() {
-    frequency = parseFloat('#frequency').val());
+    frequency = parseFloat($('#frequency').val());
 });
 
 $('#df').change(function() {
@@ -309,6 +307,22 @@ $('#cell_type').change(function() {
 $('#cell_iterations').change(function() {
    cell_iterations = parseInt($('#cell_iterations').val());
 });
+
+$('#light_pos_x').change(function() {
+   light_pos.x = parseFloat($('#light_pos_x').val());
+});
+
+$('#light_pos_y').change(function() {
+   light_pos.y = parseFloat($('#light_pos_y').val());
+});
+
+$('#light_pos_z').change(function() {
+   light_pos.z = parseFloat($('#light_pos_z').val());
+});
+
+
+
+
 
 
 
