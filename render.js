@@ -48,7 +48,7 @@ function init() {
     canvas  = $('#canvas')[0];
     context = canvas.getContext('webgl2',{ antialias:false });
 
-    w = window.innerWidth-256;
+    w = window.innerWidth-288;
     h = window.innerHeight; 
 
     canvas.width  = w;
@@ -276,22 +276,6 @@ $('#hash').click(function() {
     hash = nhash(); 
 });
 
-$('#eps').change(function() {
-    eps = parseFloat($('#eps').val());
-});
-
-$('#dist').change(function() {
-    dist = parseFloat($('#dist').val());
-});
-
-$('#octaves').change(function() {
-    octaves = parseFloat($('#octaves').val());
-});  
-
-$('#frequency').change(function() {
-    frequency = parseFloat($('#frequency').val());
-});
-
 $('#df').change(function() {
     df = parseInt($('#df').val());
 });
@@ -304,19 +288,20 @@ $('#cell_type').change(function() {
    cell_distance_type = parseInt($('#cell_type').val());
 });
 
-$('#cell_iterations').change(function() {
-   cell_iterations = parseInt($('#cell_iterations').val());
-});
 
-$('#light_pos_x').change(function() {
+$('input[type=number]').on("input",function() {
+
+
+   eps         = parseFloat($('#eps').val());
+   dist        = parseInt($('#dist').val());
+   steps       = parseInt($('#steps').val());
+
+   octaves     = parseInt($('#octaves').val());
+   frequency   = parseFloat($('#frequency').val());
+   cell_iterations = parseFloat('#cell_iterations').val());
+
    light_pos.x = parseFloat($('#light_pos_x').val());
-});
-
-$('#light_pos_y').change(function() {
    light_pos.y = parseFloat($('#light_pos_y').val());
-});
-
-$('#light_pos_z').change(function() {
    light_pos.z = parseFloat($('#light_pos_z').val());
 });
 
