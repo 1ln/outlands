@@ -48,7 +48,7 @@ function init() {
     canvas  = $('#canvas')[0];
     context = canvas.getContext('webgl2',{ antialias:false });
 
-    w = window.innerWidth-288;
+    w = window.innerWidth-512;
     h = window.innerHeight; 
 
     canvas.width  = w;
@@ -298,7 +298,7 @@ $('input[type=number]').on("input",function() {
 
    octaves     = parseInt($('#octaves').val());
    frequency   = parseFloat($('#frequency').val());
-   cell_iterations = parseFloat('#cell_iterations').val());
+   cell_iterations = parseFloat($('#cell_iterations').val());
 
    light_pos.x = parseFloat($('#light_pos_x').val());
    light_pos.y = parseFloat($('#light_pos_y').val());
