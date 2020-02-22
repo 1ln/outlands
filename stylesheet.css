@@ -20,7 +20,7 @@ height:100%;
 #gui_container {
 
 display:flex;
-width:256px;
+width:512px;
 height:100%;
 background-color:lightgrey;
 overflow:hidden;
@@ -36,8 +36,17 @@ overflow-y:scroll;
 
 }
 
+#config_container {
+
+display:grid;
+grid-template-columns: max-content max-content;
+grid-gap: 5px;
+}
+
+input { 
+width:100px;
+}
+
 label {
-
-display:flex;
-
-} 
+text-align:left;
+}
