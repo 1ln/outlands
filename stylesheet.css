@@ -20,7 +20,7 @@ height:100%;
 #gui_container {
 
 display:flex;
-width:512px;
+width:352;
 height:100%;
 background-color:lightgrey;
 overflow:hidden;
@@ -36,7 +36,7 @@ overflow-y:scroll;
 
 }
 
-#config_container {
+.config_container {
 
 display:grid;
 grid-template-columns: max-content max-content;

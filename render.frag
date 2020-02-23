@@ -489,21 +489,54 @@ vec2 res = vec2(1.0,0.0);
 //mat4 myr = rotAxis(vec3(0.0,1.0,0.0),PI*2.0 * mo.x); 
 
 mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
-p = (vec4(p,1.) * rm).xyz;
+//p = (vec4(p,1.) * rm).xyz;
 
-p += 0.025 * sin3(p,10.);
+//p += .0025 * sin3(p,10.);
 
 
 res = opu(res,vec2(q.x+2.,0.0));
+
+
+
+if(u_df == 0) {
 res = opu(res,vec2(sphere(p,1.0),1.) );
+}
 
+if(u_df == 1) {
+res = opu(res,vec2(box(p,vec3(.5)),1.));
+}
 
+if(u_df == 2) {
+res = opu(res,vec2(capsule(p,vec3(.5),vec3(1.),.5),1.));
+}
 
+if(u_df == 3) {
+res = opu(res,vec2(torus(p,vec2(1.,.5)),1.));
+}
 
+if(u_df == 4) {
+res = opu(res,vec2(roundCone(p,1.,.5,.25),1.));
+}
 
+if(u_df == 5) {
+res = opu(res,vec2(link(p,1.,.5,1.),1.));
+}
 
+if(u_df == 6) {
+res = opu(res,vec2(octahedron(p,1.),1.));
+}
 
+if(u_df == 7) {
+res = opu(res,vec2(cylinder(p,1.,.5),1.));
+}
 
+if(u_df == 8) {
+res = opu(res,vec2(prism(p,vec2(1.,.5)),1.));
+}
+
+if(u_df == 9) {
+res = opu(res,vec2(hexPrism(p,vec2(1.,.5)),1.));
+}
 
 return res;
 }
@@ -683,7 +716,7 @@ if(d.y >= 1.) {
 fres = 2.;
 
     ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p  ));
-   
+       
          
 
         col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),

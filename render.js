@@ -39,6 +39,9 @@ let frequency;
 let cell_iterations;
 let cell_type;
 
+let sine_height;
+let sine_offset;
+
 let delta;
 let clock;
 
@@ -48,7 +51,7 @@ function init() {
     canvas  = $('#canvas')[0];
     context = canvas.getContext('webgl2',{ antialias:false });
 
-    w = window.innerWidth-512;
+    w = window.innerWidth-352;
     h = window.innerHeight; 
 
     canvas.width  = w;
@@ -100,6 +103,9 @@ function init() {
     cell_iterations = 10.;
     cell_type = 0;
 
+    sine_height = 10.;
+    sine_offset = .25;
+
     $('#eps').val(eps);
     $('#dist').val(dist);
     $('#steps').val(steps);
@@ -108,6 +114,9 @@ function init() {
     $('#frequency').val(frequency);    
     $('#cell_iterations').val(cell_iterations);
     $('#cell_type').val(cell_type);
+
+    $('#sine_displace_height').val(sine_height);
+    $('#sine_displace_offset').val(sine_offset);
     
     $('#light_pos_x').val(light_pos.x);
     $('#light_pos_y').val(light_pos.y);
@@ -131,6 +140,8 @@ function init() {
         "u_frequency"           : { value: frequency },
         "u_cell_iterations"     : { value: cell_iterations },
         "u_cell_type"           : { value: cell_type },
+        "u_sine_height"         : { value: sine_height },
+        "u_sine_offset"         : { value: sine_offset },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -176,9 +187,11 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_octaves"             ].value = octaves;
         uniforms["u_frequency"           ].value = frequency;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
-        uniforms["u_cell_type"           ].value = cell_type;           
+        uniforms["u_cell_type"           ].value = cell_type;
+        uniforms["u_sine_height"         ].value = sine_height;  
+        uniforms["u_sine_offset"         ].value = sine_offset;  
+        uniforms["u_df"                  ].value = df;
         uniforms["u_light_pos"           ].value = light_pos;
-
         uniforms["u_noise_tex"           ].value = noise_texture;       
 
         controls.update();
@@ -303,6 +316,11 @@ $('input[type=number]').on("input",function() {
    light_pos.x = parseFloat($('#light_pos_x').val());
    light_pos.y = parseFloat($('#light_pos_y').val());
    light_pos.z = parseFloat($('#light_pos_z').val());
+
+   sine_height = parseFloat($('#sine_displace_height').val());
+   sine_offset = parseFloat($('#sine_displace_offset').val());
+
+
 });
 
 
