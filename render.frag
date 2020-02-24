@@ -23,10 +23,26 @@ uniform vec2 u_resolution;
 
 uniform vec3 u_light_pos;
 
+uniform int u_dif_noise;
 uniform int u_octaves;
 uniform float u_frequency;
 uniform float u_cell_iterations;
 uniform int u_cell_type;
+
+uniform int u_sine_displace;
+uniform float u_sine_height;
+uniform float u_sine_offset;
+
+uniform int u_shad_iterations;
+uniform float u_shad_max;
+uniform float u_shad_min;
+uniform float u_shad_type;
+
+uniform int u_twist_displace;
+uniform float u_twist_height;
+uniform float u_twist_offset;
+
+uniform int u_plane_intersect;
 
 uniform vec3 u_cam_target;
 
@@ -235,6 +251,13 @@ float easeInOut3(float t) {
     } else { 
         return 0.5 * ((t -= 2.0) * t * t + 2.0);
     }
+}
+
+vec3 twist(vec3 p,float h) {
+    float c = cos(h * p.y + h);
+    float s = sin(h * p.y + h);
+    mat2 m = mat2(c,-s,s,c);
+    return vec3(m * p.xy,p.z);
 }
 
 mat2 rot2(float a) {
@@ -491,45 +514,29 @@ vec2 res = vec2(1.0,0.0);
 mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
 //p = (vec4(p,1.) * rm).xyz;
 
-//p += .0025 * sin3(p,10.);
-
-
-res = opu(res,vec2(q.x+2.,0.0));
-
-
+//if(u_plane_intersect == 1) {
+//res = opu(res,vec2(q.y+u_plane_height,0.0));
+//}
 
 if(u_df == 0) {
+p += 0.0025 * sin3(p,10.);
 res = opu(res,vec2(sphere(p,1.0),1.) );
-}
+} 
 
 if(u_df == 1) {
-res = opu(res,vec2(box(p,vec3(.5)),1.));
-}
-
-if(u_df == 2) {
-res = opu(res,vec2(capsule(p,vec3(.5),vec3(1.),.5),1.));
-}
-
-if(u_df == 3) {
+p += 0.5 * twist(p,10.);
 res = opu(res,vec2(torus(p,vec2(1.,.5)),1.));
 }
 
-if(u_df == 4) {
-res = opu(res,vec2(roundCone(p,1.,.5,.25),1.));
+if(u_df == 2) {
+res = opu(res,vec2(smou(box(p,vec3(1.)),octahedron(p,1.),0.) ,1.));
 }
 
-if(u_df == 5) {
-res = opu(res,vec2(link(p,1.,.5,1.),1.));
-}
+if(u_df == 3) {
 
-if(u_df == 6) {
-res = opu(res,vec2(octahedron(p,1.),1.));
+res = opu(res,vec2(smod(cylinder(p,1.,.5),cylinder(p,1.,.25),.5) ,1.));
 }
-
-if(u_df == 7) {
-res = opu(res,vec2(cylinder(p,1.,.5),1.));
-}
-
+/*
 if(u_df == 8) {
 res = opu(res,vec2(prism(p,vec2(1.,.5)),1.));
 }
@@ -537,7 +544,7 @@ res = opu(res,vec2(prism(p,vec2(1.,.5)),1.));
 if(u_df == 9) {
 res = opu(res,vec2(hexPrism(p,vec2(1.,.5)),1.));
 }
-
+*/
 return res;
 }
 
@@ -590,11 +597,11 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
     float t = dmin;
     float ph = 1e10;
     
-    for(int i = 0; i < 16; i++ ) {
+    for(int i = 0; i < u_shad_iterations; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
 
-        if(type == 1) {
+        if(type == 0) {
 
         float y = h*h/(2. * ph);
         float d = sqrt(h*h-y*y);
@@ -610,7 +617,7 @@ float shadow(vec3 ro,vec3 rd,float dmin,float dmax,int type) {
     
         }       
 
-        if(res < 0.0001 || t > dmax ) { break; }
+        if(res < u_eps || t > dmax ) { break; }
 
 
         }
@@ -715,14 +722,18 @@ float nl = noise(vec3(5.));
 if(d.y >= 1.) {
 fres = 2.;
 
-    ns = smoothstep(noise(vec3(95.)  ),1. ,fractal(p  ));
-       
-         
+    if(u_dif_noise == 0) {
+    ns += fractal(p);
+    }
 
-        col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
-            vec3(hash(25.),hash(11.),hash(245.)), 
-            vec3(hash(5.),hash(44.),hash(95.)),
-            vec3(hash(212.),hash(4.),hash(135.)));
+    if(u_dif_noise == 1) {
+    ns += cell(p);
+    }
+
+    col = fmCol(p.y+ns,vec3(hash(10.),hash(33.),hash(100.)),
+                       vec3(hash(25.),hash(11.),hash(245.)), 
+                       vec3(hash(5.),hash(44.),hash(95.)),
+                       vec3(hash(212.),hash(4.),hash(135.)));
     
 } else {
 fres = 3.;
@@ -735,9 +746,9 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.75 * pow(clamp(1. 
 float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
-dif *= shadow(p,l,0.02,5.,0);
+dif *= shadow(p,l,u_shad_min,u_shad_max,u_shad_type);
 
-ref *= shadow(p,r,0.02,15.,0);
+ref *= shadow(p,r,u_shad_min,u_shad_max,u_shad_type);
 
 vec3 linear = vec3(0.);
 linear += 1. * dif  * vec3(.5);
@@ -749,7 +760,7 @@ col = col * linear;
 col += 5. * spe * vec3(1.);
 
  //col = fog(color,vec3(.5),.05,10.);   
-   col = pow(col,vec3(.4545));
+   col = pow(col,vec3(u_gamma));
 
       return col;
 }
