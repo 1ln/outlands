@@ -507,33 +507,28 @@ mat4 rm = rotAxis(vec3(0.,1.,1.),PI * 2. * t * s );
 //res = opu(res,vec2(q.y+u_plane_height,0.0));
 //}
 
-if(u_df == 0) {
-p += 0.0025 * sin3(p,10.);
-res = opu(res,vec2(sphere(p,1.0),1.) );
+if(noise(vec3( hash(100.))) < .5) {
+p += 0.025 * sin3(p,10.);
+}
+
+if(noise(vec3( hash(8.)) ) < .5 ) {
+res = vec2(sphere(p,1.0),1.);
 } 
 
-if(u_df == 1) {
-p += 0.5 * twist(p,10.);
-res = opu(res,vec2(torus(p,vec2(1.,.5)),1.));
+if(noise(vec3( hash(144.)) ) < .5  ) {
+res = vec2(torus(p,vec2(1.,.5)),1.);
 }
 
-if(u_df == 2) {
-res = opu(res,vec2(smou(box(p,vec3(1.)),octahedron(p,1.),0.) ,1.));
+if(noise(vec3(  hash(124.))) < .5 ) {
+res = vec2(smou(box(p,vec3(.5)),octahedron(p,1.),0.) ,1.);
 }
 
-if(u_df == 3) {
+//if(noise(vec3(  hash(10.))) < .5 ) {
+//res = vec2(smod(cylinder(p,1.,.5),cylinder(p,1.,.25),.5) ,1.);
+//}
 
-res = opu(res,vec2(smod(cylinder(p,1.,.5),cylinder(p,1.,.25),.5) ,1.));
-}
-/*
-if(u_df == 8) {
-res = opu(res,vec2(prism(p,vec2(1.,.5)),1.));
-}
 
-if(u_df == 9) {
-res = opu(res,vec2(hexPrism(p,vec2(1.,.5)),1.));
-}
-*/
+
 return res;
 }
 
@@ -726,7 +721,7 @@ fres = 2.;
     
 } else {
 fres = 3.;
-col = vec3(.5,.5045,.5);
+col = vec3(0.);
 }
 
 float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
@@ -735,9 +730,9 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.75 * pow(clamp(1. 
 float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
-dif *= shadow(p,l,u_shad_min,u_shad_max,0.);
+dif *= shadow(p,l,u_shad_min,u_shad_max,0);
 
-ref *= shadow(p,r,u_shad_min,u_shad_max,0.);
+ref *= shadow(p,r,u_shad_min,u_shad_max,0);
 
 vec3 linear = vec3(0.);
 linear += 1. * dif  * vec3(.5);

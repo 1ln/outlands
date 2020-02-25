@@ -16,48 +16,29 @@
     
     <div id="gui_scroll">
 
-        <h3>Raymarching Demo</h3>
+        <h3>Raymarching Demo</h3><br>
 
         <div class="config_container">
 
-             <label>Demo Select</label>
-
-             <select id="df" size="6"   >
-                 
-                <option value="0">Sphere        </option>
-                <option value="1">Box           </option>
-                <option value="2">Capsule       </option>
-                <option value="3">Torus         </option>
-                <option value="4">Rounded Cone  </option>
-                <option value="5">Link          </option>
-                <option value="6">Sphere box    </option>
-                <option value="7">Cylinder      </option>
-                <option value="8">Prism         </option>
-                <option value="9">Hex Prism     </option>  
-             
-             </select>
-
-
-            
+            <label>Demo </label>
+            <button id="hash">Update</button>
+  
             <label>Steps    </label>  <input type="number" id="steps">
             <label>Epsilon  </label>  <input type="number" id="eps">
             <label>Distance </label>  <input type="number" id="dist">
-
                  
             <label>Light position x</label>  <input type="number" id="light_pos_x"> 
             <label>Light position y</label>  <input type="number" id="light_pos_y">
             <label>Light position z</label>  <input type="number" id="light_pos_z">
 
+            <label>Shadow Iterations </label> 
+            <input type="number" id="shad_iterations">
 
-            <label>Sine Displace Height</label> 
-            <input type="number" id="sine_displace_height">
+            <label>Shadow Minimum </label>
+            <input type="number" id="shad_min">
 
-            <label>Sine Displace Offset</label>
-            <input type="number" id="sine_displace_offset">
-
-            
-            <label>Hash</label>
-            <button id="hash">Update</button>
+            <label>Shadow Maximum </label>
+            <input type="number" id="shad_max">            
         
             <label>Octaves</label>
             <input type="number" id="octaves" >
