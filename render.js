@@ -39,8 +39,9 @@ let frequency;
 let cell_iterations;
 let cell_type;
 
-let sine_height;
-let sine_offset;
+let shad_min;
+let shad_max;
+let shad_iterations;
 
 let delta;
 let clock;
@@ -103,8 +104,9 @@ function init() {
     cell_iterations = 10.;
     cell_type = 0;
 
-    sine_height = 10.;
-    sine_offset = .25;
+    shad_iterations = 16;
+    shad_min = 0.002;
+    shad_max = 5.;
 
     $('#eps').val(eps);
     $('#dist').val(dist);
@@ -115,9 +117,10 @@ function init() {
     $('#cell_iterations').val(cell_iterations);
     $('#cell_type').val(cell_type);
 
-    $('#sine_displace_height').val(sine_height);
-    $('#sine_displace_offset').val(sine_offset);
-    
+    $('#shad_min').val(shad_min);
+    $('#shad_max').val(shad_max);
+    $('#shad_iterations').val(shad_iterations);    
+
     $('#light_pos_x').val(light_pos.x);
     $('#light_pos_y').val(light_pos.y);
     $('#light_pos_z').val(light_pos.z);
@@ -140,8 +143,9 @@ function init() {
         "u_frequency"           : { value: frequency },
         "u_cell_iterations"     : { value: cell_iterations },
         "u_cell_type"           : { value: cell_type },
-        "u_sine_height"         : { value: sine_height },
-        "u_sine_offset"         : { value: sine_offset },
+        "u_shad_iterations"     : { value: shad_iterations },
+        "u_shad_min"            : { value: shad_min },
+        "u_shad_max"            : { value: shad_max },
         "u_noise_tex"           : { type:"t", value: noise_texture }
 
     };   
@@ -188,8 +192,9 @@ ShaderLoader("render.vert","render.frag",
         uniforms["u_frequency"           ].value = frequency;
         uniforms["u_cell_iterations"     ].value = cell_iterations;
         uniforms["u_cell_type"           ].value = cell_type;
-        uniforms["u_sine_height"         ].value = sine_height;  
-        uniforms["u_sine_offset"         ].value = sine_offset;  
+        uniforms["u_shad_iterations"     ].value = shad_iterations;  
+        uniforms["u_shad_max"            ].value = shad_max;  
+        uniforms["u_shad_min"            ].value = shad_min;
         uniforms["u_df"                  ].value = df;
         uniforms["u_light_pos"           ].value = light_pos;
         uniforms["u_noise_tex"           ].value = noise_texture;       
@@ -317,8 +322,9 @@ $('input[type=number]').on("input",function() {
    light_pos.y = parseFloat($('#light_pos_y').val());
    light_pos.z = parseFloat($('#light_pos_z').val());
 
-   sine_height = parseFloat($('#sine_displace_height').val());
-   sine_offset = parseFloat($('#sine_displace_offset').val());
+   shad_min = parseFloat($('#shad_min').val());
+   shad_max = parseFloat($('#shad_max').val());
+   shad_iterations = parseInt($('#shad_iterations').val());
 
 
 });

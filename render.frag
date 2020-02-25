@@ -29,20 +29,9 @@ uniform float u_frequency;
 uniform float u_cell_iterations;
 uniform int u_cell_type;
 
-uniform int u_sine_displace;
-uniform float u_sine_height;
-uniform float u_sine_offset;
-
 uniform int u_shad_iterations;
 uniform float u_shad_max;
 uniform float u_shad_min;
-uniform float u_shad_type;
-
-uniform int u_twist_displace;
-uniform float u_twist_height;
-uniform float u_twist_offset;
-
-uniform int u_plane_intersect;
 
 uniform vec3 u_cam_target;
 
@@ -722,11 +711,11 @@ float nl = noise(vec3(5.));
 if(d.y >= 1.) {
 fres = 2.;
 
-    if(u_dif_noise == 0) {
+    if(hash(54.) < .5) {
     ns += fractal(p);
     }
 
-    if(u_dif_noise == 1) {
+    if(hash(100.) < .5) {
     ns += cell(p);
     }
 
@@ -746,9 +735,9 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.75 * pow(clamp(1. 
 float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
-dif *= shadow(p,l,u_shad_min,u_shad_max,u_shad_type);
+dif *= shadow(p,l,u_shad_min,u_shad_max,0.);
 
-ref *= shadow(p,r,u_shad_min,u_shad_max,u_shad_type);
+ref *= shadow(p,r,u_shad_min,u_shad_max,0.);
 
 vec3 linear = vec3(0.);
 linear += 1. * dif  * vec3(.5);
@@ -760,7 +749,7 @@ col = col * linear;
 col += 5. * spe * vec3(1.);
 
  //col = fog(color,vec3(.5),.05,10.);   
-   col = pow(col,vec3(u_gamma));
+   col = pow(col,vec3(.4545));
 
       return col;
 }
