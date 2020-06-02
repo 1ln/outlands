@@ -10,6 +10,8 @@ uniform float u_time;
 
 uniform vec3 u_cam_target;
 
+uniform vec3 u_light_pos;
+
 const float E   =  2.7182818;
 const float PI  =  radians(180.0); 
 const float PHI =  (1.0 + sqrt(5.0)) / 2.0;
@@ -317,8 +319,7 @@ h *= scale;
 h = mod(h,2.) - 1.;
 float mul = r/scale;
 
-res = vec2((length(vec3(h,p.y/mul)) - 1. ) * mul,1.);
-
+res = vec2(  (length(vec3(h,p.y/mul)) - 1.) * mul,1.);
 
 return res;
 
@@ -329,7 +330,7 @@ vec2 rayScene(vec3 ro,vec3 rd) {
     float depth = 0.0;
     float d = -1.0;
 
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 250; i++) {
 
         vec3 p = ro + depth * rd;
         vec2 dist = scene(p);
@@ -356,7 +357,7 @@ float shadow(vec3 ro,vec3 rd ) {
     float t = 0.005;
     float ph = 1e10;
     
-    for(int i = 0; i < 16; i++ ) {
+    for(int i = 0; i < 165; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
 
@@ -424,16 +425,11 @@ float ref = smoothstep(-.2,.2,r.y);
 vec3 linear = vec3(0.);
 
 dif *= shadow(p,l);
-ref *= shadow(p,r);
 
-linear += dif * vec3(.5);
+linear += dif * vec3(.5,.45,.35 );
 linear += amb * vec3(.03);
-linear += ref * vec3(1.);
-linear += fre * vec3(1.);
-
-if(d.y == 1.) {
-col += vec3(.5);
-}
+linear += ref * vec3(.05,.1,.01);
+linear += fre * vec3(.045,.005,.05);
 
 col = col * linear;
 col += 5. * spe * vec3(1.,.5,.9);

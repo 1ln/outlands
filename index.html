@@ -2,7 +2,7 @@
 
 <head>
 
-<title>sdf renderer</title>
+<title>Log radial signed distance</title>
 
 <meta name="viewport" content="width=device-width", user-scalable=no, minimum-scale=0.0 maximum-scale=0.0 /> 
 <meta name="theme-color" content="#000">
@@ -11,53 +11,6 @@
 <link rel="manifest" href="manifest.json">
 
 </head>
-
-<div id="gui_container"> 
-    
-    <div id="gui_scroll">
-
-        <h3>Raymarching Demo</h3><br>
-
-        <div class="config_container">
-
-            <label>Demo </label>
-            <button id="hash">Update</button>
-  
-            <label>Steps    </label>  <input type="number" id="steps">
-            <label>Epsilon  </label>  <input type="number" id="eps">
-            <label>Distance </label>  <input type="number" id="dist">
-                 
-            <label>Light position x</label>  <input type="number" id="light_pos_x"> 
-            <label>Light position y</label>  <input type="number" id="light_pos_y">
-            <label>Light position z</label>  <input type="number" id="light_pos_z">
-
-            <label>Shadow Iterations </label> 
-            <input type="number" id="shad_iterations">
-
-            <label>Shadow Minimum </label>
-            <input type="number" id="shad_min">
-
-            <label>Shadow Maximum </label>
-            <input type="number" id="shad_max">            
-        
-            <label>Octaves</label>
-            <input type="number" id="octaves" >
-                     
-            <label>Frequency</label>      
-            <input type="number" id="frequency" step="0.001" >
-
-            <label>Cell iterations</label>
-            <input type="number" id="cell_iterations" >
-        
-            <label>Distance type</label>
-            <select id="cell_type" size="3" >
-                <option value="0">Euclidian</option>
-                <option value="1">Rectlinear</option>
-                <option value="2">Chess</option>
-            <select>
-        </div>
-        </div> 
-    </div>
 
 <canvas id="canvas" > </canvas>
 
