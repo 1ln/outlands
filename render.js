@@ -10,14 +10,10 @@ let reset;
 
 let nhash,hash;  
 
+let pos;
+
 let mouse_pressed,mouse_held,mouse;
-
-let controls;
 let cam,scene,geometry,mesh,mat;
-
-let cam_target;
-
-let light_pos;
 
 let clock;
 
@@ -45,30 +41,19 @@ function init() {
     mouse_pressed = 0;
     mouse_held = 0;
 
-    cam.position.set(5.0,10.0,25.0); 
-    cam_target  = new THREE.Vector3(0.0);
-    light_pos   = new THREE.Vector3(0.0);
-    
-    controls = new THREE.OrbitControls(cam,canvas);
-
-        controls.minDistance = 0.0;
-        controls.maxDistance = 150.0;
-        controls.target = cam_target;
-        controls.enableDamping = true;
-        controls.enablePan = false; 
-        controls.enabled = true;
+    cam.position.set(0.0,0.0,5.0); 
+    pos = new THREE.Vector3(0);
 
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
 
     uniforms = {
 
-        "u_time"                : { value : 1.0 },
-        "u_resolution"          : new THREE.Uniform(new THREE.Vector2(w,h)),
-        "u_mouse"               : new THREE.Uniform(new THREE.Vector2()),
-        "u_cam_target"          : new THREE.Uniform(new THREE.Vector3(cam_target)),
-        "u_light_pos"           : new THREE.Uniform(new THREE.Vector3(light_pos)),
-        "u_hash"                : { value: hash }
+        "t"   : { value : 1.0 },
+        "res" : new THREE.Uniform(new THREE.Vector2(w,h)),
+        "m"   : new THREE.Uniform(new THREE.Vector2()),
+        "p"   : new THREE.Uniform(new THREE.Vector3(pos)),
+        "h"   : { value: hash }
 
     };   
 
@@ -76,7 +61,7 @@ function init() {
 
 init();
 
-ShaderLoader("render.vert","logradial.frag",
+ShaderLoader("render.vert","render.frag",
 
     function(vertex,fragment) {
 
@@ -99,15 +84,11 @@ ShaderLoader("render.vert","logradial.frag",
 
         requestAnimationFrame(render);
     
-        uniforms["u_time"                ].value = performance.now();
-        uniforms["u_mouse"               ].value = mouse;
-        uniforms["u_cam_target"          ].value = cam_target; 
-        uniforms["u_hash"                ].value = hash;
-        uniforms["u_light_pos"           ].value = light_pos;
+        uniforms["t"].value = performance.now();
+        uniforms["p"].value = pos; 
+        uniforms["m"].value = mouse;
+        uniforms["h"].value = hash;
 
-        light_pos.y += Math.sin(clock.getElapsedTime() * 0.001); 
-
-        controls.update();
         renderer.render(scene,cam);
 
         } 

@@ -45,7 +45,7 @@ vec3 hash3(vec3 p) {
 }
 
 vec2 uvd() {
-   return gl_FragCoord.xy / u_res.xy;
+   return gl_FragCoord.xy / res.xy;
 }
 
 vec2 grid(vec2 uv,float s) {
@@ -82,7 +82,7 @@ float radial(vec2 uv,float b) {
 }
 
 float sedge(float v) {
-    return smoothstep(0.,1. / u_res.x,v);
+    return smoothstep(0.,1. / res.x,v);
 }
  
 float cell(vec3 x,float iterations,int type) {
