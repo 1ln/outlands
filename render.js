@@ -10,12 +10,12 @@ let reset;
 
 let nhash,hash;  
 
-let pos;
+let p;
 
 let mouse_pressed,mouse_held,mouse;
 let cam,scene,geometry,mesh,mat;
 
-let clock;
+let t;
 
 function init() {
 
@@ -32,7 +32,7 @@ function init() {
 
     cam = new THREE.PerspectiveCamera(45.,w/h,0.0,1000.0);
 
-    clock = new THREE.Clock(); 
+    t = new THREE.Clock(); 
 
     nhash = new Math.seedrandom();
     hash = nhash();
@@ -41,8 +41,8 @@ function init() {
     mouse_pressed = 0;
     mouse_held = 0;
 
-    cam.position.set(0.0,0.0,5.0); 
-    pos = new THREE.Vector3(0);
+    cam.position.set(0.0,0.0,5.0);
+    p = new THREE.Vector2(0);
 
     scene = new THREE.Scene();
     geometry = new THREE.PlaneBufferGeometry(2,2);
@@ -52,7 +52,7 @@ function init() {
         "t"   : { value : 1.0 },
         "res" : new THREE.Uniform(new THREE.Vector2(w,h)),
         "m"   : new THREE.Uniform(new THREE.Vector2()),
-        "p"   : new THREE.Uniform(new THREE.Vector3(pos)),
+        "p"   : new THREE.Uniform(new THREE.Vector2(p)),
         "h"   : { value: hash }
 
     };   
@@ -84,12 +84,14 @@ ShaderLoader("render.vert","render.frag",
 
         requestAnimationFrame(render);
     
-        uniforms["t"].value = performance.now();
-        uniforms["p"].value = pos; 
+        uniforms["t"].value = t.getElapsedTime();
+        uniforms["p"].value = p; 
         uniforms["m"].value = mouse;
         uniforms["h"].value = hash;
-
+ 
         renderer.render(scene,cam);
+
+        mouseScroll();
 
         } 
        
@@ -97,6 +99,29 @@ ShaderLoader("render.vert","render.frag",
 
     }
 ) 
+
+function mouseScroll() {
+
+    let edge = .75;   
+    let s = 0.001;
+    
+    if(mouse.x < -edge) {
+    p.x -= t.getDelta() * s;
+    }
+
+    if(mouse.x > edge) {
+    p.x += t.getDelta() * s;
+    }
+
+    if(mouse.y < -edge) {
+    p.y -= t.getDelta() * s;
+    }
+
+    if(mouse.y > edge) {
+    p.y += t.getDelta() * s;
+    }   
+
+}
 
 $('#canvas').mousedown(function() { 
  
@@ -129,4 +154,5 @@ window.addEventListener('mousemove',onMouseMove,false);
 function onMouseMove(event) {
     mouse.x = (event.clientX / w) * 2.0 - 1.0; 
     mouse.y = -(event.clientY / h) * 2.0 + 1.0;
+ 
 }
