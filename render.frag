@@ -9,7 +9,6 @@ varying vec2 uVu;
 
 uniform vec2 res;
 uniform float t;
-
 uniform vec2 p;
 uniform vec2 m;
 
@@ -17,6 +16,8 @@ const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
+
+const vec3 lp = vec3(1.);
 
 //float hash(float p) { return fract(sin(p) * 4358.5453); }
 //float hash(vec2 p) { return fract(sin(dot(vec2(12.9898,78.233))) * 43758.5357); }
@@ -85,23 +86,22 @@ float sedge(float v) {
     return smoothstep(0.,1. / res.x,v);
 }
  
-float cell(vec3 x,float iterations,int type) {
+float cell(vec2 x,float iterations,int type) {
  
     x *= iterations;
 
-    vec3 p = floor(x);
-    vec3 f = fract(x);
+    vec2 p = floor(x);
+    vec2 f = fract(x);
  
     float min_dist = 1.0;
     
     for(int i = -1; i <= 1; i++) {
         for(int j = -1; j <= 1; j++) {
-            for(int k = -1; k <= 1; k++) { 
 
-                vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = hash3( p + b );
+                vec2 b = vec2(float(i),float(j));           
+                vec2 r = mod289( p + b );
                 
-                vec3 diff = (b + r - f);
+                vec2 diff = (b + r - f);
 
                 float d = length(diff);
 
@@ -110,16 +110,11 @@ float cell(vec3 x,float iterations,int type) {
                     }
  
                     if(type == 1) {
-                        min_dist = min(min_dist,abs(diff.x)+abs(diff.y)+abs(diff.z));
-                    }
-
-                    if(type == 2) {
-                        min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
+                        min_dist = min(min_dist,abs(diff.x)+abs(diff.y));
                     }
 
             }
         }
-    }
  
     return min_dist;  
 
@@ -163,43 +158,9 @@ float ns(vec2 p) {
     return 130. * dot(m,g);
 }
 
-float n3(vec3 x) {
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);
-    float n = p.x + p.y * 157.0 + 113.0 * p.z;
-
-    return mix(mix(mix(hash(  n +   0.0) , hash(   n +   1.0)  ,f.x),
-                   mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
-               mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
-                   mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
-}
-
-float f3(vec3 x,int octaves,float h) {
-
-    float t = 0.0;
-
-    float g = exp2(-h); 
-
-    float a = 0.5;
-    float f = 1.0;
-
-    for(int i = 0; i < octaves; i++) {
- 
-    t += a * n3(f * x); 
-    f *= 2.0; 
-    a *=  g;  
+float sin2(vec2 p,float h) {
     
-    }    
-
-    return t;
-}
-
-float sin3(vec3 p,float h) {
-    
-    return sin(p.x*h) * sin(p.y*h) * sin(p.z*h);
+    return sin(p.x*h) * sin(p.y*h);
 }
 
 float fib(float n) {
@@ -314,7 +275,7 @@ vec2 repeat(vec2 p,float s) {
      return q;
 }  
 
-vec3 id(vec3 p,float s) {
+vec2 id(vec2 p,float s) {
     return floor(p/s);
 }
 
@@ -355,34 +316,7 @@ float smoi(float d1,float d2,float k) {
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) + k * h * (1.0 - h);
 
-}
-
-vec4 el(vec3 p,vec3 h) {
-    vec3 q = abs(p) - h;
-    return vec4(max(q,0.),min(max(q.x,max(q.y,q.z)),0.));
-}
-
-float extr(vec3 p,float d,float h) {
-    vec2 w = vec2(d,abs(p.xz) - h);
-    return min(max(w.x,w.y),0.) + length(max(w,0.)); 
-} 
-
-vec2 rev(vec3 p,float w) {
-    return vec2(length(p.xz) - w,p.y);
-} 
-
-vec3 twist(vec3 p,float k) {
-    
-    float s = sin(k * p.y);
-    float c = cos(k * p.y);
-    mat2 m = mat2(c,-s,s,c);
-    return vec3(m * p.xz,p.y);
-}
-
-float layer(float d,float h) {
-
-    return abs(d) - h;
-}
+}  
 
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
@@ -437,145 +371,14 @@ float segment(vec2 p,vec2 a,vec2 b) {
     return length(pa - ba * h);
 }
 
-float sphere(vec3 p,float r) { 
-     
-    return length(p) - r;
-}
-
-float nsphere(vec3 p,float r) {
-
-    return abs(length(p)-r);
-}
-
-float ellipsoid(vec3 p,vec3 r) {
-
-    float k0 = length(p/r); 
-    float k1 = length(p/(r*r));
-    return k0*(k0-1.0)/k1;
-}
-
-float cone(vec3 p,vec2 c) {
-
-    float q = length(p.xy);
-    return dot(c,vec2(q,p.z));
-}
-
-float roundCone(vec3 p,float r1,float r2,float h) {
-
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
-    float b = (r1-r2)/h;
-    float a = sqrt(1.0 - b*b);
-    float k = dot(q,vec2(-b,a));
-
-    if( k < 0.0) return length(q) - r1;
-    if( k > a*h) return length(q - vec2(0.0,h)) - r2;
-
-    return dot(q,vec2(a,b)) - r1;
-}
-
-float solidAngle(vec3 p,vec2 c,float ra) {
-    
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
-    float l = length(q) - ra;
-    float m = length(q - c * clamp(dot(q,c),0.0,ra));
-    return max(l,m * sign(c.y * q.x - c.x * q.y));
-}
-
-float link(vec3 p,float le,float r1,float r2) {
-
-    vec3 q = vec3(p.x,max(abs(p.y) -le,0.0),p.z);
-    return length(vec2(length(q.xy)-r1,q.z)) - r2;
-}
-
-float plane(vec3 p,vec4 n) {
-
-    return dot(p,n.xyz) + n.w;
-}
-
-float capsule(vec3 p,vec3 a,vec3 b,float r) {
-
-    vec3 pa = p - a;
-    vec3 ba = b - a;
-    float h = clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
-    return length(pa - ba * h) - r;
-} 
-
-float prism(vec3 p,vec2 h) {
-
-    vec3 q = abs(p);
-    return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
-}
-
-float box(vec3 p,vec3 b) {
-
-    vec3 d = abs(p) - b;
-    return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
-}
-
-float roundbox(vec3 p,vec3 b,float r) {
-
-    vec3 q = abs(p) - b;
-    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
-}
-
-float torus(vec3 p,vec2 t) {
-
-    vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
-    return length(q) - t.y; 
-}
-
-float capTorus(vec3 p,vec2 sc,float ra,float rb) {
-    p.x = abs(p.x);
-    float k = (sc.y * p.x > sc.x * p.y) ? dot(p.xy,sc) : length(p.xy);
-    return sqrt(dot(p,p) + ra*ra - 2.*k*ra) - rb;
-}
-
-float cylinder(vec3 p,float h,float r) {
-    
-    float d = length(vec2(p.x,p.z)) - r;
-    d = max(d, -p.y - h);
-    d = max(d, p.y - h);
-    return d; 
-}
-
-float hexPrism(vec3 p,vec2 h) {
- 
-    const vec3 k = vec3(-0.8660254,0.5,0.57735);
-    p = abs(p); 
-    p.xy -= 2.0 * min(dot(k.xy,p.xy),0.0) * k.xy;
- 
-    vec2 d = vec2(length(p.xy - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x)) * sign(p.y-h.x),p.z-h.y);
-    return min(max(d.x,d.y),0.0) + length(max(d,0.0));
-}
-
-float octahedron(vec3 p,float s) {
-
-    p = abs(p);
-
-    float m = p.x + p.y + p.z - s;
-    vec3 q;
-
-    if(3.0 * p.x < m) {
-       q = vec3(p.x,p.y,p.z);  
-    } else if(3.0 * p.y < m) {
-       q = vec3(p.y,p.z,p.x); 
-    } else if(3.0 * p.z < m) { 
-       q = vec3(p.z,p.x,p.y);
-    } else { 
-       return m * 0.57735027;
-    }
-
-    float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
-    return length(vec3(q.x,q.y-s+k,q.z - k)); 
-}
-
-float lev(vec2 uv) {
+float f(vec2 uv) {
 
     float n = 0.;
 
     for(int i = 1; i < 8; i++) {
-        float e = pow(2.,float(i));
-        n += ns(uv * e) * (1. / e); 
+        float e = pow(2.,float(i)); 
+        n += ns(uv * e) * (1. / e);
+
     }
 
     return n * .5 + .5;
@@ -584,16 +387,17 @@ float lev(vec2 uv) {
 vec3 normal(vec2 uv) {
 
     float d = 0.0001;
-    float h  = lev(uv); 
-    float h1 = lev(uv + vec2(d,0.));
-    float h2 = lev(uv + vec2(0.,d));
+    float h  = f(uv); 
+    float h1 = f(uv + vec2(d,0.));
+    float h2 = f(uv + vec2(0.,d));
 
     return normalize(vec3(-(h1 - h),-(h2 - h),d));
 }
 
-vec3 phong(vec2 uv,vec3 n,vec3 light_pos,vec3 ambc,vec3 difc) {
+vec3 phong(vec2 uv,vec3 n,vec3 difc) {
 
-     vec3 ld = normalize(vec3(light_pos - vec3(uv,0.)));
+     vec3 ambc = vec3(.04);
+     vec3 ld = normalize(vec3(lp - vec3(uv,0.)));
      float dif = max(0.,dot(n,ld));
      vec3 ref = normalize(reflect(-ld,n));
      float spe = pow(max(0.,dot(n,ref)),8.); 
@@ -606,9 +410,15 @@ void main() {
 vec3 col = vec3(0.);
 
 vec2 uv = -1. + 2. * uVu.xy;
-uv.x *= res.x/res.y; 
+uv.x *= res.x/res.y;
+uv += p;
 
-col = phong(uv,normal(uv),vec3(1.),vec3(.04),vec3(.05,.5,.1));
+col = phong(uv,normal(uv),vec3(.05,.5,.1));
+
+float h = f(uv); 
+if(h < .45) {
+col = vec3(0.,0.,.5);
+}
 
 col = pow(col,vec3(.4545));      
 out_FragColor = vec4(col,1.0);

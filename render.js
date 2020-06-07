@@ -103,7 +103,7 @@ ShaderLoader("render.vert","render.frag",
 function mouseScroll() {
 
     let edge = .75;   
-    let s = 0.001;
+    let s = 25.;
     
     if(mouse.x < -edge) {
     p.x -= t.getDelta() * s;
