@@ -19,31 +19,12 @@ const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 
 const vec3 lp = vec3(1.);
 
-//float hash(float p) { return fract(sin(p) * 4358.5453); }
-//float hash(vec2 p) { return fract(sin(dot(vec2(12.9898,78.233))) * 43758.5357); }
+float hash(vec2 p) { return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5357); }
 
+float mod289(float p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
-
-float hash(float p) {
-    uvec2 n = uint(int(p)) * uvec2(1391674541U,2531151992.0);
-    uint h = (n.x ^ n.y) * 1391674541U;
-    return float(h) * (1./float(0xffffffffU));
-}
-
-float hash(vec2 p) {
-    uvec2 n = uvec2(ivec2(p)) * uvec2(1391674541U,2531151992.0);
-    uint h = (n.x ^ n.y) * 1391674541U;
-    return float(h) * (1./float(0xffffffffU));
-}
-
-vec3 hash3(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) *  uvec3(1391674541U,2531151992.0,2860486313U);
-   h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,2531151992U,2860486313U);
-   return vec3(h) * (1.0/float(0xffffffffU));
-
-}
 
 vec2 uvd() {
    return gl_FragCoord.xy / res.xy;
@@ -77,7 +58,7 @@ vec3 simplexGrid(vec2 uv) {
 }
 
 float radial(vec2 uv,float b) {
-    vec2 p = vec2(.5) - uv;
+    vec2 p = uv;
     float a = atan(p.y,p.x);
     return cos(a * b);
 }
@@ -374,19 +355,28 @@ float segment(vec2 p,vec2 a,vec2 b) {
 float f(vec2 uv) {
 
     float n = 0.;
-
+    
     for(int i = 1; i < 8; i++) {
+        
         float e = pow(2.,float(i)); 
-        n += ns(uv * e) * (1. / e);
+        float s = (1. / e);
+        n += ns(uv * e) * s; 
+        
+        //n += sin2(uv,e) * s;
+        //n += sin2(uv,ns(uv * e) * s) * s;      
 
     }
-
     return n * .5 + .5;
 }
 
-vec3 normal(vec2 uv) {
+float fd2(vec2 uv) {
+    return f(uv+f(uv));
+}
+
+vec3 fn(vec2 uv) {
 
     float d = 0.0001;
+
     float h  = f(uv); 
     float h1 = f(uv + vec2(d,0.));
     float h2 = f(uv + vec2(0.,d));
@@ -394,7 +384,7 @@ vec3 normal(vec2 uv) {
     return normalize(vec3(-(h1 - h),-(h2 - h),d));
 }
 
-vec3 phong(vec2 uv,vec3 n,vec3 difc) {
+vec3 lighting(vec2 uv,vec3 n,vec3 difc) {
 
      vec3 ambc = vec3(.04);
      vec3 ld = normalize(vec3(lp - vec3(uv,0.)));
@@ -410,14 +400,21 @@ void main() {
 vec3 col = vec3(0.);
 
 vec2 uv = -1. + 2. * uVu.xy;
-uv.x *= res.x/res.y;
+uv *= res.x/res.y;
 uv += p;
 
-col = phong(uv,normal(uv),vec3(.05,.5,.1));
+vec2 q = vec2(uv);
+float s = 5.;
 
-float h = f(uv); 
+vec2 loc = floor(uv/s);
+q = mod(q,s) - .5 * s;
+
+col = lighting(uv,fn(uv),vec3(.05,.5,.1));
+
+float h = f(uv);
+
 if(h < .45) {
-col = vec3(0.,0.,.5);
+col = vec3(0.,0.,.05);
 }
 
 col = pow(col,vec3(.4545));      
