@@ -103,22 +103,22 @@ ShaderLoader("render.vert","render.frag",
 function mouseScroll() {
 
     let edge = .75;   
-    let s = 25.;
+    let s = .01;
     
     if(mouse.x < -edge) {
-    p.x -= t.getDelta() * s;
+    p.x -= t.getDelta() + s;
     }
 
     if(mouse.x > edge) {
-    p.x += t.getDelta() * s;
+    p.x += t.getDelta() + s;
     }
 
     if(mouse.y < -edge) {
-    p.y -= t.getDelta() * s;
+    p.y -= t.getDelta() + s;
     }
 
     if(mouse.y > edge) {
-    p.y += t.getDelta() * s;
+    p.y += t.getDelta() + s;
     }   
 
 }
@@ -140,8 +140,6 @@ $('#canvas').mouseup(function() {
     
     mouse_pressed = false;    
     mouse_held = false;
-    
-    hash = nhash();
 
     if(reset) {
         clearTimeout(reset);
