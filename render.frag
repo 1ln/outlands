@@ -10,6 +10,7 @@ varying vec2 uVu;
 uniform vec2 res;
 uniform float t;
 uniform vec2 p;
+uniform vec2 l;
 uniform vec2 m;
 
 const float E    =  2.7182818;
@@ -17,7 +18,7 @@ const float PI   =  radians(180.0);
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 
-const vec3 lp = vec3(1.);
+vec3 lp = vec3(0.,0.,1.);
 
 float hash(vec2 p) { return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5357); }
 
@@ -397,24 +398,36 @@ vec3 lighting(vec2 uv,vec3 n,vec3 difc) {
 
 void main() {
  
-vec3 col = vec3(0.);
-
 vec2 uv = -1. + 2. * uVu.xy;
 uv *= res.x/res.y;
+
 uv += p;
+lp.xy += p;
 
 vec2 q = vec2(uv);
+
+float scl = .1;
 float s = 5.;
 
 vec2 loc = floor(uv/s);
+
 q = mod(q,s) - .5 * s;
 
-col = lighting(uv,fn(uv),vec3(.05,.5,.1));
+vec3 col = vec3(.5);
+vec3 mountains = lighting(uv,fn(uv),vec3(.05,.5,.1));
+vec3 oceans = lighting(uv,vec3(0.,0.,fd2(uv)),vec3(0.,0.,.15)); 
 
-float h = f(uv);
+float h = f(uv * scl);
+float fe = f(uv * .25);
 
 if(h < .45) {
-col = vec3(0.,0.,.05);
+   col = oceans;
+} else {
+
+   if(fe < .35) {
+   col = mountains;
+   }   
+
 }
 
 col = pow(col,vec3(.4545));      
