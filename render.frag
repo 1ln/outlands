@@ -361,26 +361,55 @@ float f(vec2 uv) {
         
         float e = pow(2.,float(i)); 
         float s = (1. / e);
-        n += ns(uv * e) * s; 
-        
-        //n += sin2(uv,e) * s;
-        //n += sin2(uv,ns(uv * e) * s) * s;      
-
+        n += ns(uv * e) * s;      
     }
     return n * .5 + .5;
 }
 
+float f4(vec2 uv,float g) {
+ 
+    float n = 0.;
+    float a = .5;
+    float f = 1.;
+    float h = exp(-g);
+    
+    n += a * ns(uv * f); f *= 2.; a *= g;
+    n += a * ns(uv * f); f *= 2.; a *= g; 
+    n += a * ns(uv * f); f *= 2.; a *= g;
+    n += a * ns(uv * f); f *= 2.; a *= g;
+
+    return n;
+ }
 float fd2(vec2 uv) {
     return f(uv+f(uv));
 }
 
-vec3 fn(vec2 uv) {
+vec3 fn(vec2 uv,int n) {
 
     float d = 0.0001;
 
-    float h  = f(uv); 
-    float h1 = f(uv + vec2(d,0.));
-    float h2 = f(uv + vec2(0.,d));
+    vec2 d1 = vec2(d,0.);
+    vec2 d2 = vec2(0.,d);
+
+    float h,h1,h2;
+
+    if(n == 0) {
+    h  = f(uv); 
+    h1 = f(uv + d1);
+    h2 = f(uv + d2);
+    }
+    
+    if(n == 1) {
+    h = sin2(uv,.5);
+    h1 = sin2(uv + d1,.5);
+    h2 = sin2(uv + d2,.5);
+    }
+
+    if(n == 2) {
+    h = f4(uv,.5 );
+    h1 = f4(uv + d1,.5);
+    h2 = f4(uv + d2,.5);
+    }
 
     return normalize(vec3(-(h1 - h),-(h2 - h),d));
 }
@@ -414,8 +443,9 @@ vec2 loc = floor(uv/s);
 q = mod(q,s) - .5 * s;
 
 vec3 col = vec3(.5);
-vec3 mountains = lighting(uv,fn(uv),vec3(.05,.5,.1));
-vec3 oceans = lighting(uv,vec3(0.,0.,fd2(uv)),vec3(0.,0.,.15)); 
+vec3 mountains = lighting(uv,fn(uv,0),vec3(.05,.5,.1));
+vec3 hills = lighting(uv,fn(uv,2),vec3(.25,.5,.1));
+vec3 oceans = lighting(uv,fn(uv,1),vec3(0.,0.,.15)); 
 
 float h = f(uv * scl);
 float fe = f(uv * .25);
@@ -424,9 +454,13 @@ if(h < .45) {
    col = oceans;
 } else {
 
+   col = hills;
+   if(fe < .5) { }
+
    if(fe < .35) {
    col = mountains;
    }   
+   
 
 }
 
