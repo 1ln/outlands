@@ -353,35 +353,33 @@ float segment(vec2 p,vec2 a,vec2 b) {
     return length(pa - ba * h);
 }
 
-float f(vec2 uv) {
+float f(vec2 uv,int n) {
 
-    float n = 0.;
+    float f = 0.;
     
     for(int i = 1; i < 8; i++) {
         
         float e = pow(2.,float(i)); 
         float s = (1. / e);
-        n += ns(uv * e) * s;      
+
+        if(n == 0) {
+        f += sin2(uv,.5)*s;
+        }
+
+        if(n == 1) {
+        f += ns(uv * e) * s;
+        }
+
+        if(n == 2) {
+        f += sin(ns(uv * e/4.));
+        }
+      
     }
-    return n * .5 + .5;
+    return f * .5 + .5;
 }
 
-float f4(vec2 uv,float g) {
- 
-    float n = 0.;
-    float a = .5;
-    float f = 1.;
-    float h = exp(-g);
-    
-    n += a * ns(uv * f); f *= 2.; a *= g;
-    n += a * ns(uv * f); f *= 2.; a *= g; 
-    n += a * ns(uv * f); f *= 2.; a *= g;
-    n += a * ns(uv * f); f *= 2.; a *= g;
-
-    return n;
- }
 float fd2(vec2 uv) {
-    return f(uv+f(uv));
+    return f(uv+f(uv,1),1);
 }
 
 vec3 fn(vec2 uv,int n) {
@@ -393,24 +391,10 @@ vec3 fn(vec2 uv,int n) {
 
     float h,h1,h2;
 
-    if(n == 0) {
-    h  = f(uv); 
-    h1 = f(uv + d1);
-    h2 = f(uv + d2);
-    }
+    h  = f(uv,n); 
+    h1 = f(uv + d1,n);
+    h2 = f(uv + d2,n);
     
-    if(n == 1) {
-    h = sin2(uv,.5);
-    h1 = sin2(uv + d1,.5);
-    h2 = sin2(uv + d2,.5);
-    }
-
-    if(n == 2) {
-    h = f4(uv,.5 );
-    h1 = f4(uv + d1,.5);
-    h2 = f4(uv + d2,.5);
-    }
-
     return normalize(vec3(-(h1 - h),-(h2 - h),d));
 }
 
@@ -443,24 +427,23 @@ vec2 loc = floor(uv/s);
 q = mod(q,s) - .5 * s;
 
 vec3 col = vec3(.5);
-vec3 mountains = lighting(uv,fn(uv,0),vec3(.05,.5,.1));
-vec3 hills = lighting(uv,fn(uv,2),vec3(.25,.5,.1));
-vec3 oceans = lighting(uv,fn(uv,1),vec3(0.,0.,.15)); 
+vec3 mountains = lighting(uv,fn(uv,1),vec3(.05,.5,.1));
+vec3 hills = lighting(uv,fn(uv,2),vec3(1.,.5,.1));
+vec3 oceans = lighting(uv,fn(uv,0),vec3(0.,0.,.15)); 
 
-float h = f(uv * scl);
-float fe = f(uv * .25);
+float h = f(uv * scl,1);
+float fe = f(uv * .25,1);
 
-if(h < .45) {
+if(h < smoothstep(0.,1.,fe)) {
    col = oceans;
 } else {
 
    col = hills;
-   if(fe < .5) { }
 
    if(fe < .35) {
    col = mountains;
-   }   
-   
+      
+   }  
 
 }
 
