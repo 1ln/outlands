@@ -428,7 +428,6 @@ q = mod(q,s) - .5 * s;
 
 vec3 col = vec3(.5);
 vec3 mountains = lighting(uv,fn(uv,1),vec3(.05,.5,.1));
-vec3 hills = lighting(uv,fn(uv,2),vec3(1.,.5,.1));
 vec3 oceans = lighting(uv,fn(uv,0),vec3(0.,0.,.15)); 
 
 float h = f(uv * scl,1);
@@ -438,13 +437,8 @@ if(h < smoothstep(0.,1.,fe)) {
    col = oceans;
 } else {
 
-   col = hills;
-
-   if(fe < .35) {
    col = mountains;
       
-   }  
-
 }
 
 col = pow(col,vec3(.4545));      
